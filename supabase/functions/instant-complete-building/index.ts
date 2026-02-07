@@ -1,14 +1,15 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface RequestBody {
-  wallet_address: string;
-  building_id: string;
-}
+const RequestSchema = z.object({
+  wallet_address: z.string().min(3).max(100).regex(/^[a-zA-Z0-9._-]+$/),
+  building_id: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/),
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,7 +28,18 @@ Deno.serve(async (req) => {
       }
     );
 
-    const { wallet_address, building_id }: RequestBody = await req.json();
+    const body = await req.json();
+    const parseResult = RequestSchema.safeParse(body);
+
+    if (!parseResult.success) {
+      console.error('❌ Input validation failed:', parseResult.error.flatten());
+      return new Response(
+        JSON.stringify({ error: 'Invalid input parameters', details: parseResult.error.flatten().fieldErrors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { wallet_address, building_id } = parseResult.data;
 
     console.log('⚡ Instant complete building request:', { wallet_address, building_id });
 
