@@ -1,130 +1,174 @@
 
-# Система Кланов -- Этап 1: Фундамент
+# Security Fixes: Deep Analysis and Resolution Plan
 
-## Обзор
+## Summary of Findings
 
-Игрок строит здание "Клановый Зал" в Убежище. После постройки на странице `/menu` появляется новая кнопка "Клан", ведущая на страницу `/clan` со всей функциональностью кланов (создание, вступление, управление участниками, лидерборд).
-
-## Что будет реализовано
-
-**Здание "Клановый Зал" в Убежище:**
-- Новый тип здания `clan_hall` в системе зданий (building_configs, buildingLevels)
-- Отображается в сетке зданий Убежища наравне с казармами, кузницей и т.д.
-- Требует постройки (уровень 1) для доступа к функционалу кланов
-- Уровни 1-8 с возможностью развития (бонусы на будущие этапы)
-
-**Страница Клана (`/clan`):**
-- Создание клана (название, описание, политика вступления)
-- Просмотр информации о своём клане (участники, роли, уровень)
-- Система ролей: Глава, Заместитель (макс 2), Офицер, Участник
-- Заявки на вступление (подача / одобрение / отклонение)
-- Выход из клана / исключение участников
-- Передача лидерства
-- Глобальный лидерборд кланов (по суммарному Elo участников)
-
-**Кнопка в меню:**
-- Появляется только если `buildingLevels.clan_hall >= 1`
-- Стиль аналогичен остальным кнопкам меню
+The security scan found **2 critical errors** and **several warnings**. The root cause is that the app uses **wallet-based authentication (NEAR)**, not Supabase Auth, so `auth.uid()` is always `null` for client queries. This makes standard RLS patterns using `get_current_user_wallet()` ineffective, leading to overly permissive `USING (true)` workarounds.
 
 ---
 
-## Технические детали
+## Error 1: profiles table publicly exposes all data
 
-### 1. База данных -- Новые таблицы
+**Problem:** The `profiles_select_all` policy uses `USING (true)`, making all fields (`id`, `user_id`, `wallet_address`, `display_name`, timestamps) readable by anyone. Attackers could harvest wallet-to-identity mappings.
 
-```text
-clans
-  id            uuid PK default gen_random_uuid()
-  name          text UNIQUE NOT NULL (3-20 символов)
-  description   text (макс 200 символов)
-  emblem        text default 'shield' -- ключ иконки
-  leader_wallet text NOT NULL
-  level         int default 1
-  experience    int default 0
-  treasury_ell  int default 0
-  max_members   int default 20
-  join_policy   text default 'approval' -- 'open' | 'approval' | 'invite_only'
-  created_at    timestamptz default now()
+**Current app usage:**
+- `useDisplayName.ts` directly queries `profiles` table for the current user's own name
+- `useDisplayNames.ts` uses the `get_display_names` RPC (SECURITY DEFINER) for batch lookups -- this already bypasses RLS
 
-clan_members
-  id             uuid PK default gen_random_uuid()
-  clan_id        uuid FK -> clans ON DELETE CASCADE
-  wallet_address text NOT NULL
-  role           text NOT NULL default 'member' -- 'leader' | 'deputy' | 'officer' | 'member'
-  joined_at      timestamptz default now()
-  contributed_ell int default 0
-  UNIQUE(clan_id, wallet_address)
-
-clan_join_requests
-  id             uuid PK default gen_random_uuid()
-  clan_id        uuid FK -> clans ON DELETE CASCADE
-  wallet_address text NOT NULL
-  status         text default 'pending' -- 'pending' | 'accepted' | 'rejected'
-  message        text -- опциональное сообщение от заявителя
-  created_at     timestamptz default now()
-  reviewed_by    text -- кошелёк того, кто рассмотрел
-  reviewed_at    timestamptz
-```
-
-**RLS-политики:**
-- `clans`: SELECT для всех аутентифицированных (лидерборд), INSERT/UPDATE/DELETE через RPC
-- `clan_members`: SELECT для всех аутентифицированных, INSERT/UPDATE/DELETE через RPC
-- `clan_join_requests`: SELECT для участников клана + своих заявок, INSERT/UPDATE/DELETE через RPC
-
-### 2. RPC-функции (SECURITY DEFINER)
-
-- `create_clan(p_wallet, p_name, p_description, p_join_policy)` -- создание клана, автор становится лидером
-- `join_clan(p_wallet, p_clan_id, p_message)` -- заявка на вступление (или авто-вступление для open)
-- `review_join_request(p_wallet, p_request_id, p_accept)` -- одобрение/отклонение заявки (только leader/deputy/officer)
-- `leave_clan(p_wallet)` -- выход из клана (лидер не может выйти, пока не передаст лидерство)
-- `kick_member(p_wallet, p_target_wallet)` -- исключение (leader/deputy могут кикнуть officer/member)
-- `change_member_role(p_wallet, p_target_wallet, p_new_role)` -- смена роли
-- `transfer_leadership(p_wallet, p_target_wallet)` -- передача лидерства
-- `get_clan_leaderboard()` -- топ кланов по суммарному Elo участников
-- `get_my_clan(p_wallet)` -- информация о клане игрока с участниками
-- `disband_clan(p_wallet)` -- расформировать клан (только лидер)
-
-### 3. Здание "Клановый Зал" -- Интеграция
-
-**Файлы, которые будут изменены:**
-
-- `src/utils/jsonbValidation.ts` -- добавить `clan_hall: z.number().default(0)` в BuildingLevelsSchema
-- `src/contexts/GameDataContext.tsx` -- добавить `clan_hall: 0` в DEFAULT_GAME_DATA.buildingLevels
-- `src/hooks/shelter/useShelterState.ts` -- добавить `clan_hall` в buildingLevels memo и в nestUpgrades массив
-- `src/components/admin/ShelterBuildingSettings.tsx` -- добавить `{ id: 'clan_hall', name: 'Клановый зал' }` в BUILDING_TYPES
-- `building_configs` таблица -- добавить конфигурацию уровня 1 для `clan_hall` (стоимость постройки)
-
-### 4. Новые файлы
-
-```text
-src/pages/Clan.tsx                          -- Главная страница клана
-src/components/game/clan/ClanOverview.tsx    -- Обзор своего клана (участники, роли)
-src/components/game/clan/ClanCreate.tsx      -- Форма создания клана
-src/components/game/clan/ClanSearch.tsx      -- Поиск и список кланов для вступления
-src/components/game/clan/ClanLeaderboard.tsx -- Рейтинг кланов
-src/components/game/clan/ClanRequests.tsx    -- Управление заявками (для officer+)
-src/components/game/clan/ClanMembers.tsx     -- Список участников с действиями
-src/hooks/useClan.ts                        -- Хук для работы с кланами (RPC вызовы)
-```
-
-### 5. Маршрутизация и меню
-
-- `src/App.tsx` -- добавить маршрут `/clan` с lazy loading и ProtectedRoute
-- `src/components/lazy/LazyComponents.tsx` -- добавить LazyClan компонент
-- `src/pages/Menu.tsx` -- добавить кнопку "Клан" (условно по `buildingLevels.clan_hall >= 1`)
-
-### 6. Страница Убежища
-
-- `src/pages/Shelter.tsx` -- не требует новой вкладки; здание `clan_hall` появится в сетке зданий на вкладке "Улучшения" автоматически, т.к. оно будет добавлено в `nestUpgrades`
+**Fix:**
+1. Create a database view `profiles_public` that only exposes `wallet_address` and `display_name` (hides `id`, `user_id`, timestamps)
+2. Set `security_invoker = on` on the view
+3. Restrict the base `profiles` table SELECT to `USING (false)` -- all access via RPCs or view
+4. Update `useDisplayName.ts` to query from `profiles_public` instead of `profiles`
 
 ---
 
-## Порядок реализации
+## Error 2: pvp_queue has conflicting SELECT policies
 
-1. Миграция БД: таблицы `clans`, `clan_members`, `clan_join_requests` + RLS + RPC
-2. Конфигурация здания: `clan_hall` в `building_configs`, обновление schema/defaults
-3. Интеграция здания в Убежище (jsonbValidation, useShelterState, GameDataContext, ShelterBuildingSettings)
-4. Хук `useClan.ts` для работы с RPC
-5. Компоненты страницы клана (ClanCreate, ClanOverview, ClanMembers, ClanRequests, ClanSearch, ClanLeaderboard)
-6. Страница `Clan.tsx` с табами
-7. Lazy loading, маршрутизация, кнопка в меню
+**Problem:** Two SELECT policies exist:
+- `Users can view own queue entry` with `wallet_address = get_current_user_wallet()` (correct intent, but doesn't work because `auth.uid()` is null)
+- `Users can view their own queue entries` with `USING (true)` (overrides the first, exposes all team compositions)
+
+**Current app usage:**
+- Only `usePvP.ts` reads from `pvp_queue` directly (one query to check own queue entry)
+- All other operations (join, leave) use RPCs
+
+**Fix:**
+1. Create an RPC `get_my_queue_entry(p_wallet text)` that returns only the caller's queue entry
+2. Drop the overly permissive `Users can view their own queue entries` policy
+3. Keep the `Users can view own queue entry` policy (harmless since it returns nothing anyway)
+4. Update `usePvP.ts` to use the new RPC instead of direct table query
+
+---
+
+## Warning: pvp_bot_teams INSERT/UPDATE/DELETE too permissive
+
+**Problem:** All mutation policies use `USING (true)` / `WITH CHECK (true)`, allowing anyone to create/modify/delete bot teams.
+
+**Current usage:** Bot teams are managed exclusively via the `manage_bot_team` RPC (SECURITY DEFINER), so client code never writes directly.
+
+**Fix:** Restrict INSERT/UPDATE/DELETE to service_role only:
+```
+USING (current_setting('role', true) = 'service_role')
+```
+
+---
+
+## Warning: Function search_path mutable
+
+**Problem:** Some database functions don't have `search_path` set, making them vulnerable to search_path manipulation.
+
+**Fix:** Add `SET search_path = public` to the `get_current_user_wallet` function and other affected functions.
+
+---
+
+## Warnings deliberately kept as-is (with justification)
+
+- **pvp_ratings public SELECT** -- intentional for leaderboard display; only contains wallet, ELO, win/loss stats (no sensitive data)
+- **pvp_matches completed SELECT** -- intentional for match history; `battle_state` for completed matches is not sensitive (game is over)
+- **wallet_connections no SELECT** -- info-level; users don't need to see connection history in the current app
+
+---
+
+## Technical Implementation
+
+### Step 1: Database migration (SQL)
+
+```sql
+-- 1. Create public view for profiles (hide sensitive fields)
+CREATE VIEW public.profiles_public
+WITH (security_invoker = on) AS
+  SELECT wallet_address, display_name
+  FROM public.profiles;
+
+-- 2. Restrict base profiles table SELECT
+DROP POLICY IF EXISTS "profiles_select_all" ON public.profiles;
+CREATE POLICY "profiles_no_direct_select"
+  ON public.profiles FOR SELECT
+  USING (false);
+
+-- 3. Fix pvp_queue: drop the permissive policy
+DROP POLICY IF EXISTS "Users can view their own queue entries" ON public.pvp_queue;
+
+-- 4. Create RPC for checking own queue entry
+CREATE OR REPLACE FUNCTION public.get_my_queue_entry(p_wallet text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_result jsonb;
+BEGIN
+  SELECT to_jsonb(q.*) INTO v_result
+  FROM pvp_queue q
+  WHERE q.wallet_address = p_wallet
+    AND q.status = 'searching'
+    AND q.expires_at > now()
+  LIMIT 1;
+  
+  RETURN v_result;
+END;
+$$;
+
+-- 5. Fix pvp_bot_teams mutation policies
+DROP POLICY IF EXISTS "Users can insert their own bot teams" ON public.pvp_bot_teams;
+DROP POLICY IF EXISTS "Users can update their own bot teams" ON public.pvp_bot_teams;
+DROP POLICY IF EXISTS "Users can delete their own bot teams" ON public.pvp_bot_teams;
+
+CREATE POLICY "Service role can insert bot teams"
+  ON public.pvp_bot_teams FOR INSERT
+  WITH CHECK (current_setting('role', true) = 'service_role');
+
+CREATE POLICY "Service role can update bot teams"
+  ON public.pvp_bot_teams FOR UPDATE
+  USING (current_setting('role', true) = 'service_role');
+
+CREATE POLICY "Service role can delete bot teams"
+  ON public.pvp_bot_teams FOR DELETE
+  USING (current_setting('role', true) = 'service_role');
+
+-- 6. Fix search_path on get_current_user_wallet
+CREATE OR REPLACE FUNCTION public.get_current_user_wallet()
+RETURNS text
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_wallet_address text;
+BEGIN
+  SELECT wallet_address INTO v_wallet_address
+  FROM public.game_data
+  WHERE user_id = auth.uid()
+  LIMIT 1;
+  RETURN v_wallet_address;
+END;
+$$;
+```
+
+### Step 2: Update frontend code
+
+**File: `src/hooks/useDisplayName.ts`**
+- Change `.from('profiles')` to `.from('profiles_public')` for the display name query
+
+**File: `src/hooks/usePvP.ts`**
+- Replace the direct `pvp_queue` table query in `checkExistingQueue` with a call to the new `get_my_queue_entry` RPC
+
+**File: `src/integrations/supabase/types.ts`**
+- Add the `profiles_public` view and `get_my_queue_entry` RPC to the types
+
+### Step 3: Mark resolved security findings
+
+After implementation, delete/update the resolved security findings in the scanner.
+
+---
+
+## Impact Assessment
+
+- **No visual changes** -- all functionality stays the same
+- **profiles**: Display names still work everywhere (via RPC and view)
+- **pvp_queue**: Queue join/leave/check still works (via RPC)
+- **pvp_bot_teams**: Bot matching still works (all via SECURITY DEFINER RPCs)
+- **Risk**: Minimal -- all current client queries are already filtered by wallet or use RPCs
