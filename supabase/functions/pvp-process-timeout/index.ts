@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +20,8 @@ const getSupabaseServiceClient = () => {
   return createClient(supabaseUrl, supabaseServiceKey);
 };
 
+const MAX_TIMEOUTS = 2; // After 2 timeouts, player auto-loses
+
 async function finalizeMatchByTimeout(
   supabase: any,
   match: any,
@@ -40,7 +42,7 @@ async function finalizeMatchByTimeout(
 
   const finalEloChange = eloChange ?? 16;
 
-  console.log(`🏆 [PvP Timeout] ${winnerId.substring(0, 10)} wins by timeout (+${finalEloChange} ELO)`);
+  console.log(`🏆 [PvP Timeout] ${winnerId.substring(0, 10)} wins by timeout forfeit (+${finalEloChange} ELO)`);
 
   // Update match
   await supabase
@@ -64,6 +66,118 @@ async function finalizeMatchByTimeout(
   }
 
   return { winnerId, loserId, eloChange: finalEloChange };
+}
+
+async function skipTurnByTimeout(
+  supabase: any,
+  match: any,
+  timedOutWallet: string
+) {
+  const battleState = match.battle_state || {};
+  const timeoutWarnings = battleState.timeout_warnings || { player1: 0, player2: 0 };
+  
+  // Determine which player timed out
+  const isPlayer1 = timedOutWallet === match.player1_wallet;
+  const playerKey = isPlayer1 ? 'player1' : 'player2';
+  
+  // Increment warning count
+  timeoutWarnings[playerKey] = (timeoutWarnings[playerKey] || 0) + 1;
+  const warningCount = timeoutWarnings[playerKey];
+  
+  console.log(`⏰ [PvP Timeout] Player ${timedOutWallet.substring(0, 10)} timeout #${warningCount}`);
+  
+  // Check if player exceeded max timeouts
+  if (warningCount >= MAX_TIMEOUTS) {
+    // Auto-lose: opponent wins
+    const winnerId = isPlayer1 ? match.player2_wallet : match.player1_wallet;
+    
+    // Save warnings to battle_state before finalizing
+    const updatedBattleState = { ...battleState, timeout_warnings: timeoutWarnings };
+    await supabase
+      .from('pvp_matches')
+      .update({ battle_state: updatedBattleState })
+      .eq('id', match.id);
+    
+    const result = await finalizeMatchByTimeout(supabase, match, winnerId);
+    return {
+      action: 'forfeit',
+      warning_count: warningCount,
+      winner: result.winnerId,
+      loser: result.loserId,
+      elo_change: result.eloChange,
+    };
+  }
+  
+  // Skip turn: switch to opponent
+  const nextTurnWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
+  const updatedBattleState = {
+    ...battleState,
+    timeout_warnings: timeoutWarnings,
+    last_action: {
+      ...(battleState.last_action || {}),
+      action_type: 'timeout_skip',
+      skipped_wallet: timedOutWallet,
+      warning_count: warningCount,
+      timestamp: new Date().toISOString(),
+    },
+  };
+  
+  await supabase
+    .from('pvp_matches')
+    .update({
+      current_turn_wallet: nextTurnWallet,
+      turn_started_at: new Date().toISOString(),
+      battle_state: updatedBattleState,
+    })
+    .eq('id', match.id);
+  
+  // Record the skip as a move
+  await supabase.from('pvp_moves').insert({
+    match_id: match.id,
+    player_wallet: timedOutWallet,
+    turn_number: battleState.turn_number || 1,
+    action_type: 'timeout_skip',
+    attacker_pair_index: null,
+    target_pair_index: null,
+    dice_roll_attacker: null,
+    dice_roll_defender: null,
+    damage_dealt: 0,
+    is_blocked: false,
+    is_critical: false,
+    result_state: updatedBattleState,
+  });
+  
+  return {
+    action: 'skip',
+    warning_count: warningCount,
+    next_turn: nextTurnWallet,
+  };
+}
+
+async function processMatchTimeout(supabase: any, match: any) {
+  const timedOutWallet = match.current_turn_wallet;
+  
+  // For bot matches where bot timed out, this shouldn't happen
+  // but handle gracefully by skipping bot's turn
+  const isBotTimedOut = timedOutWallet?.startsWith('BOT_');
+  if (isBotTimedOut) {
+    // Just skip bot's turn without warnings
+    const humanWallet = match.player1_wallet.startsWith('BOT_') 
+      ? match.player2_wallet 
+      : match.player1_wallet;
+    
+    await supabase
+      .from('pvp_matches')
+      .update({
+        current_turn_wallet: humanWallet,
+        turn_started_at: new Date().toISOString(),
+      })
+      .eq('id', match.id);
+    
+    return { action: 'bot_skip', next_turn: humanWallet };
+  }
+  
+  return await skipTurnByTimeout(supabase, match, timedOutWallet);
 }
 
 Deno.serve(async (req) => {
@@ -101,19 +215,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Determine winner (opponent of current turn player)
-      const winnerId = match.current_turn_wallet === match.player1_wallet 
-        ? match.player2_wallet 
-        : match.player1_wallet;
-
-      const result = await finalizeMatchByTimeout(supabase, match, winnerId);
+      const result = await processMatchTimeout(supabase, match);
       
       return json({
         success: true,
         match_id: matchId,
-        winner: winnerId,
-        reason: 'timeout',
-        elo_change: result.eloChange,
+        ...result,
       });
     }
 
@@ -137,17 +244,11 @@ Deno.serve(async (req) => {
       const timeElapsed = (now - turnStarted) / 1000;
 
       if (timeElapsed > match.turn_timeout_seconds) {
-        const winnerId = match.current_turn_wallet === match.player1_wallet 
-          ? match.player2_wallet 
-          : match.player1_wallet;
-
         try {
-          const result = await finalizeMatchByTimeout(supabase, match, winnerId);
+          const result = await processMatchTimeout(supabase, match);
           processedMatches.push({
             match_id: match.id,
-            winner: winnerId,
-            loser: result.loserId,
-            elo_change: result.eloChange,
+            ...result,
           });
         } catch (err) {
           console.error(`Error processing timeout for match ${match.id}:`, err);

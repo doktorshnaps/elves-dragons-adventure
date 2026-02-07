@@ -68,6 +68,11 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(5);
 
+    // Extract timeout warnings from battle_state
+    const timeoutWarnings = match.battle_state?.timeout_warnings || { player1: 0, player2: 0 };
+    const myTimeoutWarnings = amIPlayer1 ? timeoutWarnings.player1 : timeoutWarnings.player2;
+    const opponentTimeoutWarnings = amIPlayer1 ? timeoutWarnings.player2 : timeoutWarnings.player1;
+
     return json({
       match_id: match.id,
       status: match.status,
@@ -75,6 +80,7 @@ Deno.serve(async (req) => {
       is_my_turn: isMyTurn,
       time_remaining: timeRemaining ? Math.floor(timeRemaining) : null,
       turn_number: match.battle_state?.turn_number || 1,
+      turn_timeout_seconds: match.turn_timeout_seconds,
       
       player1: {
         wallet: match.player1_wallet,
@@ -92,6 +98,11 @@ Deno.serve(async (req) => {
       last_action: match.battle_state?.last_action || null,
       initiative: match.battle_state?.initiative || null,
       recent_moves: recentMoves || [],
+      
+      timeout_warnings: {
+        my: myTimeoutWarnings || 0,
+        opponent: opponentTimeoutWarnings || 0,
+      },
       
       winner: match.winner_wallet,
       loser: match.loser_wallet,
