@@ -34,11 +34,15 @@ export const useCards = () => {
       .map(instance => {
         const rawCardData = instance.card_data as any;
         
+        // Normalize DB types (hero/dragon) to app types (character/pet)
+        const rawType = rawCardData.type || instance.card_type || 'character';
+        const normalizedType = rawType === 'hero' ? 'character' : rawType === 'dragon' ? 'pet' : rawType;
+        
         return {
           id: rawCardData.id || instance.card_template_id,
           instanceId: instance.id, // UUID из card_instances - КРИТИЧНО для уникальной идентификации
           name: rawCardData.name || 'Unknown',
-          type: rawCardData.type || 'character',
+          type: normalizedType,
           power: instance.max_power || rawCardData.power || 0,
           defense: instance.max_defense || rawCardData.defense || 0,
           health: instance.max_health || rawCardData.health || 100,
