@@ -32,6 +32,7 @@ export const CardUpgradeManager = () => {
     { id: 'medical', name: 'Медицинский пункт' },
     { id: 'dragon_lair', name: 'Драконье логово' },
     { id: 'forge', name: 'Кузница' },
+    { id: 'clan_hall', name: 'Клановый зал' },
   ];
 
   const [formData, setFormData] = useState({

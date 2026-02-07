@@ -172,7 +172,8 @@ export const useShelterState = () => {
         barracks: levels.barracks ?? 0,
         dragon_lair: levels.dragon_lair ?? 0,
         medical: levels.medical ?? 0,
-        forge: levels.forge ?? 0
+        forge: levels.forge ?? 0,
+        clan_hall: levels.clan_hall ?? 0
       };
     }
     
@@ -186,7 +187,8 @@ export const useShelterState = () => {
       barracks: 0,
       dragon_lair: 0,
       medical: 0,
-      forge: 0
+      forge: 0,
+      clan_hall: 0
     };
   }, [gameData.buildingLevels, gameState.buildingLevels]);
 
@@ -311,7 +313,8 @@ export const useShelterState = () => {
     createUpgrade("barracks", 'shelter.barracksBuilding', 'shelter.barracksDesc', 'shelter.barracksBenefit'),
     createUpgrade("dragon_lair", 'shelter.dragonLairBuilding', 'shelter.dragonLairDesc', 'shelter.dragonLairBenefit'),
     createUpgrade("medical", 'shelter.medicalBuilding', 'shelter.medicalDesc', 'shelter.medicalBenefit'),
-    createUpgrade("forge", 'Кузница', 'Восстановление брони карт', 'Ремонт брони')
+    createUpgrade("forge", 'Кузница', 'Восстановление брони карт', 'Ремонт брони'),
+    createUpgrade("clan_hall", 'Клановый зал', 'Открывает доступ к системе кланов', 'Доступ к кланам')
   ];
   }, [buildingLevels, language, getBuildingConfig]);
 

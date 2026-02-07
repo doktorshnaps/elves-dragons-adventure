@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Settings, Swords } from "lucide-react";
+import { Settings, Swords, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useGameData } from "@/hooks/useGameData";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
@@ -229,6 +229,15 @@ export const Menu = () => {
           <Swords className="w-[23px] h-[23px] text-amber-500" />
           <span className="text-base font-semibold leading-tight text-center">PVP<br/>АРЕНА</span>
         </Button>
+
+        {gameData.buildingLevels?.clan_hall >= 1 && (
+          <Button variant="outline" className="h-36 bg-black/50 border-2 border-amber-500 rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+            boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
+          }} onClick={() => navigate('/clan')}>
+            <Shield className="w-[23px] h-[23px] text-amber-500" />
+            <span className="text-base font-semibold leading-tight text-center">КЛАН</span>
+          </Button>
+        )}
       </div>
 
       {/* Admin Button - для всех админов */}
