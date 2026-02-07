@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -28,7 +28,7 @@ interface TeamBattleArenaProps {
   onAbilityUse?: (pairId: string, abilityId: string, targetId: number | string) => void;
   onEnemyAttack: () => void;
   level: number;
-  lastRoll?: { attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null;
+  lastRoll?: { attackerRoll: number; defenderRoll?: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; isMiss?: boolean; isCounterAttack?: boolean; counterAttackDamage?: number; level: number } | null;
   onSurrenderWithSave?: () => Promise<void>;
   onMenuReturn?: () => void; // ✅ Новый callback для сохранения состояния
   dungeonType?: string; // ✅ Для сохранения в Zustand
@@ -300,32 +300,41 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   };
 
-  // Автобой логика
+  // Refs для стабильных ссылок в автобое (предотвращают пересоздание эффекта)
+  const onAttackRef = useRef(onAttack);
+  const alivePairsRef = useRef(alivePairs);
+  const aliveOpponentsRef = useRef(aliveOpponents);
+  
+  useEffect(() => { onAttackRef.current = onAttack; }, [onAttack]);
+  useEffect(() => { alivePairsRef.current = alivePairs; }, [alivePairs]);
+  useEffect(() => { aliveOpponentsRef.current = aliveOpponents; }, [aliveOpponents]);
+
+  // Автобой логика — зависимости только от стабильных примитивов
   useEffect(() => {
-    // Проверяем что не в процессе атаки, чтобы не запустить несколько атак подряд
     if (autoBattle && isPlayerTurn && !isAttacking && alivePairs.length > 0 && aliveOpponents.length > 0) {
       const timer = setTimeout(() => {
-        // Ход игрока - выбираем случайную пару и цель
-        const randomPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
-        const randomTarget = aliveOpponents[Math.floor(Math.random() * aliveOpponents.length)];
+        const currentAlivePairs = alivePairsRef.current;
+        const currentAliveOpponents = aliveOpponentsRef.current;
+        const randomPair = currentAlivePairs[Math.floor(Math.random() * currentAlivePairs.length)];
+        const randomTarget = currentAliveOpponents[Math.floor(Math.random() * currentAliveOpponents.length)];
         if (randomPair && randomTarget) {
           setIsAttacking(true);
           setAttackingPair(randomPair.id);
           setAttackedTarget(randomTarget.id);
           setTimeout(() => {
-            onAttack(randomPair.id, randomTarget.id);
+            onAttackRef.current(randomPair.id, randomTarget.id);
             setTimeout(() => {
               setAttackingPair(null);
               setAttackedTarget(null);
               setIsAttacking(false);
-            }, adjustDelay(3500)); // Ждем завершения анимации и переключения хода
+            }, adjustDelay(3500));
           }, adjustDelay(200));
         }
-      }, adjustDelay(1000)); // Задержка 1 секунда для автобоя
+      }, adjustDelay(1000));
 
       return () => clearTimeout(timer);
     }
-  }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, alivePairs, aliveOpponents, onAttack, adjustDelay]);
+  }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, adjustDelay]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Header */}
@@ -536,17 +545,17 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   <div className="space-y-0.5">
                   {/* Всегда показываем кубики */}
                   <div className="flex items-center justify-center gap-1 sm:gap-2">
-                    {/* Left Dice (Игрок) */}
-                    <div ref={playerDiceRef} className="flex justify-center">
+                    {/* Single Dice — показываем только кубик атакующего */}
+                    <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef} className="flex justify-center">
                       <InlineDiceDisplay
-                        key={`dice-left-${diceKey}`}
+                        key={`dice-${diceKey}`}
                         isRolling={isDiceRolling}
-                        diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.attackerRoll : lastRoll.defenderRoll) : null}
-                        isAttacker={lastRoll ? lastRoll.source === 'player' : true}
-                        label={t(language, 'battlePage.player')}
-                        damage={lastRoll && lastRoll.source === 'enemy' ? lastRoll.damage : undefined}
-                        isBlocked={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isBlocked : undefined}
-                        isCritical={lastRoll && lastRoll.source === 'enemy' ? lastRoll.isCritical : undefined}
+                        diceValue={lastRoll ? lastRoll.attackerRoll : null}
+                        isAttacker={lastRoll ? lastRoll.source === 'player' : isPlayerTurn}
+                        label={lastRoll ? (lastRoll.source === 'player' ? t(language, 'battlePage.player') : t(language, 'battlePage.monster')) : (isPlayerTurn ? t(language, 'battlePage.player') : t(language, 'battlePage.monster'))}
+                        damage={lastRoll ? lastRoll.damage : undefined}
+                        isBlocked={lastRoll ? lastRoll.isBlocked : undefined}
+                        isCritical={lastRoll ? lastRoll.isCritical : undefined}
                       />
                     </div>
 
@@ -565,20 +574,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     ) : (
                       <div className="h-6 sm:h-7 w-14 sm:w-[88px] flex-shrink-0" />
                     )}
-
-                    {/* Right Dice (Монстр) */}
-                    <div ref={enemyDiceRef} className="flex justify-center">
-                      <InlineDiceDisplay
-                        key={`dice-right-${diceKey}`}
-                        isRolling={isDiceRolling}
-                        diceValue={lastRoll ? (lastRoll.source === 'player' ? lastRoll.defenderRoll : lastRoll.attackerRoll) : null}
-                        isAttacker={lastRoll ? lastRoll.source === 'enemy' : false}
-                        label={t(language, 'battlePage.monster')}
-                        damage={lastRoll && lastRoll.source === 'player' ? lastRoll.damage : undefined}
-                        isBlocked={lastRoll && lastRoll.source === 'player' ? lastRoll.isBlocked : undefined}
-                        isCritical={lastRoll && lastRoll.source === 'player' ? lastRoll.isCritical : undefined}
-                      />
-                    </div>
                   </div>
 
                   {/* Подсказки только в ход игрока */}

@@ -9,7 +9,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { applyDamageToPair } from '@/utils/battleHealthUtils';
 import { useGameData } from '@/hooks/useGameData';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
-import { calculateD6Damage } from '@/utils/battleCalculations';
+import { calculateDiceDamage, isMiss, isCounterAttack, isCriticalHit, getDiceDescription } from '@/utils/diceFormula';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 
 export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1, battleStarted: boolean = false) => {
@@ -65,7 +65,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     }
     return [];
   });
-  const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; level: number } | null>(null);
+  const [lastRoll, setLastRoll] = useState<{ attackerRoll: number; defenderRoll?: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; isMiss?: boolean; isCounterAttack?: boolean; counterAttackDamage?: number; level: number } | null>(null);
 
   // Тайминги последовательности боя (синхронизированы с UI анимациями)
   const DICE_ROLL_MS = 1500; // кубики крутятся
@@ -353,21 +353,24 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       return;
     }
 
-    // Расчет результата броска и будущего урона (без немедленного применения)
-    const damageResult = calculateD6Damage(attackingPair.power, target.armor || 0);
-    const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
-    const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
+    // PvP-формула: один бросок D6
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const appliedDamage = calculateDiceDamage(roll, attackingPair.power, target.armor || 0);
+    const missed = isMiss(roll);
+    const isCritical = isCriticalHit(roll);
+    const isCounter = isCounterAttack(roll);
 
-    console.log(`✅ [PLAYER] БРОСОК ЗАВЕРШЕН: result=${damageResult.attackerRoll}vs${damageResult.defenderRoll}, damage=${appliedDamage} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+    console.log(`✅ [PLAYER] БРОСОК ЗАВЕРШЕН: roll=${roll}, damage=${appliedDamage}, miss=${missed}, critical=${isCritical}, counter=${isCounter} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
 
     // Публикуем результат броска (UI сам покажет результаты и запустит анимацию)
     setLastRoll({
-      attackerRoll: damageResult.attackerRoll,
-      defenderRoll: damageResult.defenderRoll,
+      attackerRoll: roll,
       source: 'player',
       damage: appliedDamage,
-      isBlocked,
-      isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
+      isBlocked: missed,
+      isCritical: isCritical,
+      isMiss: missed,
+      isCounterAttack: isCounter,
       level: battleState.level,
       targetOpponentId: targetId
     } as any);
@@ -447,33 +450,27 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const targetPair = alivePairs[Math.floor(Math.random() * alivePairs.length)];
     console.log('🎯 Enemy target:', currentEnemy.name, '→', targetPair.hero?.name || targetPair.dragon?.name);
 
-    // Расчет результата броска (без немедленного урона)
-    const damageResult = calculateD6Damage(currentEnemy.power, targetPair.defense);
-    const appliedDamage = damageResult.attackerRoll > damageResult.defenderRoll ? damageResult.damage : 0;
-    const isBlocked = damageResult.isDefenderCrit || damageResult.attackerRoll <= damageResult.defenderRoll;
+    // PvP-формула: один бросок D6
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const appliedDamage = calculateDiceDamage(roll, currentEnemy.power, targetPair.defense);
+    const missed = isMiss(roll);
+    const isCritical = isCriticalHit(roll);
+    const isCounter = isCounterAttack(roll);
 
-    console.log(`✅ [ENEMY] БРОСОК ЗАВЕРШЕН: result=${damageResult.attackerRoll}vs${damageResult.defenderRoll}, damage=${appliedDamage} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
+    console.log(`✅ [ENEMY] БРОСОК ЗАВЕРШЕН: roll=${roll}, damage=${appliedDamage}, miss=${missed}, critical=${isCritical}, counter=${isCounter} (${Date.now() - turnStartTime}ms, ${new Date().toISOString()})`);
 
     // Публикуем результат броска (UI сам покажет результаты и анимацию)
     setLastRoll({
-      attackerRoll: damageResult.attackerRoll,
-      defenderRoll: damageResult.defenderRoll,
+      attackerRoll: roll,
       source: 'enemy',
       damage: appliedDamage,
-      isBlocked,
-      isCritical: damageResult.isAttackerCrit && appliedDamage > 0,
+      isBlocked: missed,
+      isCritical: isCritical,
+      isMiss: missed,
+      isCounterAttack: isCounter,
       level: battleState.level,
       targetPairId: targetPair.id
     } as any);
-
-    // Крит-блокировка врага: отметим пропуск следующего хода
-    if (damageResult.skipNextTurn) {
-      setSkippedAttackerIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(`enemy-${currentEnemy.id}`);
-        return newSet;
-      });
-    }
 
     // Toast уведомления убраны - урон отображается визуально на карточках
 
