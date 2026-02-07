@@ -143,6 +143,16 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   // Функция для фактического начала боя (после проверок)
   const proceedWithBattleStart = async () => {
+    // ✅ FIX: Prevent starting battle with empty team
+    if (battleState.playerPairs.length === 0) {
+      toast({
+        title: t(language, 'battlePage.noTeamSelected') || 'Команда не выбрана',
+        description: t(language, 'battlePage.selectTeamFirst') || 'Выберите героев для боя',
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Снимаем энергию ТОЛЬКО если это первый уровень (вход в подземелье)
     if (battleState.level === 1) {
       const { getInitialEnergyState } = await import('@/utils/energyManager');
@@ -323,6 +333,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   };
   // ✅ Общий хендлер для сохранения состояния боя при выходе в меню
   const handleSaveBattleStateAndNavigate = useCallback((targetRoute: string = '/dungeons') => {
+    // ✅ FIX: Only save battle state if battle actually started AND team is non-empty
+    if (!battleStarted || battleState.playerPairs.length === 0) {
+      console.log('📝 [handleSaveBattleState] No active battle, navigating without saving');
+      navigate(targetRoute);
+      return;
+    }
+    
     startTransition(() => {
       // ✅ КРИТИЧНО: Сохраняем ПОЛНОЕ состояние боя в Zustand перед выходом
       // включая opponents, currentTurn, currentAttacker чтобы резюмировать бой
@@ -345,9 +362,14 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       
       navigate(targetRoute);
     });
-  }, [battleState, dungeonType, navigate]);
+  }, [battleState, dungeonType, navigate, battleStarted]);
   
   const handleBackToMenu = () => {
+    // ✅ FIX: If no battle started, just navigate without saving stale state
+    if (!battleStarted) {
+      navigate('/dungeons');
+      return;
+    }
     handleSaveBattleStateAndNavigate('/dungeons');
   };
   
@@ -711,9 +733,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // Автоматически активируем бой при загрузке, если есть активное подземелье
   useEffect(() => {
     const isActiveBattle = useGameStore.getState().activeBattleInProgress;
-    const hasTeamBattleState = useGameStore.getState().battleState;
+    const savedTeamState = useGameStore.getState().teamBattleState;
     
-    if (isActiveBattle && hasTeamBattleState && !battleStarted) {
+    // ✅ FIX: Only auto-resume if saved state has non-empty playerPairs
+    if (isActiveBattle && savedTeamState?.playerPairs?.length > 0 && !battleStarted) {
       console.log('🔄 Автовозобновление активного боя');
       setBattleStarted(true);
     }
@@ -809,6 +832,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
+    // ✅ FIX: If team was never loaded (stale empty state), clear and don't render defeat
+    if (battleState.playerPairs.length === 0) {
+      console.log('⚠️ [RENDER] Empty playerPairs detected — clearing stale battle state');
+      setBattleStarted(false);
+      useGameStore.getState().clearTeamBattleState();
+      // Fall through to pre-battle screen below
+    } else {
     console.log('🎬 [RENDER] isBattleOver detected:', {
       isBattleOver,
       battleStarted,
@@ -903,6 +933,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         />
       </>
     );
+    } // close else (non-empty playerPairs)
   }
 
   // Функция восстановления сессии при сетевом сбое
