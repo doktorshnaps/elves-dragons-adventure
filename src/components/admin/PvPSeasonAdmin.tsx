@@ -21,6 +21,17 @@ const TIER_LABELS: Record<string, string> = {
   legend: "Легенда",
 };
 
+const LEAGUE_NAMES: Record<string, string> = {
+  "1": "Обычные",
+  "2": "Необычные",
+  "3": "Редкие",
+  "4": "Эпические",
+  "5": "Легендарные",
+  "6": "Мифические",
+  "7": "Божественные",
+  "8": "Трансцендентные",
+};
+
 const DEFAULT_REWARDS_CONFIG = {
   bronze:   { icon: "🥉", min_elo: 0,    max_elo: 1199, ell_reward: 500 },
   silver:   { icon: "🥈", min_elo: 1200, max_elo: 1399, ell_reward: 1500 },
@@ -31,6 +42,17 @@ const DEFAULT_REWARDS_CONFIG = {
   legend:   { icon: "🏆", min_elo: 2200, max_elo: 99999, ell_reward: 50000, bonus_card: "legendary", title: true },
 };
 
+const DEFAULT_LEAGUE_REWARDS_CONFIG: Record<string, { name: string; ell_reward: number }> = {
+  "1": { name: "Обычные",         ell_reward: 0 },
+  "2": { name: "Необычные",       ell_reward: 100 },
+  "3": { name: "Редкие",          ell_reward: 300 },
+  "4": { name: "Эпические",       ell_reward: 500 },
+  "5": { name: "Легендарные",     ell_reward: 1000 },
+  "6": { name: "Мифические",      ell_reward: 2000 },
+  "7": { name: "Божественные",    ell_reward: 5000 },
+  "8": { name: "Трансцендентные", ell_reward: 10000 },
+};
+
 export const PvPSeasonAdmin: React.FC = () => {
   const { accountId } = useWalletContext();
   const { activeSeason, allSeasons, countdown, refetchSeason, refetchAllSeasons, fetchSeasonLeaderboard } = usePvPSeason();
@@ -39,11 +61,14 @@ export const PvPSeasonAdmin: React.FC = () => {
   const [newName, setNewName] = useState("");
   const [newDuration, setNewDuration] = useState("30");
   const [rewardsConfig, setRewardsConfig] = useState(DEFAULT_REWARDS_CONFIG);
+  const [leagueRewardsConfig, setLeagueRewardsConfig] = useState(DEFAULT_LEAGUE_REWARDS_CONFIG);
   const [creating, setCreating] = useState(false);
 
   // Edit rewards
   const [editingRewards, setEditingRewards] = useState(false);
   const [editRewards, setEditRewards] = useState<typeof DEFAULT_REWARDS_CONFIG>(DEFAULT_REWARDS_CONFIG);
+  const [editingLeagueRewards, setEditingLeagueRewards] = useState(false);
+  const [editLeagueRewards, setEditLeagueRewards] = useState<typeof DEFAULT_LEAGUE_REWARDS_CONFIG>(DEFAULT_LEAGUE_REWARDS_CONFIG);
 
   // Season leaderboard
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
@@ -54,10 +79,14 @@ export const PvPSeasonAdmin: React.FC = () => {
   const [endingAction, setEndingAction] = useState(false);
   const [distributing, setDistributing] = useState(false);
   const [savingRewards, setSavingRewards] = useState(false);
+  const [savingLeagueRewards, setSavingLeagueRewards] = useState(false);
 
   useEffect(() => {
     if (activeSeason?.rewards_config) {
       setEditRewards(activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG);
+    }
+    if (activeSeason?.league_rewards_config && Object.keys(activeSeason.league_rewards_config).length > 0) {
+      setEditLeagueRewards(activeSeason.league_rewards_config as typeof DEFAULT_LEAGUE_REWARDS_CONFIG);
     }
   }, [activeSeason]);
 
@@ -70,6 +99,7 @@ export const PvPSeasonAdmin: React.FC = () => {
         p_name: newName.trim(),
         p_duration_days: parseInt(newDuration) || 30,
         p_rewards_config: rewardsConfig as any,
+        p_league_rewards_config: leagueRewardsConfig as any,
       });
       if (error) throw error;
       toast.success(`Сезон «${newName}» создан!`);
@@ -113,7 +143,10 @@ export const PvPSeasonAdmin: React.FC = () => {
       });
       if (error) throw error;
       const result = data as any;
-      toast.success(`Награды распределены! ${result.players_rewarded} игроков получили ${result.total_ell_distributed} ELL`);
+      const leagueInfo = result.total_league_ell_distributed > 0
+        ? ` + ${result.total_league_ell_distributed} ELL (лиги)`
+        : "";
+      toast.success(`Награды распределены! ${result.players_rewarded} игроков получили ${result.total_ell_distributed} ELL (тиры)${leagueInfo}`);
       refetchAllSeasons();
     } catch (err: any) {
       toast.error("Ошибка: " + err.message);
@@ -132,13 +165,33 @@ export const PvPSeasonAdmin: React.FC = () => {
         p_rewards_config: editRewards as any,
       });
       if (error) throw error;
-      toast.success("Награды обновлены!");
+      toast.success("Награды по тирам обновлены!");
       setEditingRewards(false);
       refetchSeason();
     } catch (err: any) {
       toast.error("Ошибка: " + err.message);
     } finally {
       setSavingRewards(false);
+    }
+  };
+
+  const handleSaveLeagueRewards = async () => {
+    if (!activeSeason || !accountId) return;
+    setSavingLeagueRewards(true);
+    try {
+      const { error } = await supabase.rpc("admin_update_pvp_season", {
+        p_admin_wallet_address: accountId,
+        p_season_id: activeSeason.id,
+        p_league_rewards_config: editLeagueRewards as any,
+      });
+      if (error) throw error;
+      toast.success("Награды по лигам обновлены!");
+      setEditingLeagueRewards(false);
+      refetchSeason();
+    } catch (err: any) {
+      toast.error("Ошибка: " + err.message);
+    } finally {
+      setSavingLeagueRewards(false);
     }
   };
 
@@ -154,6 +207,13 @@ export const PvPSeasonAdmin: React.FC = () => {
     setEditRewards(prev => ({
       ...prev,
       [tier]: { ...prev[tier as keyof typeof prev], [field]: value },
+    }));
+  };
+
+  const updateLeagueRewardValue = (league: string, value: number) => {
+    setEditLeagueRewards(prev => ({
+      ...prev,
+      [league]: { ...prev[league], ell_reward: value },
     }));
   };
 
@@ -245,6 +305,52 @@ export const PvPSeasonAdmin: React.FC = () => {
                 )}
               </div>
 
+              {/* League Rewards Config */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-white/80 font-medium">Награды по лигам</div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingLeagueRewards(!editingLeagueRewards)}
+                    className="text-xs"
+                  >
+                    {editingLeagueRewards ? "Отмена" : "Редактировать"}
+                  </Button>
+                </div>
+
+                <div className="grid gap-2">
+                  {Object.entries(editingLeagueRewards ? editLeagueRewards : (
+                    (activeSeason.league_rewards_config && Object.keys(activeSeason.league_rewards_config).length > 0)
+                      ? activeSeason.league_rewards_config as typeof DEFAULT_LEAGUE_REWARDS_CONFIG
+                      : DEFAULT_LEAGUE_REWARDS_CONFIG
+                  )).map(([leagueKey, config]) => (
+                    <div key={leagueKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                      <div className="w-28 text-sm text-white/80">
+                        ★{leagueKey} {LEAGUE_NAMES[leagueKey] || config.name}
+                      </div>
+                      {editingLeagueRewards ? (
+                        <Input
+                          type="number"
+                          value={config.ell_reward}
+                          onChange={e => updateLeagueRewardValue(leagueKey, parseInt(e.target.value) || 0)}
+                          className="w-24 h-7 text-xs"
+                        />
+                      ) : (
+                        <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {editingLeagueRewards && (
+                  <Button onClick={handleSaveLeagueRewards} disabled={savingLeagueRewards} className="mt-2 w-full" size="sm">
+                    {savingLeagueRewards ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                    Сохранить награды по лигам
+                  </Button>
+                )}
+              </div>
+
               {/* End Season */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -321,6 +427,29 @@ export const PvPSeasonAdmin: React.FC = () => {
                       setRewardsConfig(prev => ({
                         ...prev,
                         [tierKey]: { ...prev[tierKey as keyof typeof prev], ell_reward: parseInt(e.target.value) || 0 },
+                      }));
+                    }}
+                    className="w-24 h-7 text-xs"
+                  />
+                  <span className="text-xs text-white/50">ELL</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-white/70 text-xs mb-2 block">Награды по лигам (ELL)</Label>
+            <div className="grid gap-2">
+              {Object.entries(leagueRewardsConfig).map(([leagueKey, config]) => (
+                <div key={leagueKey} className="flex items-center gap-3 p-2 bg-white/5 rounded-lg">
+                  <div className="w-28 text-sm text-white/80">★{leagueKey} {LEAGUE_NAMES[leagueKey]}</div>
+                  <Input
+                    type="number"
+                    value={config.ell_reward}
+                    onChange={e => {
+                      setLeagueRewardsConfig(prev => ({
+                        ...prev,
+                        [leagueKey]: { ...prev[leagueKey], ell_reward: parseInt(e.target.value) || 0 },
                       }));
                     }}
                     className="w-24 h-7 text-xs"

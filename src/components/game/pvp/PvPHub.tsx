@@ -55,7 +55,7 @@ export const PvPHub: React.FC = () => {
   const [togglingBot, setTogglingBot] = useState(false);
   const [showTeamDialog, setShowTeamDialog] = useState(false);
 
-  const { activeSeason, countdown, getPlayerTierReward } = usePvPSeason();
+  const { activeSeason, countdown, getPlayerTierReward, getPlayerLeagueReward } = usePvPSeason();
 
   const { getPvPTeam, loading: teamsLoading, switchTeam } = usePlayerTeams();
 
@@ -216,12 +216,18 @@ export const PvPHub: React.FC = () => {
               </div>
               {rating && (() => {
                 const reward = getPlayerTierReward(rating.elo);
-                return reward ? (
+                const leagueReward = getPlayerLeagueReward(selectedRarityTier);
+                return (
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Награда за сезон: <span className="text-yellow-500 font-medium">{reward.ellReward} ELL</span>
-                    {reward.bonusCard && <span className="ml-1">(+карта)</span>}
+                    {reward && (
+                      <span>Тир: <span className="text-yellow-500 font-medium">{reward.ellReward} ELL</span></span>
+                    )}
+                    {leagueReward && leagueReward.ellReward > 0 && (
+                      <span className="ml-2">Лига ★{selectedRarityTier}: <span className="text-yellow-500 font-medium">+{leagueReward.ellReward} ELL</span></span>
+                    )}
+                    {reward?.bonusCard && <span className="ml-1">(+карта)</span>}
                   </div>
-                ) : null;
+                );
               })()}
             </CardContent>
           </Card>

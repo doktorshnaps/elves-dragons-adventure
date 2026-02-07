@@ -2,6 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface LeagueRewardConfig {
+  name: string;
+  ell_reward: number;
+}
+
 export interface PvPSeason {
   id: string;
   season_number: number;
@@ -17,6 +22,7 @@ export interface PvPSeason {
     bonus_card?: string | boolean;
     title?: boolean;
   }>;
+  league_rewards_config: Record<string, LeagueRewardConfig>;
   rewards_distributed: boolean;
   created_at: string;
   updated_at: string;
@@ -53,7 +59,7 @@ export function usePvPSeason() {
         console.error("Error fetching active season:", error);
         return null;
       }
-      return data as PvPSeason | null;
+      return data as unknown as PvPSeason | null;
     },
     staleTime: 60_000,
   });
@@ -70,7 +76,7 @@ export function usePvPSeason() {
         console.error("Error fetching all seasons:", error);
         return [];
       }
-      return (data || []) as PvPSeason[];
+      return (data || []) as unknown as PvPSeason[];
     },
     staleTime: 60_000,
   });
@@ -144,6 +150,18 @@ export function usePvPSeason() {
     return null;
   }, [activeSeason]);
 
+  const getPlayerLeagueReward = useCallback((league: number): { leagueName: string; ellReward: number } | null => {
+    if (!activeSeason?.league_rewards_config) return null;
+
+    const leagueConfig = activeSeason.league_rewards_config[String(league)];
+    if (!leagueConfig) return null;
+
+    return {
+      leagueName: leagueConfig.name,
+      ellReward: leagueConfig.ell_reward,
+    };
+  }, [activeSeason]);
+
   return {
     activeSeason,
     allSeasons: allSeasons || [],
@@ -153,6 +171,7 @@ export function usePvPSeason() {
     timeRemaining,
     fetchSeasonLeaderboard,
     getPlayerTierReward,
+    getPlayerLeagueReward,
     refetchSeason,
     refetchAllSeasons,
   };
