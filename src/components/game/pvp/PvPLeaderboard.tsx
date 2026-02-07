@@ -161,8 +161,16 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
   };
 
   const formatWallet = (wallet: string) => {
-    if (isAdmin) return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
-    return getDisplayName(wallet);
+    const name = getDisplayName(wallet);
+    if (isAdmin) {
+      const short = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+      // If display name differs from fallback, show both
+      if (name !== short && name !== `${wallet.slice(0, 8)}...${wallet.slice(-4)}`) {
+        return `${name} (${short})`;
+      }
+      return short;
+    }
+    return name;
   };
 
   const getSeasonTierReward = (season: PvPSeason | null, elo: number, league?: number): number => {
