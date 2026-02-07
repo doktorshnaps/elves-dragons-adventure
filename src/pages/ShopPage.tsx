@@ -10,8 +10,10 @@ export const ShopPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-shop">
-      <Shop onClose={() => navigate('/menu')} />
+    <div className="h-screen flex flex-col bg-shop">
+      <div className="flex-1 overflow-y-auto">
+        <Shop onClose={() => navigate('/menu')} />
+      </div>
     </div>
   );
 };

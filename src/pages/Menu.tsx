@@ -88,7 +88,7 @@ export const Menu = () => {
     await disconnectWallet();
     navigate('/auth');
   };
-  return <div className="app-shell min-h-screen p-4 bg-center bg-no-repeat relative" style={{
+  return <div className="app-shell h-screen relative flex flex-col" style={{
     filter: `brightness(${brightness}%)`
   }}>
       <div className="absolute inset-0 bg-center bg-no-repeat" style={{
@@ -99,8 +99,9 @@ export const Menu = () => {
       filter: `brightness(${backgroundBrightness}%)`
     }} />
       <SettingsMenu />
-      <div className="pointer-events-none absolute inset-0 bg-black/30 mx-0 my-0 py-0 px-0" />
+      <div className="pointer-events-none absolute inset-0 bg-black/30" />
       
+      <div className="flex-1 overflow-y-auto p-4">
       {/* Top Info Bar - Level and Balances */}
       <div className="relative z-10 w-full px-2 sm:px-4 mb-4 mt-2">
         <div className="flex-wrap px-[59px] pr-[62px] pb-0 mr-0 mb-0 ml-0 mt-0 pl-[3px] pt-0 items-center justify-between flex flex-row gap-0">
@@ -249,6 +250,6 @@ export const Menu = () => {
             <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.gameSettings').toUpperCase().replace(' ', '\n')}</span>
           </Button>
         </div>}
-      
+      </div>
     </div>;
 };

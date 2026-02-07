@@ -50,7 +50,7 @@ export const ClanPage = () => {
 
   return (
     <div
-      className="min-h-screen bg-game-background p-4 pb-20 relative"
+      className="h-screen bg-game-background relative flex flex-col"
       style={backgroundImage ? {
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -60,6 +60,7 @@ export const ClanPage = () => {
       } : {}}
     >
       {backgroundImage && <div className="absolute inset-0 bg-black/25 pointer-events-none" />}
+      <div className="flex-1 overflow-y-auto p-4 pb-20">
       <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
@@ -163,6 +164,7 @@ export const ClanPage = () => {
             </TabsContent>
           </Tabs>
         )}
+      </div>
       </div>
     </div>
   );

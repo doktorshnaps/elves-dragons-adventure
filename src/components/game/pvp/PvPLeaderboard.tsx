@@ -252,8 +252,8 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold">{entry.matches_played}</div>
-                        <div className="text-[10px] text-muted-foreground">матчей</div>
+                        <div className="text-lg font-bold">{entry.wins}W / {entry.losses}L</div>
+                        <div className="text-[10px] text-muted-foreground">{entry.win_rate}% побед</div>
                       </div>
                     </div>
                   );

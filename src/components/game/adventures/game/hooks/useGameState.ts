@@ -37,21 +37,6 @@ export const useGameState = (
     }
   }, [currentHealth, isGameOver, navigate, toast]);
 
-  const handleSelectTarget = (monster: Monster) => {
-    console.log("Selecting target:", monster);
-    if (monster.position === undefined) return;
-    
-    setTargetedMonster({
-      id: monster.id,
-      position: monster.position
-    });
-    
-    toast({
-      title: "Цель выбрана",
-      description: `${monster.name} выбран целью для атаки`
-    });
-  };
-
   return {
     currentHealth,
     setCurrentHealth,
@@ -59,7 +44,7 @@ export const useGameState = (
     setIsAttacking,
     targetedMonster,
     setTargetedMonster,
-    isGameOver,
-    handleSelectTarget
+    isGameOver
   };
+
 };

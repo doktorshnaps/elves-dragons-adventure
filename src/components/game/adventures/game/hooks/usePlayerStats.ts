@@ -185,12 +185,22 @@ export const usePlayerStats = (initialLevel = 1) => {
     const equipmentBonuses = calculateEquipmentBonuses();
     const { currentSum } = getTeamHealthSums();
     const { currentSum: currentDefSum, maxSum: maxDefSum } = getTeamDefenseSums();
-    updateStats(prev => ({
-      ...prev,
-      health: Math.min(currentSum + equipmentBonuses.health, prev.maxHealth),
-      currentDefense: currentDefSum,
-      maxDefense: maxDefSum
-    }));
+    
+    // Only update if values actually changed to prevent infinite re-render loops
+    const newHealth = Math.min(currentSum + equipmentBonuses.health, stats.maxHealth);
+    const needsUpdate = 
+      newHealth !== stats.health || 
+      currentDefSum !== stats.currentDefense || 
+      maxDefSum !== stats.maxDefense;
+    
+    if (needsUpdate) {
+      updateStats(prev => ({
+        ...prev,
+        health: Math.min(currentSum + equipmentBonuses.health, prev.maxHealth),
+        currentDefense: currentDefSum,
+        maxDefense: maxDefSum
+      }));
+    }
   }, [calculateEquipmentBonuses, getTeamHealthSums, getTeamDefenseSums, updateStats, cards, gameData.selectedTeam]);
 
   const addExperience = useCallback((amount: number) => {
