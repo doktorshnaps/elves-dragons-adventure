@@ -2,9 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface BonusReward {
+  type: "hero_card" | "dragon_card" | "item";
+  template_id: string;
+  name: string;
+  rarity?: number;
+  quantity: number;
+}
+
 export interface LeagueRewardConfig {
   name: string;
   ell_reward: number;
+  bonus_rewards?: BonusReward[];
 }
 
 export interface PvPSeason {
@@ -20,6 +29,7 @@ export interface PvPSeason {
     max_elo: number;
     ell_reward: number;
     bonus_card?: string | boolean;
+    bonus_rewards?: BonusReward[];
     title?: boolean;
   }>;
   league_rewards_config: Record<string, LeagueRewardConfig>;
