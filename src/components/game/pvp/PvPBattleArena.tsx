@@ -143,6 +143,8 @@ interface PvPBattleArenaProps {
   isMyTurn: boolean;
   turnNumber: number;
   timeRemaining: number | null;
+  turnTimeoutSeconds: number;
+  timeoutWarnings: { my: number; opponent: number };
   opponentWallet: string;
   isBotMatch?: boolean;
   isLoading: boolean;
@@ -166,6 +168,7 @@ interface PvPBattleArenaProps {
   } | null;
   onAttack: (attackerIndex: number, targetIndex: number) => Promise<void>;
   onSurrender: () => Promise<void>;
+  onTimeout: () => Promise<void>;
 }
 
 export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
@@ -174,6 +177,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   isMyTurn,
   turnNumber,
   timeRemaining,
+  turnTimeoutSeconds,
+  timeoutWarnings,
   opponentWallet,
   isBotMatch,
   isLoading,
@@ -182,6 +187,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   initiative,
   onAttack,
   onSurrender,
+  onTimeout,
 }) => {
   const navigate = useNavigate();
   const { adjustDelay } = useBattleSpeed();
@@ -223,6 +229,43 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const [opponentDamages, setOpponentDamages] = useState<
     Map<number, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>
   >(new Map());
+
+  // Local countdown timer
+  const [localTimer, setLocalTimer] = useState<number | null>(timeRemaining);
+  const timeoutTriggeredRef = useRef(false);
+
+  // Reset local timer when server time_remaining changes (new turn)
+  useEffect(() => {
+    if (timeRemaining !== null && timeRemaining > 0) {
+      setLocalTimer(timeRemaining);
+      timeoutTriggeredRef.current = false;
+    }
+  }, [timeRemaining, isMyTurn]);
+
+  // Countdown every second
+  useEffect(() => {
+    if (localTimer === null || localTimer <= 0) return;
+    
+    const interval = setInterval(() => {
+      setLocalTimer(prev => {
+        if (prev === null) return null;
+        const next = prev - 1;
+        if (next <= 0) return 0;
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [localTimer !== null && localTimer > 0]);
+
+  // Auto-trigger timeout when timer hits 0
+  useEffect(() => {
+    if (localTimer === 0 && !timeoutTriggeredRef.current) {
+      timeoutTriggeredRef.current = true;
+      console.log('[PvP Timer] Time expired, triggering timeout');
+      onTimeout();
+    }
+  }, [localTimer, onTimeout]);
 
   // Hide initiative after 3 seconds
   useEffect(() => {
@@ -735,9 +778,25 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               )}
             </CardTitle>
 
-            {/* Right - turn indicator and timer */}
+            {/* Right - turn indicator, timer, and warnings */}
             <div className="flex items-center gap-2 sm:absolute sm:right-0 sm:top-0">
               {isPolling && <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />}
+              
+              {/* Countdown Timer */}
+              {localTimer !== null && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded font-mono text-xs sm:text-sm font-bold ${
+                  localTimer <= 10 
+                    ? "bg-red-600/90 text-white animate-pulse" 
+                    : localTimer <= 20 
+                      ? "bg-orange-500/80 text-white" 
+                      : "bg-white/10 text-white/80"
+                }`}>
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {Math.floor(localTimer / 60)}:{(localTimer % 60).toString().padStart(2, "0")}
+                </div>
+              )}
+              
+              {/* Turn Indicator */}
               <div
                 className={`px-2 py-1 rounded text-xs sm:text-sm font-medium ${
                   isMyTurn ? "bg-green-500/80 text-white" : "bg-yellow-500/80 text-black"
@@ -745,18 +804,24 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               >
                 {isMyTurn ? "Ваш ход" : "Ход противника"}
               </div>
+              
+              {/* Timeout Warnings */}
+              {(timeoutWarnings.my > 0 || timeoutWarnings.opponent > 0) && (
+                <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                  {timeoutWarnings.my > 0 && (
+                    <span className="bg-red-500/80 text-white px-1.5 py-0.5 rounded" title="Ваши предупреждения">
+                      ⚠️ {timeoutWarnings.my}/2
+                    </span>
+                  )}
+                  {timeoutWarnings.opponent > 0 && (
+                    <span className="bg-yellow-500/80 text-black px-1.5 py-0.5 rounded" title="Предупреждения противника">
+                      👤 {timeoutWarnings.opponent}/2
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Timer */}
-          {timeRemaining !== null && (
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <Clock className="w-4 h-4 text-white/70" />
-              <span className={`text-lg font-mono ${timeRemaining < 30 ? "text-red-400" : "text-white"}`}>
-                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, "0")}
-              </span>
-            </div>
-          )}
         </CardHeader>
       </Card>
 

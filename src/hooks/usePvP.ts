@@ -698,6 +698,51 @@ export const usePvP = (walletAddress: string | null) => {
     return error ? [] : (data || []);
   }, []);
 
+  // Process timeout for a match (called when turn timer expires)
+  const processTimeout = useCallback(async (matchId: string) => {
+    const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
+
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/pvp-process-timeout`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ match_id: matchId })
+        }
+      );
+
+      const result = await response.json();
+      
+      if (result.success) {
+        if (result.action === 'skip') {
+          toast({
+            title: "⏰ Время вышло!",
+            description: `Ход пропущен. Предупреждение ${result.warning_count}/2`,
+            variant: "destructive"
+          });
+        } else if (result.action === 'forfeit') {
+          toast({
+            title: "⏰ Поражение по таймауту",
+            description: "2 пропуска хода — автоматическое поражение",
+            variant: "destructive"
+          });
+          loadRating();
+          loadActiveMatches();
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('[PvP] processTimeout error:', error);
+      return null;
+    }
+  }, [toast, loadRating, loadActiveMatches]);
+
   // Get match history
   const getMatchHistory = useCallback(async (limit = 20) => {
     if (!walletAddress) return [];
@@ -787,6 +832,7 @@ export const usePvP = (walletAddress: string | null) => {
     getMatchHistory,
     toggleBotTeam,
     isBotEnabledForTier,
+    processTimeout,
     
     // Refresh
     refreshRating: loadRating,

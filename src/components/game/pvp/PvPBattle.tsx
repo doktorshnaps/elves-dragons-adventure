@@ -15,7 +15,7 @@ const PvPBattleContent: React.FC = () => {
   const { toast } = useToast();
   const { accountId: walletAddress } = useWalletContext();
   
-  const { submitMove, getMatchStatus, loading } = usePvP(walletAddress);
+  const { submitMove, getMatchStatus, processTimeout, loading } = usePvP(walletAddress);
   const lastSeenMoveIdRef = React.useRef<string | null>(null);
   
   const [matchData, setMatchData] = useState<any>(null);
@@ -205,6 +205,19 @@ const PvPBattleContent: React.FC = () => {
     }
   };
 
+  // Handle timeout
+  const handleTimeout = async () => {
+    if (!matchId) return;
+    
+    const result = await processTimeout(matchId);
+    if (result) {
+      // Reload match data after timeout processing
+      setTimeout(() => {
+        loadMatch();
+      }, 500);
+    }
+  };
+
   // Handle surrender
   const handleSurrender = async () => {
     if (!matchId) return;
@@ -305,6 +318,8 @@ const PvPBattleContent: React.FC = () => {
         isMyTurn={matchData.is_my_turn || false}
         turnNumber={matchData.turn_number || 1}
         timeRemaining={matchData.time_remaining}
+        turnTimeoutSeconds={matchData.turn_timeout_seconds || 60}
+        timeoutWarnings={matchData.timeout_warnings || { my: 0, opponent: 0 }}
         opponentWallet={opponentWallet || 'Противник'}
         isBotMatch={opponentWallet?.startsWith('BOT_')}
         isLoading={loading}
@@ -313,6 +328,7 @@ const PvPBattleContent: React.FC = () => {
         initiative={initiative}
         onAttack={handleAttack}
         onSurrender={handleSurrender}
+        onTimeout={handleTimeout}
       />
     </div>
   );
