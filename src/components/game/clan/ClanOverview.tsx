@@ -69,10 +69,10 @@ export const ClanOverview = ({
       <div
         className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4 relative overflow-hidden"
       >
-        {/* Background image */}
-        {clan.background_image && (
+        {/* Header background image (central panel) */}
+        {clan.header_background && (
           <div className="absolute inset-0">
-            <img src={clan.background_image} alt="" className="w-full h-full object-cover" />
+            <img src={clan.header_background} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/60" />
           </div>
         )}
@@ -135,6 +135,7 @@ export const ClanOverview = ({
                   clanId={clan.id}
                   currentEmblem={isEmblemUrl ? clan.emblem : null}
                   currentBackground={clan.background_image}
+                  currentHeaderBackground={clan.header_background}
                   onUpdate={() => {
                     onCustomizationUpdate();
                     setCustomizeOpen(false);
