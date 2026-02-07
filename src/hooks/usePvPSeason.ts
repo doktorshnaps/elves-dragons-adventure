@@ -23,15 +23,7 @@ export interface PvPSeason {
   starts_at: string;
   ends_at: string;
   is_active: boolean;
-  rewards_config: Record<string, {
-    icon?: string;
-    min_elo: number;
-    max_elo: number;
-    ell_reward: number;
-    bonus_card?: string | boolean;
-    bonus_rewards?: BonusReward[];
-    title?: boolean;
-  }>;
+  rewards_config: Record<string, any>;
   league_rewards_config: Record<string, LeagueRewardConfig>;
   rewards_distributed: boolean;
   created_at: string;
@@ -149,16 +141,31 @@ export function usePvPSeason() {
     return (data || []) as SeasonLeaderboardEntry[];
   }, []);
 
-  const getPlayerTierReward = useCallback((elo: number): { tierName: string; ellReward: number; bonusCard?: string | boolean } | null => {
+  const getPlayerTierReward = useCallback((elo: number, league?: number): { tierName: string; ellReward: number; bonusCard?: string | boolean } | null => {
     if (!activeSeason?.rewards_config) return null;
 
     const config = activeSeason.rewards_config;
-    for (const [tierKey, tierConfig] of Object.entries(config)) {
-      if (elo >= tierConfig.min_elo && elo <= tierConfig.max_elo) {
+    
+    // Per-league format: { "1": { bronze: {...}, ... }, "2": {...} }
+    // Flat format (legacy): { bronze: {...}, silver: {...}, ... }
+    let tierConfig: Record<string, any>;
+    if (league && config[String(league)] && typeof config[String(league)] === 'object' && config[String(league)].bronze) {
+      tierConfig = config[String(league)];
+    } else if (config.bronze) {
+      // Flat format
+      tierConfig = config;
+    } else {
+      // Per-league but no specific league requested, use first available
+      const firstLeague = Object.keys(config).find(k => /^\d+$/.test(k));
+      tierConfig = firstLeague ? config[firstLeague] : config;
+    }
+
+    for (const [tierKey, tc] of Object.entries(tierConfig)) {
+      if (tc && tc.min_elo !== undefined && elo >= tc.min_elo && elo <= tc.max_elo) {
         return {
           tierName: tierKey,
-          ellReward: tierConfig.ell_reward,
-          bonusCard: tierConfig.bonus_card,
+          ellReward: tc.ell_reward,
+          bonusCard: tc.bonus_card,
         };
       }
     }
