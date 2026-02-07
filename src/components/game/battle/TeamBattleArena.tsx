@@ -608,89 +608,97 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 damage={attackAnimation.damage}
               />
 
-              {/* Row 1: Turn + Dice + Attack + AutoBattle — all in one line */}
-              <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                <span className="text-[10px] sm:text-xs font-medium">
-                  {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
-                </span>
+              {/* Main row: Left=dice+buttons, Right=last roll info */}
+              <div className="flex items-start gap-2 sm:gap-3">
+                {/* Left side: Turn indicator + Dice + Buttons */}
+                <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                  <span className="text-[10px] sm:text-xs font-medium">
+                    {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
+                  </span>
 
-                <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
-                  <InlineDiceDisplay
-                    key={`dice-${diceKey}`}
-                    isRolling={isDiceRolling}
-                    diceValue={lastRoll ? lastRoll.attackerRoll : null}
-                    isAttacker={lastRoll ? lastRoll.source === 'player' : isPlayerTurn}
-                    label={lastRoll ? (lastRoll.source === 'player' ? t(language, 'battlePage.player') : t(language, 'battlePage.monster')) : (isPlayerTurn ? t(language, 'battlePage.player') : t(language, 'battlePage.monster'))}
-                    damage={lastRoll ? lastRoll.damage : undefined}
-                    isBlocked={lastRoll ? lastRoll.isBlocked : undefined}
-                    isCritical={lastRoll ? lastRoll.isCritical : undefined}
-                  />
+                  <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
+                    <InlineDiceDisplay
+                      key={`dice-${diceKey}`}
+                      isRolling={isDiceRolling}
+                      diceValue={lastRoll ? lastRoll.attackerRoll : null}
+                      isAttacker={lastRoll ? lastRoll.source === 'player' : isPlayerTurn}
+                      label={lastRoll ? (lastRoll.source === 'player' ? t(language, 'battlePage.player') : t(language, 'battlePage.monster')) : (isPlayerTurn ? t(language, 'battlePage.player') : t(language, 'battlePage.monster'))}
+                      damage={lastRoll ? lastRoll.damage : undefined}
+                      isBlocked={lastRoll ? lastRoll.isBlocked : undefined}
+                      isCritical={lastRoll ? lastRoll.isCritical : undefined}
+                    />
+                  </div>
+
+                  <div className="flex gap-1">
+                    {isPlayerTurn && !autoBattle ? (
+                      <Button 
+                        onClick={handleAttack} 
+                        disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
+                        size="sm" 
+                        variant="menu"
+                        className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs flex-shrink-0"
+                        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                      >
+                        {t(language, 'battlePage.attackButton')}
+                      </Button>
+                    ) : null}
+
+                    <Button 
+                      variant={autoBattle ? "destructive" : "menu"} 
+                      size="sm" 
+                      onClick={handleAutoBattle}
+                      className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
+                      style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
+                    >
+                      {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
+                    </Button>
+                  </div>
                 </div>
 
-                {isPlayerTurn && !autoBattle ? (
-                  <Button 
-                    onClick={handleAttack} 
-                    disabled={!selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
-                    size="sm" 
-                    variant="menu"
-                    className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs flex-shrink-0"
-                    style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                  >
-                    {t(language, 'battlePage.attackButton')}
-                  </Button>
-                ) : null}
+                {/* Right side: D6 Legend + Last roll details */}
+                <div className="flex-1 min-w-0 flex flex-col gap-0.5 pt-1">
+                  {/* D6 Legend */}
+                  <div className="text-[8px] sm:text-[10px] text-white/40 flex flex-wrap gap-x-1.5">
+                    <span className="text-red-400">1:⚔️</span>
+                    <span className="text-orange-400">2:✕</span>
+                    <span className="text-yellow-400">3:50%</span>
+                    <span className="text-green-400">4:100%</span>
+                    <span className="text-blue-400">5:150%</span>
+                    <span className="text-purple-400">6:200%</span>
+                  </div>
 
-                <Button 
-                  variant={autoBattle ? "destructive" : "menu"} 
-                  size="sm" 
-                  onClick={handleAutoBattle}
-                  className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
-                  style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
-                >
-                  {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
-                </Button>
-              </div>
-
-              {/* Row 2: D6 Legend — single compact line */}
-              <div className="text-[6px] sm:text-[9px] text-white/40 flex justify-center gap-x-1 mt-0.5">
-                <span className="text-red-400">1:⚔️</span>
-                <span className="text-orange-400">2:✕</span>
-                <span className="text-yellow-400">3:50%</span>
-                <span className="text-green-400">4:100%</span>
-                <span className="text-blue-400">5:150%</span>
-                <span className="text-purple-400">6:200%</span>
-              </div>
-
-              {/* Row 3: Compact inline roll history */}
-              {rollHistory.length > 0 && rollHistory[0] && (
-                <div className="mt-0.5 border-t border-white/10 pt-0.5">
-                  {(() => {
-                    const e = rollHistory[0];
-                    const isPlayer = e.source === 'player';
-                    const diceColor = [,'text-red-400','text-orange-400','text-yellow-400','text-green-400','text-blue-400','text-purple-400'][e.diceRoll] || 'text-white';
-                    return (
-                      <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[10px] text-white/70 px-0.5">
-                        <span className={isPlayer ? 'text-green-400' : 'text-red-400'}>
-                          {isPlayer ? '👤' : '👾'} {e.attackerName}
-                        </span>
-                        <span className={`font-bold ${diceColor}`}>🎲{e.diceRoll} ({e.dicePercent}%)</span>
-                        {!e.isMiss ? (
-                          <span className="font-mono">
-                            <span className="text-yellow-300">{e.modifiedPower}</span>
-                            <span className="text-white/40">−</span>
-                            <span className="text-blue-300">{e.defenderDefense}</span>
-                            <span className="text-white/40">=</span>
-                            <span className={`font-bold ${e.isCritical ? 'text-purple-400' : 'text-red-400'}`}>{e.netDamage}</span>
-                          </span>
-                        ) : (
-                          <span className="text-white/40 italic">промах</span>
-                        )}
-                        <span className="text-white/30">→{e.targetName}</span>
-                      </div>
-                    );
-                  })()}
+                  {/* Last roll info */}
+                  {rollHistory.length > 0 && rollHistory[0] && (
+                    <div className="border-t border-white/10 pt-0.5 space-y-0.5">
+                      {(() => {
+                        const e = rollHistory[0];
+                        const isPlayer = e.source === 'player';
+                        const diceColor = [,'text-red-400','text-orange-400','text-yellow-400','text-green-400','text-blue-400','text-purple-400'][e.diceRoll] || 'text-white';
+                        return (
+                          <div className="text-[10px] sm:text-xs text-white/80 space-y-0.5">
+                            <div className={isPlayer ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+                              {isPlayer ? '👤' : '👾'} {e.attackerName}
+                            </div>
+                            <div className={`font-bold ${diceColor}`}>🎲 {e.diceRoll} ({e.dicePercent}%)</div>
+                            {!e.isMiss ? (
+                              <div className="font-mono">
+                                <span className="text-yellow-300">{e.modifiedPower}</span>
+                                <span className="text-white/40">−</span>
+                                <span className="text-blue-300">{e.defenderDefense}</span>
+                                <span className="text-white/40">=</span>
+                                <span className={`font-bold ${e.isCritical ? 'text-purple-400' : 'text-red-400'}`}>{e.netDamage}</span>
+                              </div>
+                            ) : (
+                              <div className="text-white/40 italic">промах</div>
+                            )}
+                            <div className="text-white/50">→{e.targetName}</div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
