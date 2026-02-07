@@ -148,12 +148,24 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
     return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
   };
 
-  const getSeasonTierReward = (season: PvPSeason | null, elo: number): number => {
+  const getSeasonTierReward = (season: PvPSeason | null, elo: number, league?: number): number => {
     if (!season?.rewards_config) return 0;
     const config = season.rewards_config;
-    for (const [, tierConfig] of Object.entries(config)) {
-      if (elo >= tierConfig.min_elo && elo <= tierConfig.max_elo) {
-        return tierConfig.ell_reward || 0;
+    
+    // Per-league format detection
+    let tierConfig: Record<string, any>;
+    if (league && config[String(league)] && typeof config[String(league)] === 'object') {
+      tierConfig = config[String(league)] as Record<string, any>;
+    } else if (config.bronze) {
+      tierConfig = config as Record<string, any>;
+    } else {
+      const firstLeague = Object.keys(config).find(k => /^\d+$/.test(k));
+      tierConfig = firstLeague ? (config as any)[firstLeague] : config as Record<string, any>;
+    }
+    
+    for (const [, tc] of Object.entries(tierConfig)) {
+      if (tc && tc.min_elo !== undefined && elo >= tc.min_elo && elo <= tc.max_elo) {
+        return tc.ell_reward || 0;
       }
     }
     return 0;
@@ -319,7 +331,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {seasonLeaderboard.map((entry) => {
                   const isCurrentPlayer = entry.wallet_address === currentWallet;
-                  const reward = getSeasonTierReward(selectedSeason, entry.elo);
+                  const reward = getSeasonTierReward(selectedSeason, entry.elo, rarityTier);
                   return (
                     <div
                       key={entry.wallet_address}

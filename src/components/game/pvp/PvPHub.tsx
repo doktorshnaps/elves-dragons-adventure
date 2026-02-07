@@ -215,9 +215,18 @@ export const PvPHub: React.FC = () => {
                 </div>
               </div>
               {rating && (() => {
-                const reward = getPlayerTierReward(rating.elo);
+                const reward = getPlayerTierReward(rating.elo, selectedRarityTier);
                 const leagueReward = getPlayerLeagueReward(selectedRarityTier);
-                const tierBonusRewards = reward ? (activeSeason?.rewards_config?.[reward.tierName] as any)?.bonus_rewards : [];
+                const tierBonusRewards = reward ? (() => {
+                  const rc = activeSeason?.rewards_config;
+                  if (!rc) return [];
+                  // Per-league format
+                  if (rc[String(selectedRarityTier)] && typeof rc[String(selectedRarityTier)] === 'object') {
+                    return (rc[String(selectedRarityTier)] as any)?.[reward.tierName]?.bonus_rewards || [];
+                  }
+                  // Flat format
+                  return (rc as any)?.[reward.tierName]?.bonus_rewards || [];
+                })() : [];
                 const leagueBonusRewards = leagueReward ? (activeSeason?.league_rewards_config?.[String(selectedRarityTier)] as any)?.bonus_rewards : [];
                 const allBonusRewards = [...(tierBonusRewards || []), ...(leagueBonusRewards || [])];
                 return (

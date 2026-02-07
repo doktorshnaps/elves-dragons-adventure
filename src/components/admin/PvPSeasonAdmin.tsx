@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trophy, Clock, Plus, StopCircle, Gift, Loader2, Calendar, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,15 +34,52 @@ const LEAGUE_NAMES: Record<string, string> = {
   "8": "Трансцендентные",
 };
 
-const DEFAULT_REWARDS_CONFIG = {
+interface TierConfig {
+  icon: string;
+  min_elo: number;
+  max_elo: number;
+  ell_reward: number;
+  bonus_card?: string | boolean;
+  bonus_rewards?: BonusReward[];
+  title?: boolean;
+}
+
+type PerLeagueRewardsConfig = Record<string, Record<string, TierConfig>>;
+
+const TIER_TEMPLATE: Record<string, TierConfig> = {
   bronze:   { icon: "🥉", min_elo: 0,    max_elo: 1199, ell_reward: 500 },
   silver:   { icon: "🥈", min_elo: 1200, max_elo: 1399, ell_reward: 1500 },
   gold:     { icon: "🥇", min_elo: 1400, max_elo: 1599, ell_reward: 3000 },
-  platinum: { icon: "💎", min_elo: 1600, max_elo: 1799, ell_reward: 5000, bonus_card: true },
-  diamond:  { icon: "💠", min_elo: 1800, max_elo: 1999, ell_reward: 10000, bonus_card: "rare" },
-  master:   { icon: "👑", min_elo: 2000, max_elo: 2199, ell_reward: 20000, bonus_card: "epic" },
-  legend:   { icon: "🏆", min_elo: 2200, max_elo: 99999, ell_reward: 50000, bonus_card: "legendary", title: true },
+  platinum: { icon: "💎", min_elo: 1600, max_elo: 1799, ell_reward: 5000 },
+  diamond:  { icon: "💠", min_elo: 1800, max_elo: 1999, ell_reward: 10000 },
+  master:   { icon: "👑", min_elo: 2000, max_elo: 2199, ell_reward: 20000 },
+  legend:   { icon: "🏆", min_elo: 2200, max_elo: 99999, ell_reward: 50000 },
 };
+
+function generateDefaultPerLeagueRewards(): PerLeagueRewardsConfig {
+  const config: PerLeagueRewardsConfig = {};
+  for (let i = 1; i <= 8; i++) {
+    config[String(i)] = JSON.parse(JSON.stringify(TIER_TEMPLATE));
+  }
+  return config;
+}
+
+const DEFAULT_PER_LEAGUE_REWARDS = generateDefaultPerLeagueRewards();
+
+function isPerLeagueFormat(config: any): boolean {
+  if (!config || typeof config !== 'object') return false;
+  const keys = Object.keys(config);
+  return keys.length > 0 && keys.some(k => /^\d+$/.test(k));
+}
+
+function convertToPerLeague(config: any): PerLeagueRewardsConfig {
+  if (isPerLeagueFormat(config)) return config;
+  const perLeague: PerLeagueRewardsConfig = {};
+  for (let i = 1; i <= 8; i++) {
+    perLeague[String(i)] = JSON.parse(JSON.stringify(config));
+  }
+  return perLeague;
+}
 
 const DEFAULT_LEAGUE_REWARDS_CONFIG: Record<string, { name: string; ell_reward: number }> = {
   "1": { name: "Обычные",         ell_reward: 0 },
@@ -61,15 +99,19 @@ export const PvPSeasonAdmin: React.FC = () => {
   // Create season form
   const [newName, setNewName] = useState("");
   const [newDuration, setNewDuration] = useState("30");
-  const [rewardsConfig, setRewardsConfig] = useState(DEFAULT_REWARDS_CONFIG);
+  const [rewardsConfig, setRewardsConfig] = useState<PerLeagueRewardsConfig>(DEFAULT_PER_LEAGUE_REWARDS);
   const [leagueRewardsConfig, setLeagueRewardsConfig] = useState(DEFAULT_LEAGUE_REWARDS_CONFIG);
   const [creating, setCreating] = useState(false);
 
   // Edit rewards
   const [editingRewards, setEditingRewards] = useState(false);
-  const [editRewards, setEditRewards] = useState<typeof DEFAULT_REWARDS_CONFIG>(DEFAULT_REWARDS_CONFIG);
+  const [editRewards, setEditRewards] = useState<PerLeagueRewardsConfig>(DEFAULT_PER_LEAGUE_REWARDS);
   const [editingLeagueRewards, setEditingLeagueRewards] = useState(false);
   const [editLeagueRewards, setEditLeagueRewards] = useState<typeof DEFAULT_LEAGUE_REWARDS_CONFIG>(DEFAULT_LEAGUE_REWARDS_CONFIG);
+
+  // Selected league for tier rewards editing
+  const [selectedRewardLeague, setSelectedRewardLeague] = useState("1");
+  const [selectedCreateLeague, setSelectedCreateLeague] = useState("1");
 
   // Season leaderboard
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
@@ -84,7 +126,7 @@ export const PvPSeasonAdmin: React.FC = () => {
 
   useEffect(() => {
     if (activeSeason?.rewards_config) {
-      setEditRewards(activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG);
+      setEditRewards(convertToPerLeague(activeSeason.rewards_config));
     }
     if (activeSeason?.league_rewards_config && Object.keys(activeSeason.league_rewards_config).length > 0) {
       setEditLeagueRewards(activeSeason.league_rewards_config as typeof DEFAULT_LEAGUE_REWARDS_CONFIG);
@@ -204,10 +246,13 @@ export const PvPSeasonAdmin: React.FC = () => {
     setLeaderboardLoading(false);
   };
 
-  const updateRewardValue = (tier: string, field: string, value: number) => {
+  const updateRewardValue = (league: string, tier: string, field: string, value: number) => {
     setEditRewards(prev => ({
       ...prev,
-      [tier]: { ...prev[tier as keyof typeof prev], [field]: value },
+      [league]: {
+        ...prev[league],
+        [tier]: { ...prev[league]?.[tier], [field]: value },
+      },
     }));
   };
 
@@ -253,7 +298,7 @@ export const PvPSeasonAdmin: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rewards Config */}
+              {/* Rewards Config - Per League */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="text-sm text-white/80 font-medium">Награды по тирам</div>
@@ -267,53 +312,75 @@ export const PvPSeasonAdmin: React.FC = () => {
                   </Button>
                 </div>
 
-                <div className="grid gap-2">
-                  {Object.entries(editingRewards ? editRewards : (activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG))
-                    .sort(([, a], [, b]) => (a as any).min_elo - (b as any).min_elo)
-                    .map(([tierKey, rawConfig]) => {
-                    const config = rawConfig as any;
-                    return (
-                      <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
-                        <div className="flex items-center gap-3">
-                          <div className="w-20 text-sm text-white/80">
-                            {config.icon || "•"} {TIER_LABELS[tierKey] || tierKey}
-                          </div>
-                          <div className="text-xs text-white/50 w-24">
-                            {config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}
-                          </div>
-                          {editingRewards ? (
-                            <Input
-                              type="number"
-                              value={config.ell_reward}
-                              onChange={e => updateRewardValue(tierKey, "ell_reward", parseInt(e.target.value) || 0)}
-                              className="w-24 h-7 text-xs"
-                            />
-                          ) : (
-                            <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
-                          )}
-                        </div>
-                        {editingRewards ? (
-                          <BonusRewardEditor
-                            rewards={config.bonus_rewards || []}
-                            onChange={(rewards) => {
-                              setEditRewards(prev => ({
-                                ...prev,
-                                [tierKey]: { ...prev[tierKey as keyof typeof prev], bonus_rewards: rewards },
-                              }));
-                            }}
-                          />
-                        ) : (
-                          <BonusRewardDisplay rewards={config.bonus_rewards} />
-                        )}
-                      </div>
-                    );
-                  })}
+                {/* League selector */}
+                <div className="mb-3">
+                  <Select value={selectedRewardLeague} onValueChange={setSelectedRewardLeague}>
+                    <SelectTrigger className="w-full h-8 text-xs bg-white/10 border-white/20 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(LEAGUE_NAMES).map(([key, name]) => (
+                        <SelectItem key={key} value={key}>★{key} {name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {(() => {
+                  const currentConfig = editingRewards
+                    ? (editRewards[selectedRewardLeague] || {})
+                    : ((convertToPerLeague(activeSeason.rewards_config))[selectedRewardLeague] || {});
+
+                  return (
+                    <div className="grid gap-2">
+                      {Object.entries(currentConfig)
+                        .sort(([, a], [, b]) => a.min_elo - b.min_elo)
+                        .map(([tierKey, config]) => (
+                          <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
+                            <div className="flex items-center gap-3">
+                              <div className="w-20 text-sm text-white/80">
+                                {config.icon || "•"} {TIER_LABELS[tierKey] || tierKey}
+                              </div>
+                              <div className="text-xs text-white/50 w-24">
+                                {config.min_elo}-{config.max_elo === 99999 ? "∞" : config.max_elo}
+                              </div>
+                              {editingRewards ? (
+                                <Input
+                                  type="number"
+                                  value={config.ell_reward}
+                                  onChange={e => updateRewardValue(selectedRewardLeague, tierKey, "ell_reward", parseInt(e.target.value) || 0)}
+                                  className="w-24 h-7 text-xs"
+                                />
+                              ) : (
+                                <div className="text-yellow-400 text-sm font-medium">{config.ell_reward} ELL</div>
+                              )}
+                            </div>
+                            {editingRewards ? (
+                              <BonusRewardEditor
+                                rewards={config.bonus_rewards || []}
+                                onChange={(rewards) => {
+                                  setEditRewards(prev => ({
+                                    ...prev,
+                                    [selectedRewardLeague]: {
+                                      ...prev[selectedRewardLeague],
+                                      [tierKey]: { ...prev[selectedRewardLeague]?.[tierKey], bonus_rewards: rewards },
+                                    },
+                                  }));
+                                }}
+                              />
+                            ) : (
+                              <BonusRewardDisplay rewards={config.bonus_rewards} />
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  );
+                })()}
 
                 {editingRewards && (
                   <Button onClick={handleSaveRewards} disabled={savingRewards} className="mt-2 w-full" size="sm">
                     {savingRewards ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
-                    Сохранить награды
+                    Сохранить награды (все лиги)
                   </Button>
                 )}
               </div>
@@ -445,9 +512,23 @@ export const PvPSeasonAdmin: React.FC = () => {
           </div>
 
           <div>
-            <Label className="text-white/70 text-xs mb-2 block">Награды по тирам (ELL)</Label>
+            <Label className="text-white/70 text-xs mb-2 block">Награды по тирам (ELL) — по лигам</Label>
+            <div className="mb-2">
+              <Select value={selectedCreateLeague} onValueChange={setSelectedCreateLeague}>
+                <SelectTrigger className="w-full h-8 text-xs bg-white/10 border-white/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(LEAGUE_NAMES).map(([key, name]) => (
+                    <SelectItem key={key} value={key}>★{key} {name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid gap-2">
-              {Object.entries(rewardsConfig).map(([tierKey, config]) => (
+              {Object.entries(rewardsConfig[selectedCreateLeague] || TIER_TEMPLATE)
+                .sort(([, a], [, b]) => a.min_elo - b.min_elo)
+                .map(([tierKey, config]) => (
                 <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
                   <div className="flex items-center gap-3">
                     <div className="w-20 text-sm text-white/80">{config.icon} {TIER_LABELS[tierKey]}</div>
@@ -458,7 +539,10 @@ export const PvPSeasonAdmin: React.FC = () => {
                       onChange={e => {
                         setRewardsConfig(prev => ({
                           ...prev,
-                          [tierKey]: { ...prev[tierKey as keyof typeof prev], ell_reward: parseInt(e.target.value) || 0 },
+                          [selectedCreateLeague]: {
+                            ...prev[selectedCreateLeague],
+                            [tierKey]: { ...prev[selectedCreateLeague]?.[tierKey], ell_reward: parseInt(e.target.value) || 0 },
+                          },
                         }));
                       }}
                       className="w-24 h-7 text-xs"
@@ -466,11 +550,14 @@ export const PvPSeasonAdmin: React.FC = () => {
                     <span className="text-xs text-white/50">ELL</span>
                   </div>
                   <BonusRewardEditor
-                    rewards={(config as any).bonus_rewards || []}
+                    rewards={config.bonus_rewards || []}
                     onChange={(rewards) => {
                       setRewardsConfig(prev => ({
                         ...prev,
-                        [tierKey]: { ...prev[tierKey as keyof typeof prev], bonus_rewards: rewards },
+                        [selectedCreateLeague]: {
+                          ...prev[selectedCreateLeague],
+                          [tierKey]: { ...prev[selectedCreateLeague]?.[tierKey], bonus_rewards: rewards },
+                        },
                       }));
                     }}
                   />
@@ -605,7 +692,7 @@ export const PvPSeasonAdmin: React.FC = () => {
                       ) : (
                         <div className="space-y-1 max-h-60 overflow-y-auto">
                           {leaderboard.map((entry) => {
-                            const tierReward = getTierReward(season, entry.elo);
+                            const tierReward = getTierReward(season, entry.elo, entry.rarity_tier);
                             return (
                               <div key={entry.wallet_address} className="flex items-center gap-2 text-xs p-1.5 bg-white/5 rounded">
                                 <span className="w-6 text-center text-white/60">#{entry.rank}</span>
@@ -635,12 +722,23 @@ export const PvPSeasonAdmin: React.FC = () => {
   );
 };
 
-function getTierReward(season: PvPSeason, elo: number): number {
+function getTierReward(season: PvPSeason, elo: number, league?: number): number {
   const config = season.rewards_config;
   if (!config) return 0;
-  for (const [, tierConfig] of Object.entries(config)) {
-    if (elo >= tierConfig.min_elo && elo <= tierConfig.max_elo) {
-      return tierConfig.ell_reward || 0;
+  
+  let tierConfig: Record<string, any>;
+  if (league && config[String(league)] && typeof config[String(league)] === 'object') {
+    tierConfig = config[String(league)] as Record<string, any>;
+  } else if (config.bronze) {
+    tierConfig = config as Record<string, any>;
+  } else {
+    const firstLeague = Object.keys(config).find(k => /^\d+$/.test(k));
+    tierConfig = firstLeague ? (config as any)[firstLeague] : config as Record<string, any>;
+  }
+  
+  for (const [, tc] of Object.entries(tierConfig)) {
+    if (tc && tc.min_elo !== undefined && elo >= tc.min_elo && elo <= tc.max_elo) {
+      return tc.ell_reward || 0;
     }
   }
   return 0;
