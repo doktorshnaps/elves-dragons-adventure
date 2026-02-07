@@ -2640,14 +2640,6 @@ export type Database = {
             Returns: boolean
           }
         | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_amount: number
-              p_target_user_id: string
-            }
-            Returns: boolean
-          }
-        | {
             Args: { p_amount: number; p_target_user_id: string }
             Returns: boolean
           }
@@ -2750,29 +2742,17 @@ export type Database = {
         Args: { p_admin_wallet_address: string; p_id: string }
         Returns: boolean
       }
-      admin_find_user_by_wallet:
-        | {
-            Args: { p_wallet_address: string }
-            Returns: {
-              account_level: number
-              balance: number
-              created_at: string
-              is_banned: boolean
-              user_id: string
-              wallet_address: string
-            }[]
-          }
-        | {
-            Args: { p_admin_wallet_address?: string; p_wallet_address: string }
-            Returns: {
-              account_level: number
-              balance: number
-              created_at: string
-              is_banned: boolean
-              user_id: string
-              wallet_address: string
-            }[]
-          }
+      admin_find_user_by_wallet: {
+        Args: { p_admin_wallet_address?: string; p_wallet_address: string }
+        Returns: {
+          account_level: number
+          balance: number
+          created_at: string
+          is_banned: boolean
+          user_id: string
+          wallet_address: string
+        }[]
+      }
       admin_get_all_players: {
         Args: never
         Returns: {
@@ -2840,12 +2820,10 @@ export type Database = {
           wallet_address: string
         }[]
       }
-      admin_get_user_info:
-        | {
-            Args: { p_admin_wallet_address?: string; p_user_id: string }
-            Returns: Json
-          }
-        | { Args: { p_user_id: string }; Returns: Json }
+      admin_get_user_info: {
+        Args: { p_admin_wallet_address?: string; p_user_id: string }
+        Returns: Json
+      }
       admin_give_items_to_player: {
         Args: { p_items: Json; p_target_wallet_address: string }
         Returns: boolean
@@ -3038,19 +3016,14 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { p_item_instance_id: string }; Returns: boolean }
-      admin_set_player_balance:
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_new_balance: number
-              p_target_wallet_address: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: { p_new_balance: number; p_target_wallet_address: string }
-            Returns: boolean
-          }
+      admin_set_player_balance: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_new_balance: number
+          p_target_wallet_address: string
+        }
+        Returns: boolean
+      }
       admin_toggle_maintenance_mode: {
         Args: {
           p_admin_wallet_address?: string
