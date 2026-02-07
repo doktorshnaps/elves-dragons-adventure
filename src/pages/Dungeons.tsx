@@ -12,12 +12,14 @@ const Dungeons = () => {
   });
 
   return (
-    <div className="p-4">
-      <DungeonSearch 
-        onClose={() => navigate('/menu')} 
-        balance={balance}
-        onBalanceChange={updateBalance}
-      />
+    <div className="h-screen flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4">
+        <DungeonSearch 
+          onClose={() => navigate('/menu')} 
+          balance={balance}
+          onBalanceChange={updateBalance}
+        />
+      </div>
     </div>
   );
 };

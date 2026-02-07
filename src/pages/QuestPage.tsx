@@ -17,7 +17,7 @@ export const QuestPage = () => {
   const { language } = useLanguage();
 
   return (
-    <div className="min-h-screen p-4 relative">
+    <div className="h-screen relative flex flex-col">
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
@@ -28,6 +28,7 @@ export const QuestPage = () => {
         }}
       />
       <div className="pointer-events-none absolute inset-0 bg-black/30" />
+      <div className="flex-1 overflow-y-auto p-4">
       <div className="max-w-4xl mx-auto relative z-10">
         <Button
           variant="menu"
@@ -74,6 +75,7 @@ export const QuestPage = () => {
             <ReferralTab />
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </div>
   );

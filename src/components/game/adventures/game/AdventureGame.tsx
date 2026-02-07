@@ -114,8 +114,8 @@ export const AdventureGame = ({
     monsterDiceRoll,
     isMonsterTurn,
     handlePlayerAttack
-  } = useDiceRoll((damage: number) => {
-    if (isMonsterTurn) {
+  } = useDiceRoll((damage: number, source: 'player' | 'monster') => {
+    if (source === 'monster') {
       setCurrentHealth(prev => Math.max(0, prev - damage));
       // Sync damage to team cards
       applyDamageToTeam(damage);

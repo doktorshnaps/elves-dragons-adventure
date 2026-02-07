@@ -324,6 +324,7 @@ const PvPBattleContent: React.FC = () => {
         isBotMatch={opponentWallet?.startsWith('BOT_')}
         isLoading={loading}
         isPolling={isPolling}
+        amIPlayer1={amIPlayer1}
         lastRoll={lastRoll}
         initiative={initiative}
         onAttack={handleAttack}

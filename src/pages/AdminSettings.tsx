@@ -66,7 +66,7 @@ const AdminSettingsContent = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 relative">
+    <div className="h-screen relative flex flex-col">
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
@@ -77,6 +77,7 @@ const AdminSettingsContent = () => {
         }}
       />
       <div className="pointer-events-none absolute inset-0 bg-black/30" />
+      <div className="flex-1 overflow-y-auto p-4">
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -199,6 +200,7 @@ const AdminSettingsContent = () => {
             </TabsContent>
           )}
         </Tabs>
+      </div>
       </div>
     </div>
   );

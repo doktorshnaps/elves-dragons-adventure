@@ -119,24 +119,11 @@ const PvPUnitImage: React.FC<{
   );
 };
 
-// D6 roll result description
+// D6 roll result description — uses unified dice formula
+import { getDiceDescription as getUnifiedDiceDescription, getDicePercentage } from '@/utils/diceFormula';
+
 const getDiceResultDescription = (roll: number): { text: string; color: string } => {
-  switch (roll) {
-    case 1:
-      return { text: "Критический промах! Контратака!", color: "text-red-500" };
-    case 2:
-      return { text: "Промах!", color: "text-orange-400" };
-    case 3:
-      return { text: "Слабый удар (50%)", color: "text-yellow-400" };
-    case 4:
-      return { text: "Нормальный удар (100%)", color: "text-green-400" };
-    case 5:
-      return { text: "Сильный удар (150%)", color: "text-blue-400" };
-    case 6:
-      return { text: "Критический удар! (200%)", color: "text-purple-400" };
-    default:
-      return { text: "", color: "text-white" };
-  }
+  return getUnifiedDiceDescription(roll);
 };
 
 interface PvPBattleArenaProps {
@@ -151,6 +138,7 @@ interface PvPBattleArenaProps {
   isBotMatch?: boolean;
   isLoading: boolean;
   isPolling: boolean;
+  amIPlayer1?: boolean;
   lastRoll?: {
     attackerRoll: number;
     defenderRoll?: number;
@@ -185,6 +173,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   isBotMatch,
   isLoading,
   isPolling,
+  amIPlayer1 = true,
   lastRoll,
   initiative,
   onAttack,
@@ -308,17 +297,9 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     };
   }, []);
 
-  // Helper: get dice percent from roll
+  // Helper: get dice percent from roll — uses unified formula
   const getDicePercent = (roll: number): number => {
-    switch (roll) {
-      case 1: return 0;
-      case 2: return 0;
-      case 3: return 50;
-      case 4: return 100;
-      case 5: return 150;
-      case 6: return 200;
-      default: return 0;
-    }
+    return getDicePercentage(roll);
   };
 
   // Track processed rolls to prevent duplicates from dependency changes
@@ -692,7 +673,9 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const renderInitiativeOverlay = () => {
     if (!showInitiative || !initiative) return null;
     
-    const iWonInitiative = initiative.first_turn === "player1";
+    const iWonInitiative = amIPlayer1
+      ? initiative.first_turn === "player1"
+      : initiative.first_turn === "player2";
     
     return (
       <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
@@ -708,14 +691,14 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               <div className="text-center">
                 <div className="text-white/70 text-sm mb-2">Вы</div>
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-                  {initiative.player1_roll}
+                  {amIPlayer1 ? initiative.player1_roll : initiative.player2_roll}
                 </div>
               </div>
               <div className="text-2xl text-white/50">VS</div>
               <div className="text-center">
                 <div className="text-white/70 text-sm mb-2">Противник</div>
                 <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-lg flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-                  {initiative.player2_roll}
+                  {amIPlayer1 ? initiative.player2_roll : initiative.player1_roll}
                 </div>
               </div>
             </div>

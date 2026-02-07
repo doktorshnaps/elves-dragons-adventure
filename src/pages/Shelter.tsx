@@ -79,8 +79,8 @@ export const Shelter = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
-      <div className="container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
+    <div className="h-screen relative flex flex-col">
+      <div className="flex-1 overflow-y-auto container mx-auto p-2 sm:p-4 space-y-6 relative z-10">
         {/* Кнопка возврата и информация - адаптивный layout */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-2 mb-16 sm:mb-6 pt-2">
           {/* Кнопка возврата */}

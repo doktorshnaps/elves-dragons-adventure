@@ -101,9 +101,7 @@ export const AdventuresTab = () => {
       setPlayerStats(prev => ({ ...prev, health: 0 }));
       setCurrentMonster(null);
       
-      setTimeout(() => {
-        navigate('/menu');
-      }, 2000);
+      // Game over redirect handled in useGameState.ts — no duplicate redirect here
       
       return;
     }

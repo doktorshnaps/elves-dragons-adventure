@@ -154,7 +154,7 @@ export const Seekers = () => {
     : 0;
 
   return (
-    <div className="min-h-screen p-4 relative" style={{ filter: `brightness(${brightness}%)` }}>
+    <div className="h-screen relative flex flex-col" style={{ filter: `brightness(${brightness}%)` }}>
       <div 
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
@@ -167,6 +167,7 @@ export const Seekers = () => {
       />
       <div className="pointer-events-none absolute inset-0 bg-black/30" />
 
+      <div className="flex-1 overflow-y-auto p-4">
       <div className="relative z-10 max-w-4xl mx-auto">
         <Button
           variant="outline"
@@ -333,6 +334,7 @@ export const Seekers = () => {
             )}
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );
