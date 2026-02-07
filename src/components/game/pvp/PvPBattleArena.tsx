@@ -397,7 +397,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         targetName,
       };
 
-      setRollHistory(prev => [historyEntry, ...prev].slice(0, 2));
+      setRollHistory([historyEntry]);
       
       // Calculate positions for animation after a short delay to allow refs to update
       requestAnimationFrame(() => {
@@ -715,7 +715,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const rollResultInfo = lastRoll ? getDiceResultDescription(lastRoll.attackerRoll) : null;
 
   return (
-    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-1 sm:space-y-2 p-1 sm:p-2 relative overflow-y-auto">
+    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-1 sm:space-y-2 p-1 sm:p-2 relative overflow-y-auto overflow-x-hidden">
       {/* Attack Animation Overlay - positioned over entire battle area */}
       <AttackAnimation 
         isActive={attackAnimation.isActive}
@@ -822,10 +822,10 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         </CardHeader>
       </Card>
 
-      <div className="flex-1 flex flex-col space-y-1 sm:space-y-2 overflow-hidden min-h-0">
+      <div className="flex-1 flex flex-col space-y-1 sm:space-y-2 min-h-0">
         {/* My Team - Upper Part */}
-        <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
-          <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
+        <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
+          <CardContent className="overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0.5 sm:gap-1">
               {myPairs.map((pair, index) => renderPairCard(pair, index, true, myDamages.get(index)))}
             </div>
@@ -936,7 +936,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         {/* Opponent Team - Lower Part */}
         <Card
           variant="menu"
-          className="flex-1 min-h-0 flex flex-col overflow-hidden"
+          className="flex-shrink-0"
           style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
         >
           <CardHeader className="py-1.5 sm:py-2 flex-shrink-0 px-2 sm:px-6">
@@ -946,7 +946,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               {isBotMatch && <Bot className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+          <CardContent className="overflow-x-hidden p-0.5 sm:p-1">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0.5 sm:gap-1">
               {opponentPairs.map((pair, index) => renderPairCard(pair, index, false, opponentDamages.get(index)))}
             </div>
