@@ -38,6 +38,7 @@ export const BuildingLevelsSchema = z.object({
   dragon_lair: z.number().default(0),
   medical: z.number().default(0),
   forge: z.number().default(0),
+  clan_hall: z.number().default(0),
 }).passthrough(); // Разрешаем дополнительные поля
 
 export type BuildingLevels = z.infer<typeof BuildingLevelsSchema>;
@@ -206,6 +207,7 @@ export function validateBuildingLevels(buildingLevels: unknown): BuildingLevels 
       dragon_lair: 0,
       medical: 0,
       forge: 0,
+      clan_hall: 0,
     }
   );
 }

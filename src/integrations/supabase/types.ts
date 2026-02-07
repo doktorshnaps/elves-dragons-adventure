@@ -527,6 +527,127 @@ export type Database = {
         }
         Relationships: []
       }
+      clan_join_requests: {
+        Row: {
+          clan_id: string
+          created_at: string | null
+          id: string
+          message: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          wallet_address: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          wallet_address: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_join_requests_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_members: {
+        Row: {
+          clan_id: string
+          contributed_ell: number | null
+          id: string
+          joined_at: string | null
+          role: string
+          wallet_address: string
+        }
+        Insert: {
+          clan_id: string
+          contributed_ell?: number | null
+          id?: string
+          joined_at?: string | null
+          role?: string
+          wallet_address: string
+        }
+        Update: {
+          clan_id?: string
+          contributed_ell?: number | null
+          id?: string
+          joined_at?: string | null
+          role?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_members_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          emblem: string | null
+          experience: number | null
+          id: string
+          join_policy: string | null
+          leader_wallet: string
+          level: number | null
+          max_members: number | null
+          name: string
+          treasury_ell: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          emblem?: string | null
+          experience?: number | null
+          id?: string
+          join_policy?: string | null
+          leader_wallet: string
+          level?: number | null
+          max_members?: number | null
+          name: string
+          treasury_ell?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          emblem?: string | null
+          experience?: number | null
+          id?: string
+          join_policy?: string | null
+          leader_wallet?: string
+          level?: number | null
+          max_members?: number | null
+          name?: string
+          treasury_ell?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       class_multipliers: {
         Row: {
           class_name: string
@@ -3460,6 +3581,10 @@ export type Database = {
         Args: { p_listing_id: string }
         Returns: undefined
       }
+      change_member_role: {
+        Args: { p_new_role: string; p_target_wallet: string; p_wallet: string }
+        Returns: Json
+      }
       check_api_rate_limit: {
         Args: {
           p_endpoint: string
@@ -3529,6 +3654,15 @@ export type Database = {
         Args: { p_card: Json; p_wallet_address: string }
         Returns: string
       }
+      create_clan: {
+        Args: {
+          p_description?: string
+          p_join_policy?: string
+          p_name: string
+          p_wallet: string
+        }
+        Returns: Json
+      }
       create_game_data_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -3575,6 +3709,7 @@ export type Database = {
         Args: { p_template_id: number }
         Returns: number
       }
+      disband_clan: { Args: { p_wallet: string }; Returns: Json }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
         Returns: string
@@ -3711,6 +3846,8 @@ export type Database = {
         Args: { p_card_name: string; p_card_type: string; p_rarity: number }
         Returns: Json
       }
+      get_clan_leaderboard: { Args: never; Returns: Json }
+      get_clan_requests: { Args: { p_wallet: string }; Returns: Json }
       get_current_user_wallet: { Args: never; Returns: string }
       get_dungeon_item_drops: {
         Args: { p_dungeon_level: number; p_dungeon_number: number }
@@ -3864,6 +4001,7 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      get_my_clan: { Args: { p_wallet: string }; Returns: Json }
       get_nft_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -4145,6 +4283,10 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned: { Args: { p_wallet_address: string }; Returns: boolean }
+      join_clan: {
+        Args: { p_clan_id: string; p_message?: string; p_wallet: string }
+        Returns: Json
+      }
       join_pvp_queue: {
         Args: {
           p_match_type?: string
@@ -4154,6 +4296,11 @@ export type Database = {
         }
         Returns: Json
       }
+      kick_member: {
+        Args: { p_target_wallet: string; p_wallet: string }
+        Returns: Json
+      }
+      leave_clan: { Args: { p_wallet: string }; Returns: Json }
       leave_pvp_queue: { Args: { p_wallet_address: string }; Returns: Json }
       mark_quest_claimed: {
         Args: { p_quest_id: string; p_wallet_address: string }
@@ -4262,6 +4409,11 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address: string }
         Returns: Json
       }
+      review_join_request: {
+        Args: { p_accept: boolean; p_request_id: string; p_wallet: string }
+        Returns: Json
+      }
+      search_clans: { Args: { p_query?: string }; Returns: Json }
       start_bot_match: {
         Args: {
           p_bot_elo: number
@@ -4333,6 +4485,10 @@ export type Database = {
           p_team_snapshot: Json
           p_wallet_address: string
         }
+        Returns: Json
+      }
+      transfer_leadership: {
+        Args: { p_target_wallet: string; p_wallet: string }
         Returns: Json
       }
       update_active_workers_by_wallet: {

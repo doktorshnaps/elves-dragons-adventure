@@ -51,6 +51,9 @@ const Wibe3TestPanel = lazy(() => import('./components/wibe3/Wibe3TestPanel'));
 const PvP = lazy(() => import('./pages/PvP').then(m => ({ default: m.PvP })));
 const PvPBattlePage = lazy(() => import('./pages/PvPBattlePage').then(m => ({ default: m.PvPBattlePage })));
 
+// Clan page
+const ClanPage = lazy(() => import('./pages/Clan').then(m => ({ default: m.ClanPage })));
+
 // Simple loading fallback
 const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
@@ -107,6 +110,7 @@ function App() {
                                   <Route path="/wibe3-test" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Wibe3TestPanel /></ProtectedRoute></Suspense>} />
                                   <Route path="/pvp" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PvP /></ProtectedRoute></Suspense>} />
                                   <Route path="/pvp/battle/:matchId" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><PvPBattlePage /></ProtectedRoute></Suspense>} />
+                                  <Route path="/clan" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><ClanPage /></ProtectedRoute></Suspense>} />
                                 </Routes>
                               </Suspense>
                               <Toaster />

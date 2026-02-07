@@ -72,7 +72,8 @@ const DEFAULT_GAME_DATA: GameData = {
     barracks: 0,
     dragon_lair: 0,
     medical: 0,
-    forge: 0
+    forge: 0,
+    clan_hall: 0
   },
   activeBuildingUpgrades: []
 };
