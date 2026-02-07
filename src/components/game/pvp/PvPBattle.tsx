@@ -16,6 +16,7 @@ const PvPBattleContent: React.FC = () => {
   const { accountId: walletAddress } = useWalletContext();
   
   const { submitMove, getMatchStatus, loading } = usePvP(walletAddress);
+  const lastSeenMoveIdRef = React.useRef<string | null>(null);
   
   const [matchData, setMatchData] = useState<any>(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -33,20 +34,53 @@ const PvPBattleContent: React.FC = () => {
   } | null>(null);
 
   // Load match data
-  const loadMatch = useCallback(async () => {
+  const loadMatch = useCallback(async (isInitial = false) => {
     if (!matchId) return;
     
     const data = await getMatchStatus(matchId);
     if (data) {
+      // Check if opponent made a move since our last check
+      const recentMoves = data.recent_moves || [];
+      const latestMove = recentMoves[0]; // most recent move (sorted desc)
+      
+      if (
+        !isInitial &&
+        latestMove &&
+        latestMove.id !== lastSeenMoveIdRef.current &&
+        latestMove.player_wallet !== walletAddress
+      ) {
+        // Opponent made a new move — show it as lastRoll
+        lastSeenMoveIdRef.current = latestMove.id;
+        const roll = latestMove.dice_roll_attacker ?? 4;
+        const isMiss = roll <= 2;
+        const isCritical = roll === 6;
+        const isCounterAttack = roll === 1;
+        
+        setLastRoll({
+          attackerRoll: roll,
+          source: 'opponent',
+          damage: latestMove.damage_dealt || 0,
+          isCritical,
+          isMiss,
+          isCounterAttack,
+          counterAttackDamage: isCounterAttack ? (latestMove.damage_dealt || 0) : 0,
+          description: ''
+        });
+      } else if (isInitial && latestMove) {
+        // On initial load, just remember the latest move id without animating
+        lastSeenMoveIdRef.current = latestMove.id;
+        setLastRoll(null);
+      } else {
+        setLastRoll(null);
+      }
+      
       setMatchData(data);
-      // Clear last roll to prevent animation replay when pairs update
-      setLastRoll(null);
     }
-  }, [matchId, getMatchStatus]);
+  }, [matchId, getMatchStatus, walletAddress]);
 
   // Initial load
   useEffect(() => {
-    loadMatch();
+    loadMatch(true);
   }, [loadMatch]);
 
   // Trigger bot turn if it's bot match and bot goes first
@@ -120,6 +154,11 @@ const PvPBattleContent: React.FC = () => {
     const result = await submitMove(matchId, 'attack', attackerIndex, targetIndex);
     
     if (result?.success) {
+      // Mark the player's move as seen so polling won't replay it
+      if (result.move_id) {
+        lastSeenMoveIdRef.current = result.move_id;
+      }
+      
       // Show player's dice roll animation
       if (result.dice_roll !== undefined) {
         setLastRoll({
@@ -136,6 +175,10 @@ const PvPBattleContent: React.FC = () => {
       
       // If bot made a move, show bot's dice roll after player's animation
       if (result.bot_turn) {
+        // Mark bot move as seen too
+        if (result.bot_turn.move_id) {
+          lastSeenMoveIdRef.current = result.bot_turn.move_id;
+        }
         setTimeout(() => {
           setLastRoll({
             attackerRoll: result.bot_turn.dice_roll,
