@@ -604,7 +604,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
           {/* Card Images */}
           <div className="flex gap-0.5 sm:gap-1 justify-center">
             {/* Hero Image */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
               <PvPUnitImage
                 unit={{
                   ...pair.hero,
@@ -620,7 +620,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
 
             {/* Dragon Image */}
             {pair.dragon && (
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                 <PvPUnitImage
                   unit={{
                     ...pair.dragon,
@@ -628,8 +628,8 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                   }}
                   unitType="dragon"
                   alt={pair.dragon.name}
-                  width={80}
-                  height={80}
+                  width={64}
+                  height={64}
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -732,7 +732,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const rollResultInfo = lastRoll ? getDiceResultDescription(lastRoll.attackerRoll) : null;
 
   return (
-    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-2 p-2 relative">
+    <div ref={battleContainerRef} className="w-full h-full flex flex-col space-y-1 sm:space-y-2 p-1 sm:p-2 relative overflow-y-auto">
       {/* Attack Animation Overlay - positioned over entire battle area */}
       <AttackAnimation 
         isActive={attackAnimation.isActive}
@@ -839,7 +839,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
         </CardHeader>
       </Card>
 
-      <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
+      <div className="flex-1 flex flex-col space-y-1 sm:space-y-2 overflow-hidden min-h-0">
         {/* My Team - Upper Part */}
         <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
           <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
