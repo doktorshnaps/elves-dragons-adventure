@@ -68,6 +68,25 @@ export const AdminConsole = () => {
     setOutput(prev => [...prev, text]);
   };
 
+  // Helper to resolve wallet address from UUID or wallet string
+  const resolveWalletAddress = async (target: string): Promise<string | null> => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (uuidRegex.test(target)) {
+      const { data: userInfo } = await supabase.rpc('admin_get_user_info', {
+        p_user_id: target,
+        p_admin_wallet_address: accountId
+      });
+      return userInfo ? (userInfo as any).wallet_address : null;
+    } else {
+      const { data: userData } = await supabase.rpc('admin_find_user_by_wallet', {
+        p_wallet_address: target,
+        p_admin_wallet_address: accountId
+      });
+      return userData && userData.length > 0 ? userData[0].wallet_address : null;
+    }
+  };
+
   const executeCommand = async () => {
     if (!command.trim()) return;
 
@@ -318,27 +337,16 @@ export const AdminConsole = () => {
       return;
     }
 
-    const userId = parts[1];
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
-    }
-
-    // First, get wallet address from user_id
-    const { data: userData } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', userId)
-      .single();
+    const target = parts[1];
+    const walletAddress = await resolveWalletAddress(target);
     
-    if (!userData?.wallet_address) {
+    if (!walletAddress) {
       addOutput('Ошибка: пользователь не найден');
       return;
     }
 
     const { data, error } = await supabase.rpc('admin_get_player_cards', {
-      p_target_wallet_address: userData.wallet_address,
+      p_target_wallet_address: walletAddress,
       p_admin_wallet_address: accountId
     });
 
@@ -384,27 +392,16 @@ export const AdminConsole = () => {
       return;
     }
 
-    const userId = parts[1];
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
-    }
-
-    // First, get wallet address from user_id
-    const { data: userData } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', userId)
-      .single();
+    const target = parts[1];
+    const walletAddress = await resolveWalletAddress(target);
     
-    if (!userData?.wallet_address) {
+    if (!walletAddress) {
       addOutput('Ошибка: пользователь не найден');
       return;
     }
 
     const { data, error } = await supabase.rpc('admin_get_player_inventory', {
-      p_target_wallet_address: userData.wallet_address,
+      p_target_wallet_address: walletAddress,
       p_admin_wallet_address: accountId
     });
 
@@ -440,7 +437,7 @@ export const AdminConsole = () => {
       return;
     }
 
-    const userId = parts[1];
+    const target = parts[1];
     const amount = parseInt(parts[2]);
 
     if (isNaN(amount) || amount < 0) {
@@ -448,26 +445,15 @@ export const AdminConsole = () => {
       return;
     }
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
-    }
-
-    // First, get wallet address from user_id
-    const { data: userData } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', userId)
-      .single();
+    const walletAddress = await resolveWalletAddress(target);
     
-    if (!userData?.wallet_address) {
+    if (!walletAddress) {
       addOutput('Ошибка: пользователь не найден');
       return;
     }
 
     const { error } = await supabase.rpc('admin_set_player_balance', {
-      p_target_wallet_address: userData.wallet_address,
+      p_target_wallet_address: walletAddress,
       p_new_balance: amount,
       p_admin_wallet_address: accountId
     });
@@ -475,7 +461,7 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка установки баланса: ${error.message}`);
     } else {
-      addOutput(`✅ Баланс игрока ${userId} установлен на ${amount} ELL`);
+      addOutput(`✅ Баланс игрока ${target} установлен на ${amount} ELL`);
       toast({
         title: "Баланс установлен",
         description: `Баланс установлен на ${amount} ELL`
@@ -501,11 +487,22 @@ export const AdminConsole = () => {
 
     // Определяем пользователя: допускаем как UUID (user_id), так и wallet
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    let userId: string | null = null;
+    let walletAddress: string | null = null;
     let displayTarget = target;
 
     if (uuidRegex.test(target)) {
-      userId = target;
+      // UUID provided - get wallet via admin RPC
+      const { data: userInfo, error: infoError } = await supabase.rpc('admin_get_user_info', {
+        p_user_id: target,
+        p_admin_wallet_address: accountId
+      });
+
+      if (infoError || !userInfo) {
+        addOutput(`❌ Пользователь с UUID "${target}" не найден.`);
+        return;
+      }
+
+      walletAddress = (userInfo as any).wallet_address;
     } else {
       const { data: userData, error: userError } = await supabase
         .rpc('admin_find_user_by_wallet', {
@@ -518,7 +515,12 @@ export const AdminConsole = () => {
         return;
       }
 
-      userId = userData[0].user_id;
+      walletAddress = userData[0].wallet_address;
+    }
+
+    if (!walletAddress) {
+      addOutput('Ошибка: не удалось определить кошелек пользователя');
+      return;
     }
 
     // Поиск карты по ID (номеру) или имени (частичное совпадение)
@@ -559,20 +561,8 @@ export const AdminConsole = () => {
       description: dbCard.description
     };
 
-    // Get wallet address for the user
-    const { data: targetUserData } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!targetUserData?.wallet_address) {
-      addOutput('Ошибка: пользователь не найден');
-      return;
-    }
-
     const { error } = await supabase.rpc('admin_give_player_card', {
-      p_target_wallet_address: targetUserData.wallet_address,
+      p_target_wallet_address: walletAddress,
       p_card_template_id: dbCard.name,
       p_card_data: cardData,
       p_admin_wallet_address: accountId
@@ -603,34 +593,30 @@ export const AdminConsole = () => {
       return;
     }
 
-    const userId = parts[1];
+    const target = parts[1];
     const itemName = parts[2];
     const quantity = parseInt(parts[3]) || 1;
     const itemType = parts[4] || 'consumable';
 
+    // Resolve wallet address from UUID or wallet
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
-      addOutput('Неверный формат UUID игрока');
-      return;
+    let walletAddress: string | null = null;
+
+    if (uuidRegex.test(target)) {
+      const { data: userInfo } = await supabase.rpc('admin_get_user_info', {
+        p_user_id: target,
+        p_admin_wallet_address: accountId
+      });
+      walletAddress = userInfo ? (userInfo as any).wallet_address : null;
+    } else {
+      const { data: userData } = await supabase.rpc('admin_find_user_by_wallet', {
+        p_wallet_address: target,
+        p_admin_wallet_address: accountId
+      });
+      walletAddress = userData && userData.length > 0 ? userData[0].wallet_address : null;
     }
 
-    const itemData = {
-      id: `admin-item-${Date.now()}-${Math.random()}`,
-      name: itemName,
-      type: itemType,
-      quantity: quantity,
-      description: `Предмет выдан администратором`,
-      image: '/placeholder.svg'
-    };
-
-    // Get wallet address for the user
-    const { data: targetUserData } = await supabase
-      .from('game_data')
-      .select('wallet_address')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!targetUserData?.wallet_address) {
+    if (!walletAddress) {
       addOutput('Ошибка: пользователь не найден');
       return;
     }
@@ -649,7 +635,7 @@ export const AdminConsole = () => {
     }
 
     const { error } = await supabase.rpc('admin_give_player_item', {
-      p_target_wallet_address: targetUserData.wallet_address,
+      p_target_wallet_address: walletAddress,
       p_template_id: templateData.id,
       p_admin_wallet_address: accountId
     });
@@ -657,7 +643,7 @@ export const AdminConsole = () => {
     if (error) {
       addOutput(`Ошибка выдачи предмета: ${error.message}`);
     } else {
-      addOutput(`✅ Предмет "${itemName}" x${quantity} выдан игроку ${userId}`);
+      addOutput(`✅ Предмет "${itemName}" x${quantity} выдан игроку ${target}`);
       toast({
         title: "Предмет выдан",
         description: `Предмет "${itemName}" x${quantity} выдан игроку`
