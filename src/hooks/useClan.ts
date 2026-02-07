@@ -69,11 +69,15 @@ export const useClan = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const invalidateClan = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['my-clan'] });
-    queryClient.invalidateQueries({ queryKey: ['clan-leaderboard'] });
-    queryClient.invalidateQueries({ queryKey: ['clan-requests'] });
-    queryClient.invalidateQueries({ queryKey: ['clan-search'] });
+  const invalidateClan = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['my-clan'] }),
+      queryClient.invalidateQueries({ queryKey: ['clan-leaderboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['clan-requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['clan-search'] }),
+    ]);
+    // Ensure my-clan data is fully refetched before continuing
+    await queryClient.refetchQueries({ queryKey: ['my-clan'] });
   }, [queryClient]);
 
   // Get my clan
@@ -115,7 +119,7 @@ export const useClan = () => {
 
   // Create clan
   const createClan = useCallback(async (name: string, description: string, joinPolicy: string) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('create_clan', {
       p_wallet: accountId,
       p_name: name,
@@ -129,13 +133,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Клан создан!', description: `Клан "${name}" успешно создан` });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Join clan
   const joinClan = useCallback(async (clanId: string, message?: string) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('join_clan', {
       p_wallet: accountId,
       p_clan_id: clanId,
@@ -152,13 +156,13 @@ export const useClan = () => {
     } else {
       toast({ title: 'Заявка отправлена', description: 'Ожидайте одобрения от руководства клана' });
     }
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Review request
   const reviewRequest = useCallback(async (requestId: string, accept: boolean) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('review_join_request', {
       p_wallet: accountId,
       p_request_id: requestId,
@@ -171,13 +175,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: accept ? 'Заявка принята' : 'Заявка отклонена' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Leave clan
   const leaveClan = useCallback(async () => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('leave_clan', { p_wallet: accountId });
     if (error) throw error;
     const result = data as any;
@@ -186,13 +190,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Вы покинули клан' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Kick member
   const kickMember = useCallback(async (targetWallet: string) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('kick_member', {
       p_wallet: accountId,
       p_target_wallet: targetWallet,
@@ -204,13 +208,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Участник исключён' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Change role
   const changeRole = useCallback(async (targetWallet: string, newRole: string) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('change_member_role', {
       p_wallet: accountId,
       p_target_wallet: targetWallet,
@@ -223,13 +227,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Роль изменена' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Transfer leadership
   const transferLeadership = useCallback(async (targetWallet: string) => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('transfer_leadership', {
       p_wallet: accountId,
       p_target_wallet: targetWallet,
@@ -241,13 +245,13 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Лидерство передано' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 
   // Disband clan
   const disbandClan = useCallback(async () => {
-    if (!accountId) return;
+    if (!accountId) return false;
     const { data, error } = await supabase.rpc('disband_clan', { p_wallet: accountId });
     if (error) throw error;
     const result = data as any;
@@ -256,7 +260,7 @@ export const useClan = () => {
       return false;
     }
     toast({ title: 'Клан расформирован' });
-    invalidateClan();
+    await invalidateClan();
     return true;
   }, [accountId, toast, invalidateClan]);
 

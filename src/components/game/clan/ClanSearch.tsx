@@ -49,7 +49,12 @@ export const ClanSearch = ({ onSearch, onJoin, hasClan }: ClanSearchProps) => {
   const handleJoin = async (clanId: string) => {
     setJoining(clanId);
     try {
-      await onJoin(clanId);
+      const success = await onJoin(clanId);
+      if (success) {
+        // Refresh search results to update member counts
+        const data = await onSearch(query || undefined);
+        setResults(data);
+      }
     } finally {
       setJoining(null);
     }
