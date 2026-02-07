@@ -3352,28 +3352,17 @@ export type Database = {
             }
             Returns: undefined
           }
-      admin_update_pvp_season:
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_ends_at?: string
-              p_name?: string
-              p_rewards_config?: Json
-              p_season_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_admin_wallet_address: string
-              p_ends_at?: string
-              p_league_rewards_config?: Json
-              p_name?: string
-              p_rewards_config?: Json
-              p_season_id: string
-            }
-            Returns: Json
-          }
+      admin_update_pvp_season: {
+        Args: {
+          p_admin_wallet_address: string
+          p_ends_at?: string
+          p_league_rewards_config?: Json
+          p_name?: string
+          p_rewards_config?: Json
+          p_season_id: string
+        }
+        Returns: Json
+      }
       admin_update_rarity_multiplier: {
         Args: {
           p_admin_wallet_address?: string

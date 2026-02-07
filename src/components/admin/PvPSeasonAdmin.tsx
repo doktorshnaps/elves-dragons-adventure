@@ -201,7 +201,10 @@ export const PvPSeasonAdmin: React.FC = () => {
   };
 
   const handleSaveRewards = async () => {
-    if (!activeSeason || !accountId) return;
+    if (!activeSeason || !accountId) {
+      toast.error("Нет активного сезона или кошелёк не подключён");
+      return;
+    }
     setSavingRewards(true);
     try {
       const { error } = await supabase.rpc("admin_update_pvp_season", {
