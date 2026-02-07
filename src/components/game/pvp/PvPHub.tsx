@@ -185,7 +185,7 @@ export const PvPHub: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-pvp p-4 relative">
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
       <div className="max-w-4xl mx-auto space-y-4 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">
