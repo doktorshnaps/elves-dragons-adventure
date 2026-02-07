@@ -268,7 +268,9 @@ export const PvPSeasonAdmin: React.FC = () => {
                 </div>
 
                 <div className="grid gap-2">
-                  {Object.entries(editingRewards ? editRewards : (activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG)).map(([tierKey, rawConfig]) => {
+                  {Object.entries(editingRewards ? editRewards : (activeSeason.rewards_config as typeof DEFAULT_REWARDS_CONFIG))
+                    .sort(([, a], [, b]) => (a as any).min_elo - (b as any).min_elo)
+                    .map(([tierKey, rawConfig]) => {
                     const config = rawConfig as any;
                     return (
                       <div key={tierKey} className="p-2 bg-white/5 rounded-lg space-y-1">
