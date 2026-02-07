@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot, History, Eye } from "lucide-react";
+import { Swords, Trophy, Clock, Coins, ArrowLeft, Search, X, Loader2, Star, Bot, History, Eye, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { usePvP } from "@/hooks/usePvP";
 import { PvPLeaderboard } from "./PvPLeaderboard";
@@ -13,6 +13,7 @@ import { PvPMatchHistory } from "./PvPMatchHistory";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { usePlayerTeams, TeamPair } from "@/hooks/usePlayerTeams";
 import { normalizeCardImageUrl } from "@/utils/cardImageResolver";
+import { usePvPSeason } from "@/hooks/usePvPSeason";
 
 const TIER_COLORS: Record<string, string> = {
   bronze: "bg-amber-700 text-white",
@@ -53,6 +54,8 @@ export const PvPHub: React.FC = () => {
   const [selectedRarityTier, setSelectedRarityTier] = useState(1);
   const [togglingBot, setTogglingBot] = useState(false);
   const [showTeamDialog, setShowTeamDialog] = useState(false);
+
+  const { activeSeason, countdown, getPlayerTierReward } = usePvPSeason();
 
   const { getPvPTeam, loading: teamsLoading, switchTeam } = usePlayerTeams();
 
@@ -195,6 +198,34 @@ export const PvPHub: React.FC = () => {
             <span className="font-bold">{balance} ELL</span>
           </div>
         </div>
+
+        {/* Season Banner */}
+        {activeSeason && (
+          <Card className="bg-card/80 backdrop-blur border-primary/30">
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm font-medium">{activeSeason.name}</span>
+                  <Badge variant="outline" className="text-[10px]">#{activeSeason.season_number}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{countdown}</span>
+                </div>
+              </div>
+              {rating && (() => {
+                const reward = getPlayerTierReward(rating.elo);
+                return reward ? (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Награда за сезон: <span className="text-yellow-500 font-medium">{reward.ellReward} ELL</span>
+                    {reward.bonusCard && <span className="ml-1">(+карта)</span>}
+                  </div>
+                ) : null;
+              })()}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Rating Card */}
         <Card className="bg-card/80 backdrop-blur">
