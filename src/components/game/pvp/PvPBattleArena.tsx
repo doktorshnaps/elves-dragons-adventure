@@ -731,25 +731,25 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
 
       {/* Header */}
       <Card variant="menu" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
-        <CardHeader className="py-2 sm:py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 sm:relative">
+        <CardHeader className="py-1.5 sm:py-3 px-2 sm:px-6">
+          <div className="flex items-center justify-between gap-1">
             {/* Left buttons */}
-            <div className="flex gap-1 sm:gap-2 sm:absolute sm:left-0 sm:top-0">
+            <div className="flex gap-1 flex-shrink-0">
               <Button
                 variant="menu"
                 size="sm"
-                className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9"
+                className="text-[10px] sm:text-sm px-1.5 sm:px-2 py-1 h-7 sm:h-9"
                 onClick={() => navigate("/pvp")}
               >
-                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                Назад
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5" />
+                <span className="hidden sm:inline">Назад</span>
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9">
-                    <Flag className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                    Сдаться
+                  <Button variant="destructive" size="sm" className="text-[10px] sm:text-sm px-1.5 sm:px-2 py-1 h-7 sm:h-9">
+                    <Flag className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline ml-1">Сдаться</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -765,54 +765,54 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
               </AlertDialog>
             </div>
 
-            {/* Center title */}
-            <CardTitle className="text-center text-sm sm:text-lg text-white flex-1">
-              PvP Арена - Ход {turnNumber}
-              {isBotMatch && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  <Bot className="w-3 h-3 inline" /> Бот
-                </span>
-              )}
-            </CardTitle>
+            {/* Center: Title + Bot label */}
+            <div className="flex-1 min-w-0 text-center">
+              <CardTitle className="text-xs sm:text-lg text-white truncate">
+                Ход {turnNumber}
+                {isBotMatch && (
+                  <Bot className="w-3 h-3 inline ml-1 text-muted-foreground" />
+                )}
+              </CardTitle>
+            </div>
 
-            {/* Right - turn indicator, timer, and warnings */}
-            <div className="flex items-center gap-2 sm:absolute sm:right-0 sm:top-0">
-              {isPolling && <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />}
+            {/* Right - timer + turn indicator */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {isPolling && <RefreshCw className="w-3 h-3 animate-spin text-muted-foreground" />}
               
               {/* Countdown Timer */}
               {localTimer !== null && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded font-mono text-xs sm:text-sm font-bold ${
+                <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded font-mono text-[10px] sm:text-sm font-bold ${
                   localTimer <= 10 
                     ? "bg-red-600/90 text-white animate-pulse" 
                     : localTimer <= 20 
                       ? "bg-orange-500/80 text-white" 
                       : "bg-white/10 text-white/80"
                 }`}>
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Clock className="w-3 h-3" />
                   {Math.floor(localTimer / 60)}:{(localTimer % 60).toString().padStart(2, "0")}
                 </div>
               )}
               
               {/* Turn Indicator */}
               <div
-                className={`px-2 py-1 rounded text-xs sm:text-sm font-medium ${
+                className={`px-1.5 py-0.5 rounded text-[10px] sm:text-sm font-medium whitespace-nowrap ${
                   isMyTurn ? "bg-green-500/80 text-white" : "bg-yellow-500/80 text-black"
                 }`}
               >
-                {isMyTurn ? "Ваш ход" : "Ход противника"}
+                {isMyTurn ? "Ваш ход" : "Ход ⏳"}
               </div>
               
               {/* Timeout Warnings */}
               {(timeoutWarnings.my > 0 || timeoutWarnings.opponent > 0) && (
-                <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                <div className="flex items-center gap-0.5 text-[9px] sm:text-xs">
                   {timeoutWarnings.my > 0 && (
-                    <span className="bg-red-500/80 text-white px-1.5 py-0.5 rounded" title="Ваши предупреждения">
-                      ⚠️ {timeoutWarnings.my}/2
+                    <span className="bg-red-500/80 text-white px-1 py-0.5 rounded">
+                      ⚠️{timeoutWarnings.my}
                     </span>
                   )}
                   {timeoutWarnings.opponent > 0 && (
-                    <span className="bg-yellow-500/80 text-black px-1.5 py-0.5 rounded" title="Предупреждения противника">
-                      👤 {timeoutWarnings.opponent}/2
+                    <span className="bg-yellow-500/80 text-black px-1 py-0.5 rounded">
+                      👤{timeoutWarnings.opponent}
                     </span>
                   )}
                 </div>
@@ -834,101 +834,98 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
 
         {/* Action Panel with Roll History */}
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}>
-          <CardContent className="py-2 sm:py-3">
-            <div className="flex gap-3">
-              {/* Left: Dice + Controls */}
-              <div className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                {/* Single Dice Display (only attacker rolls now) */}
-                <div className="flex items-center justify-center gap-4 w-full">
-                  <InlineDiceDisplay
-                    key={`dice-${diceKey}`}
-                    isRolling={isDiceRolling}
-                    diceValue={lastRoll?.attackerRoll ?? null}
-                    isAttacker={true}
-                    label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
-                  />
+          <CardContent className="py-1.5 sm:py-3 px-2 sm:px-6">
+            <div className="flex flex-col gap-1.5 sm:gap-2">
+              {/* Dice + Controls row */}
+              <div className="flex items-center justify-between gap-1.5 w-full">
+                <InlineDiceDisplay
+                  key={`dice-${diceKey}`}
+                  isRolling={isDiceRolling}
+                  diceValue={lastRoll?.attackerRoll ?? null}
+                  isAttacker={true}
+                  label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
+                />
 
-                  {/* Attack Button + Auto-select toggle */}
-                  {isMyTurn ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        onClick={handleAttack}
-                        disabled={selectedPair === null || selectedTarget === null || isLoading}
-                        size="sm"
-                        variant="menu"
-                        className="h-8 sm:h-10 px-4 sm:px-6 text-sm sm:text-base"
-                        style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
-                      >
-                        <Sword className="w-4 h-4 mr-2" />
-                        Атаковать
-                      </Button>
-                      <div className="flex items-center gap-1.5">
-                        <Switch
-                          id="auto-select"
-                          checked={autoSelect}
-                          onCheckedChange={setAutoSelect}
-                          className="scale-75 sm:scale-100"
-                        />
-                        <Label htmlFor="auto-select" className="text-[10px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
-                          <Zap className="w-3 h-3 text-yellow-400" />
-                          Авто
-                        </Label>
-                      </div>
+                {/* Attack Button + Auto-select toggle */}
+                {isMyTurn ? (
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      onClick={handleAttack}
+                      disabled={selectedPair === null || selectedTarget === null || isLoading}
+                      size="sm"
+                      variant="menu"
+                      className="h-7 sm:h-10 px-2 sm:px-6 text-xs sm:text-base whitespace-nowrap"
+                      style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
+                    >
+                      <Sword className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      Атаковать
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Switch
+                        id="auto-select"
+                        checked={autoSelect}
+                        onCheckedChange={setAutoSelect}
+                        className="scale-75"
+                      />
+                      <Label htmlFor="auto-select" className="text-[9px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
+                        <Zap className="w-2.5 h-2.5 text-yellow-400" />
+                        Авто
+                      </Label>
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
-                      <div className="flex items-center gap-1.5">
-                        <Switch
-                          id="auto-select-wait"
-                          checked={autoSelect}
-                          onCheckedChange={setAutoSelect}
-                          className="scale-75 sm:scale-100"
-                        />
-                        <Label htmlFor="auto-select-wait" className="text-[10px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
-                          <Zap className="w-3 h-3 text-yellow-400" />
-                          Авто
-                        </Label>
-                      </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-7 sm:h-10 flex items-center text-white/70 text-[10px] sm:text-sm whitespace-nowrap">Ожидание хода...</div>
+                    <div className="flex items-center gap-1">
+                      <Switch
+                        id="auto-select-wait"
+                        checked={autoSelect}
+                        onCheckedChange={setAutoSelect}
+                        className="scale-75"
+                      />
+                      <Label htmlFor="auto-select-wait" className="text-[9px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
+                        <Zap className="w-2.5 h-2.5 text-yellow-400" />
+                        Авто
+                      </Label>
                     </div>
-                  )}
-                </div>
-
-                {/* Roll Result Description */}
-                {lastRoll && rollResultInfo && (
-                  <div className={`text-sm font-medium ${rollResultInfo.color}`}>
-                    {rollResultInfo.text}
-                    {lastRoll.damage > 0 && ` → ${lastRoll.damage} урона`}
-                    {lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0 && (
-                      <span className="text-red-400 ml-2">
-                        (Контратака: {lastRoll.counterAttackDamage} урона вам!)
-                      </span>
-                    )}
                   </div>
                 )}
-
-                {/* Selection hints */}
-                {isMyTurn && selectedPair === null && (
-                  <div className="text-[10px] sm:text-xs text-white/70">Выберите пару для атаки</div>
-                )}
-                {isMyTurn && selectedPair !== null && selectedTarget === null && (
-                  <div className="text-[10px] sm:text-xs text-white/70">Выберите цель для атаки</div>
-                )}
-
-                {/* D6 Legend */}
-                <div className="text-[8px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-2 gap-y-0.5">
-                  <span className="text-red-400">1:Контратака</span>
-                  <span className="text-orange-400">2:Промах</span>
-                  <span className="text-yellow-400">3:50%</span>
-                  <span className="text-green-400">4:100%</span>
-                  <span className="text-blue-400">5:150%</span>
-                  <span className="text-purple-400">6:200%</span>
-                </div>
               </div>
 
-              {/* Right: Roll History */}
+              {/* Roll Result Description */}
+              {lastRoll && rollResultInfo && (
+                <div className={`text-[10px] sm:text-sm font-medium text-center ${rollResultInfo.color}`}>
+                  {rollResultInfo.text}
+                  {lastRoll.damage > 0 && ` → ${lastRoll.damage} урона`}
+                  {lastRoll.isCounterAttack && lastRoll.counterAttackDamage && lastRoll.counterAttackDamage > 0 && (
+                    <span className="text-red-400 ml-1">
+                      (Контратака: {lastRoll.counterAttackDamage})
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Selection hints */}
+              {isMyTurn && selectedPair === null && (
+                <div className="text-[9px] sm:text-xs text-white/70 text-center">Выберите пару для атаки</div>
+              )}
+              {isMyTurn && selectedPair !== null && selectedTarget === null && (
+                <div className="text-[9px] sm:text-xs text-white/70 text-center">Выберите цель для атаки</div>
+              )}
+
+              {/* D6 Legend */}
+              <div className="text-[7px] sm:text-[10px] text-white/50 flex flex-wrap justify-center gap-x-1.5 gap-y-0">
+                <span className="text-red-400">1:Контратака</span>
+                <span className="text-orange-400">2:Промах</span>
+                <span className="text-yellow-400">3:50%</span>
+                <span className="text-green-400">4:100%</span>
+                <span className="text-blue-400">5:150%</span>
+                <span className="text-purple-400">6:200%</span>
+              </div>
+
+              {/* Roll History - below controls on all screens */}
               {rollHistory.length > 0 && (
-                <div className="flex-1 min-w-0 border-l border-white/10 pl-3">
+                <div className="border-t border-white/10 pt-1.5">
                   <PvPRollHistory history={rollHistory} />
                 </div>
               )}
@@ -942,11 +939,11 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
           className="flex-1 min-h-0 flex flex-col overflow-hidden"
           style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
         >
-          <CardHeader className="py-2 flex-shrink-0">
-            <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
-              <Sword className="w-4 h-4" />
-              Противник: {opponentWallet.slice(0, 12)}...
-              {isBotMatch && <Bot className="w-4 h-4 ml-1" />}
+          <CardHeader className="py-1.5 sm:py-2 flex-shrink-0 px-2 sm:px-6">
+            <CardTitle className="flex items-center gap-1 sm:gap-2 text-red-400 justify-center text-xs sm:text-sm truncate">
+              <Sword className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate">Противник: {opponentWallet.slice(0, 10)}...</span>
+              {isBotMatch && <Bot className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
