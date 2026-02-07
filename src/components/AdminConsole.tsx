@@ -546,10 +546,13 @@ export const AdminConsole = () => {
     const rarityAsNumber = parseInt(String(rarityInput), 10) as any;
     const stats = calculateCardStats(dbCard.name, rarityAsNumber, dbCard.type);
     
+    // Map cardDatabase types to card_instances DB types
+    const dbCardType = dbCard.type === 'character' ? 'hero' : dbCard.type === 'pet' ? 'dragon' : dbCard.type;
+    
     const cardData = {
       id: `admin-${Date.now()}-${Math.random()}`,
       name: dbCard.name,
-      type: dbCard.type,
+      type: dbCardType,
       rarity: rarityAsNumber,
       faction: dbCard.faction || 'Без фракции',
       power: stats.power,
