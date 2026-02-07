@@ -33,6 +33,7 @@ export const ClanPage = () => {
     transferLeadership,
     disbandClan,
     searchClans,
+    updateClanInfo,
     invalidateClan,
   } = useClan();
 
@@ -109,6 +110,7 @@ export const ClanPage = () => {
                 onChangeRole={changeRole}
                 onTransferLeadership={transferLeadership}
                 onCustomizationUpdate={invalidateClan}
+                onUpdateClanInfo={updateClanInfo}
               />
             </TabsContent>
 

@@ -617,6 +617,7 @@ export type Database = {
           level: number | null
           max_members: number | null
           name: string
+          social_links: Json | null
           treasury_ell: number | null
           updated_at: string | null
         }
@@ -633,6 +634,7 @@ export type Database = {
           level?: number | null
           max_members?: number | null
           name: string
+          social_links?: Json | null
           treasury_ell?: number | null
           updated_at?: string | null
         }
@@ -649,6 +651,7 @@ export type Database = {
           level?: number | null
           max_members?: number | null
           name?: string
+          social_links?: Json | null
           treasury_ell?: number | null
           updated_at?: string | null
         }
@@ -4579,6 +4582,14 @@ export type Database = {
             }
             Returns: Json
           }
+      update_clan_info: {
+        Args: {
+          p_description?: string
+          p_social_links?: Json
+          p_wallet: string
+        }
+        Returns: Json
+      }
       update_daily_quest_progress: {
         Args: {
           p_increment?: number
