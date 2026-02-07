@@ -1,51 +1,138 @@
 
 
-# Auto-Select Cards in PvP
+# PvP Seasons System
 
-## Current Behavior
-Each turn the player must:
-1. Click on one of their own pairs (attacker)
-2. Click on one of the opponent's pairs (target)
-3. Click "Атаковать"
+## What Already Exists
 
-This means 3 clicks per turn, which can get tedious across many turns.
+The database already has strong foundations:
+- `pvp_seasons` table with `season_number`, `name`, `starts_at`, `ends_at`, `is_active`, `rewards_config` (JSONB with tier-based ELL/card rewards)
+- `pvp_ratings` table linked to seasons via `season_id`
+- `pvp_matches` table linked to seasons via `season_id`
+- Active Season 1 running ("Сезон 1: Начало") until April 23, 2026
+- `get_active_pvp_season()` function used throughout ELO calculations
 
-## Proposed Solution
-Add a toggle "Автовыбор" in the action panel of the PvP battle. When enabled:
-- The system automatically selects the **first alive pair** as the attacker
-- The system automatically selects the **first alive opponent pair** as the target
-- The player only clicks "Атаковать"
+What's **missing**: admin management UI, season end-of-season leaderboard with rewards, and reward distribution logic.
 
-The player can still manually override any selection by clicking a different card while auto-select is active. After the attack resolves and a new turn begins, auto-select re-applies.
+---
 
-## How Auto-Select Picks Cards
+## Plan Overview
 
-| Role | Logic |
-|------|-------|
-| Attacker (my pair) | First pair with `currentHealth > 0` (by index) |
-| Target (opponent pair) | First pair with `currentHealth > 0` (by index) |
+### Part 1: Database -- Admin RPC Functions
 
-This mirrors the bot's own targeting logic (first alive pair), keeping it simple and predictable.
+Create a migration with 3 new RPC functions:
 
-## UI Changes
+**`admin_create_pvp_season`** -- Create a new season with parameters:
+- `p_admin_wallet_address` (verified via `is_admin_or_super_wallet`)
+- `p_name` (season name, e.g. "Season 2: Dragons")
+- `p_duration_days` (how many days the season lasts)
+- `p_rewards_config` (JSONB with rewards per Elo tier)
+- Auto-increments `season_number`, sets `starts_at` = now, `ends_at` = now + duration
+- Deactivates any currently active season first
 
-A toggle switch or button will appear next to the "Атаковать" button:
-- Label: "Автовыбор"
-- Visual: a small Switch component (from Radix UI, already installed)
-- When enabled, pairs are pre-selected with their usual highlight colors
-- The state persists throughout the match (saved in component state)
+**`admin_update_pvp_season`** -- Edit an existing season:
+- Update name, end date, rewards_config
+- Only allows edits while season is still active
+
+**`admin_end_pvp_season`** -- End season early and prepare results:
+- Sets `is_active = false`, `ends_at = now()`
+- Returns the season ID for reward distribution
+
+**`get_pvp_season_leaderboard`** -- Get season results with rewards:
+- Accepts `p_season_id` (UUID)
+- Returns top players from `pvp_ratings` for that season, joined with the rewards_config to show what each tier earns
+- Includes: rank, wallet, elo, tier, wins, losses, win_rate, reward_ell, reward_bonus
+
+**`admin_distribute_season_rewards`** -- Actually give out rewards:
+- Takes `p_admin_wallet_address` and `p_season_id`
+- Iterates through all players in that season's `pvp_ratings`
+- Based on each player's final `tier`, adds ELL via `add_ell_balance`
+- Marks the season as "rewards_distributed" (new boolean column) to prevent double distribution
+
+### Part 2: Schema Changes
+
+Add one column to `pvp_seasons`:
+- `rewards_distributed boolean DEFAULT false` -- prevents double reward payout
+
+### Part 3: Admin Panel Component
+
+Create `src/components/admin/PvPSeasonAdmin.tsx`:
+
+- **Current Season Card**: Shows active season name, number, start/end dates, time remaining countdown
+- **Rewards Configuration**: Editable table/form showing each Elo tier (Bronze through Legend) with:
+  - Tier name and Elo range
+  - ELL reward amount (editable input)
+  - Bonus card rarity (select dropdown)
+  - Special title flag (checkbox for Legend tier)
+- **Create New Season**: Form with name, duration (days/hours), rewards config
+- **End Season Button**: Ends current season early with confirmation dialog
+- **Season History**: List of past seasons with their results
+- **Distribute Rewards Button**: For ended seasons, triggers reward distribution with progress indicator
+
+### Part 4: Admin Panel Integration
+
+Update `src/pages/AdminSettings.tsx`:
+- Add new "PvP Сезоны" tab trigger
+- Add `TabsContent` with `PvPSeasonAdmin` component
+- Add import for the new component
+
+### Part 5: PvP Hub -- Season Info Display
+
+Update `src/components/game/pvp/PvPHub.tsx`:
+- Add a **Season Banner** card at the top showing:
+  - Current season name and number
+  - Time remaining (countdown)
+  - Current tier rewards preview (what player earns at their current Elo tier)
+- Fetch active season data on mount via Supabase query
+
+### Part 6: Season Leaderboard in PvP Hub
+
+Update `src/components/game/pvp/PvPLeaderboard.tsx`:
+- Add a **"Season Results"** tab alongside the existing leaderboard
+- When a season has ended, show:
+  - Final rankings with positions
+  - Each player's tier and corresponding reward
+  - Highlight "Rewards distributed" or "Awaiting rewards" status
+- For the current season: show the live leaderboard with reward preview per tier
+
+### Part 7: Hook for Season Data
+
+Create `src/hooks/usePvPSeason.ts`:
+- Fetches active season info
+- Fetches season leaderboard for ended seasons
+- Provides countdown timer for season end
+- Caches via React Query with appropriate stale times
+
+---
 
 ## Technical Details
 
-**File: `src/components/game/pvp/PvPBattleArena.tsx`**
+### Rewards Config Structure (existing format, kept as-is)
 
-1. Add a `useState<boolean>` for `autoSelect`, defaulting to `false`
-2. Add a `useEffect` that triggers when `isMyTurn` becomes `true` and `autoSelect` is on:
-   - Find the first alive pair in `myPairs` -> set as `selectedPair`
-   - Find the first alive pair in `opponentPairs` -> set as `selectedTarget`
-3. Also re-apply auto-select after `handleAttack` completes and the next turn data arrives (the existing `handleAttack` already resets `selectedPair`/`selectedTarget` to `null`, and the effect above will re-fill them when new turn data loads)
-4. Add a `Switch` + label in the action panel row, next to the attack button
-5. Manual card clicks still work and override auto-selection while toggle is on
+```text
+{
+  "bronze":   { "icon": "...", "min_elo": 0,    "max_elo": 1199, "ell_reward": 500 },
+  "silver":   { "icon": "...", "min_elo": 1200, "max_elo": 1399, "ell_reward": 1500 },
+  "gold":     { "icon": "...", "min_elo": 1400, "max_elo": 1599, "ell_reward": 3000 },
+  "platinum": { "icon": "...", "min_elo": 1600, "max_elo": 1799, "ell_reward": 5000, "bonus_card": true },
+  "diamond":  { "icon": "...", "min_elo": 1800, "max_elo": 1999, "ell_reward": 10000, "bonus_card": "rare" },
+  "master":   { "icon": "...", "min_elo": 2000, "max_elo": 2199, "ell_reward": 20000, "bonus_card": "epic" },
+  "legend":   { "icon": "...", "min_elo": 2200, "max_elo": 99999, "ell_reward": 50000, "bonus_card": "legendary", "title": true }
+}
+```
 
-**No backend changes required** -- this is purely a frontend UX improvement.
+### Files to Create
+- `src/components/admin/PvPSeasonAdmin.tsx` -- Admin season management component
+- `src/hooks/usePvPSeason.ts` -- Season data hook
+- Migration SQL file -- RPC functions + schema change
 
+### Files to Edit
+- `src/pages/AdminSettings.tsx` -- Add PvP Seasons tab
+- `src/components/game/pvp/PvPHub.tsx` -- Add season banner
+- `src/components/game/pvp/PvPLeaderboard.tsx` -- Add season results view
+- `src/integrations/supabase/types.ts` -- Update types for new column and RPCs
+
+### Key Design Decisions
+- Rewards are **not auto-distributed** at season end -- admin clicks a button to review and confirm, preventing accidents
+- Each season stores its own `rewards_config`, so historical seasons preserve what rewards were offered
+- The leaderboard for ended seasons queries `pvp_ratings` by `season_id`, showing the frozen final standings
+- Season banner in PvP Hub uses the existing `pvp_seasons` table data, no new tables needed
