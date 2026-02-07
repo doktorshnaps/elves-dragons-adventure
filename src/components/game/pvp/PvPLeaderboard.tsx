@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, Crown, Clock, Gift, Loader2 } from "lucide-react";
+import { Trophy, Medal, Crown, Clock, Gift, Loader2, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase";
 import { usePvPSeason, PvPSeason, SeasonLeaderboardEntry } from "@/hooks/usePvPSeason";
+import { PlacementReward } from "@/components/admin/PlacementRewardEditor";
+import { BonusReward } from "@/components/admin/BonusRewardEditor";
 
 const RARITY_NAMES: Record<number, string> = {
   1: "Обычные",
@@ -152,7 +154,6 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
     if (!season?.rewards_config) return 0;
     const config = season.rewards_config;
     
-    // Per-league format detection
     let tierConfig: Record<string, any>;
     if (league && config[String(league)] && typeof config[String(league)] === 'object') {
       tierConfig = config[String(league)] as Record<string, any>;
@@ -169,6 +170,34 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
       }
     }
     return 0;
+  };
+
+  // Get placement reward for a specific rank within a tier
+  const getPlacementReward = (season: PvPSeason | null, elo: number, rank: number, league?: number): PlacementReward | null => {
+    if (!season?.rewards_config) return null;
+    const config = season.rewards_config;
+    
+    let tierConfig: Record<string, any>;
+    if (league && config[String(league)] && typeof config[String(league)] === 'object') {
+      tierConfig = config[String(league)] as Record<string, any>;
+    } else if (config.bronze) {
+      tierConfig = config as Record<string, any>;
+    } else {
+      const firstLeague = Object.keys(config).find(k => /^\d+$/.test(k));
+      tierConfig = firstLeague ? (config as any)[firstLeague] : config as Record<string, any>;
+    }
+    
+    for (const [, tc] of Object.entries(tierConfig)) {
+      if (tc && tc.min_elo !== undefined && elo >= tc.min_elo && elo <= tc.max_elo) {
+        const placements: PlacementReward[] = tc.placement_rewards || [];
+        for (const p of placements) {
+          if (rank >= p.from_rank && rank <= p.to_rank) {
+            return p;
+          }
+        }
+      }
+    }
+    return null;
   };
 
   // Find ended seasons for the "past results" selector
@@ -332,6 +361,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                 {seasonLeaderboard.map((entry) => {
                   const isCurrentPlayer = entry.wallet_address === currentWallet;
                   const reward = getSeasonTierReward(selectedSeason, entry.elo, rarityTier);
+                  const placementReward = getPlacementReward(selectedSeason, entry.elo, Number(entry.rank), rarityTier);
                   return (
                     <div
                       key={entry.wallet_address}
@@ -359,6 +389,20 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
                           <span className="text-green-500">{entry.wins}W</span>
                           <span className="text-red-500">{entry.losses}L</span>
                         </div>
+                        {/* Placement reward info */}
+                        {placementReward && (
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <Award className="w-3 h-3 text-yellow-500 flex-shrink-0" />
+                            {placementReward.ell_reward > 0 && (
+                              <span className="text-[10px] text-yellow-500 font-medium">+{placementReward.ell_reward} ELL</span>
+                            )}
+                            {placementReward.bonus_rewards?.map((bonus: BonusReward, i: number) => (
+                              <Badge key={i} variant="outline" className="text-[9px] px-1 py-0 bg-yellow-500/10 text-yellow-400 border-yellow-500/30">
+                                {bonus.name} ×{bonus.quantity}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         {reward > 0 && (
