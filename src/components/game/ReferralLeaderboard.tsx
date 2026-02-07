@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, TrendingUp, Award, Clock, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDisplayNames } from "@/hooks/useDisplayNames";
+import { useAdmin } from "@/contexts/AdminContext";
 
 interface ReferralStats {
   wallet_address: string;
@@ -33,6 +35,7 @@ interface OverallStats {
 
 export const ReferralLeaderboard = () => {
   const { toast } = useToast();
+  const { isAdmin } = useAdmin();
   
   const [allTimeStats, setAllTimeStats] = useState<ReferralStats[]>([]);
   const [weeklyStats, setWeeklyStats] = useState<ReferralStats[]>([]);
@@ -40,6 +43,22 @@ export const ReferralLeaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedReferrer, setSelectedReferrer] = useState<string | null>(null);
   const [referralDetails, setReferralDetails] = useState<ReferralDetail[]>([]);
+
+  // Collect all wallet addresses for display name lookup
+  const allWallets = useMemo(() => {
+    const wallets = new Set<string>();
+    allTimeStats.forEach(s => wallets.add(s.wallet_address));
+    weeklyStats.forEach(s => wallets.add(s.wallet_address));
+    referralDetails.forEach(d => wallets.add(d.wallet_address));
+    return [...wallets];
+  }, [allTimeStats, weeklyStats, referralDetails]);
+  
+  const { getDisplayName } = useDisplayNames(allWallets);
+  
+  const formatWallet = (wallet: string) => {
+    if (isAdmin) return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
+    return getDisplayName(wallet);
+  };
 
   useEffect(() => {
     loadReferralStats();
@@ -193,9 +212,9 @@ export const ReferralLeaderboard = () => {
                 }`}>
                   #{index + 1}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-mono text-white truncate">
-                    {stat.wallet_address.slice(0, 8)}...{stat.wallet_address.slice(-4)}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-mono text-white truncate">
+                      {formatWallet(stat.wallet_address)}
                   </div>
                   <div className="text-xs text-white/50">
                     {referrals} реф.
@@ -293,7 +312,7 @@ export const ReferralLeaderboard = () => {
                 >
                   <div>
                     <div className="text-xs text-white font-mono">
-                      {detail.wallet_address.slice(0, 10)}...{detail.wallet_address.slice(-4)}
+                      {formatWallet(detail.wallet_address)}
                     </div>
                     <div className="text-xs text-white/50">
                       {new Date(detail.created_at).toLocaleDateString('ru-RU')}

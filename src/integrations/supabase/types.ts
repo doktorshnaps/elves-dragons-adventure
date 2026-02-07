@@ -3855,6 +3855,7 @@ export type Database = {
       get_clan_leaderboard: { Args: never; Returns: Json }
       get_clan_requests: { Args: { p_wallet: string }; Returns: Json }
       get_current_user_wallet: { Args: never; Returns: string }
+      get_display_names: { Args: { p_wallets: string[] }; Returns: Json }
       get_dungeon_item_drops: {
         Args: { p_dungeon_level: number; p_dungeon_number: number }
         Returns: {
@@ -4605,6 +4606,10 @@ export type Database = {
           p_wallet_address: string
         }
         Returns: boolean
+      }
+      upsert_display_name: {
+        Args: { p_display_name: string; p_wallet_address: string }
+        Returns: Json
       }
       upsert_nft_card_instance: {
         Args: {

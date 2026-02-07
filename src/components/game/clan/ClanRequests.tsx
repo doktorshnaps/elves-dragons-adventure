@@ -35,6 +35,7 @@ export const ClanRequests = ({ requests, loading, onReview }: ClanRequestsProps)
                 <div className="text-sm font-medium text-white">
                   {request.display_name || `${request.wallet_address.slice(0, 10)}...`}
                 </div>
+                <div className="text-[10px] text-white/30 font-mono truncate">{request.wallet_address}</div>
                 <div className="flex items-center gap-2 text-xs text-white/40">
                   <span>Elo: {request.elo}</span>
                   {request.account_level && <span>Ур. {request.account_level}</span>}

@@ -1,5 +1,6 @@
 import { Trophy, Shield, Users, Crown } from 'lucide-react';
 import type { ClanLeaderboardEntry } from '@/hooks/useClan';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface ClanLeaderboardProps {
   leaderboard: ClanLeaderboardEntry[];
@@ -8,6 +9,7 @@ interface ClanLeaderboardProps {
 }
 
 export const ClanLeaderboard = ({ leaderboard, loading, myClanId }: ClanLeaderboardProps) => {
+  const { isAdmin } = useAdmin();
   if (loading) {
     return <div className="text-center text-white/50 py-8">Загрузка рейтинга...</div>;
   }
@@ -66,6 +68,7 @@ export const ClanLeaderboard = ({ leaderboard, loading, myClanId }: ClanLeaderbo
                 <span><Users className="w-3 h-3 inline" /> {entry.member_count}/{entry.max_members}</span>
                 <span>Ур. {entry.level}</span>
                 {entry.leader_name && <span><Crown className="w-3 h-3 inline" /> {entry.leader_name}</span>}
+                {isAdmin && !entry.leader_name && <span className="font-mono text-[10px]"><Crown className="w-3 h-3 inline" /> {entry.leader_wallet.slice(0, 8)}...</span>}
               </div>
             </div>
 
