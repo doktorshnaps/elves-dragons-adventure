@@ -2,6 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface PlacementReward {
+  from_rank: number;
+  to_rank: number;
+  ell_reward: number;
+  bonus_rewards?: BonusReward[];
+}
+
 export interface BonusReward {
   type: "hero_card" | "dragon_card" | "item";
   template_id: string;

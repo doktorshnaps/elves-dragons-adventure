@@ -12,6 +12,7 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { usePvPSeason, PvPSeason, SeasonLeaderboardEntry } from "@/hooks/usePvPSeason";
 import { toast } from "sonner";
 import { BonusRewardEditor, BonusRewardDisplay, BonusReward } from "./BonusRewardEditor";
+import { PlacementRewardEditor, PlacementRewardDisplay, PlacementReward } from "./PlacementRewardEditor";
 
 const TIER_LABELS: Record<string, string> = {
   bronze: "Бронза",
@@ -41,6 +42,7 @@ interface TierConfig {
   ell_reward: number;
   bonus_card?: string | boolean;
   bonus_rewards?: BonusReward[];
+  placement_rewards?: PlacementReward[];
   title?: boolean;
 }
 
@@ -356,20 +358,37 @@ export const PvPSeasonAdmin: React.FC = () => {
                               )}
                             </div>
                             {editingRewards ? (
-                              <BonusRewardEditor
-                                rewards={config.bonus_rewards || []}
-                                onChange={(rewards) => {
-                                  setEditRewards(prev => ({
-                                    ...prev,
-                                    [selectedRewardLeague]: {
-                                      ...prev[selectedRewardLeague],
-                                      [tierKey]: { ...prev[selectedRewardLeague]?.[tierKey], bonus_rewards: rewards },
-                                    },
-                                  }));
-                                }}
-                              />
+                              <>
+                                <BonusRewardEditor
+                                  rewards={config.bonus_rewards || []}
+                                  onChange={(rewards) => {
+                                    setEditRewards(prev => ({
+                                      ...prev,
+                                      [selectedRewardLeague]: {
+                                        ...prev[selectedRewardLeague],
+                                        [tierKey]: { ...prev[selectedRewardLeague]?.[tierKey], bonus_rewards: rewards },
+                                      },
+                                    }));
+                                  }}
+                                />
+                                <PlacementRewardEditor
+                                  rewards={config.placement_rewards || []}
+                                  onChange={(placementRewards) => {
+                                    setEditRewards(prev => ({
+                                      ...prev,
+                                      [selectedRewardLeague]: {
+                                        ...prev[selectedRewardLeague],
+                                        [tierKey]: { ...prev[selectedRewardLeague]?.[tierKey], placement_rewards: placementRewards },
+                                      },
+                                    }));
+                                  }}
+                                />
+                              </>
                             ) : (
-                              <BonusRewardDisplay rewards={config.bonus_rewards} />
+                              <>
+                                <BonusRewardDisplay rewards={config.bonus_rewards} />
+                                <PlacementRewardDisplay rewards={config.placement_rewards} />
+                              </>
                             )}
                           </div>
                         ))}
@@ -557,6 +576,18 @@ export const PvPSeasonAdmin: React.FC = () => {
                         [selectedCreateLeague]: {
                           ...prev[selectedCreateLeague],
                           [tierKey]: { ...prev[selectedCreateLeague]?.[tierKey], bonus_rewards: rewards },
+                        },
+                      }));
+                    }}
+                  />
+                  <PlacementRewardEditor
+                    rewards={config.placement_rewards || []}
+                    onChange={(placementRewards) => {
+                      setRewardsConfig(prev => ({
+                        ...prev,
+                        [selectedCreateLeague]: {
+                          ...prev[selectedCreateLeague],
+                          [tierKey]: { ...prev[selectedCreateLeague]?.[tierKey], placement_rewards: placementRewards },
                         },
                       }));
                     }}
