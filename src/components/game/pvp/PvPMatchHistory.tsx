@@ -23,9 +23,32 @@ interface MatchHistoryEntry {
 
 interface PvPMatchHistoryProps {
   walletAddress: string | null;
+  rarityTier: number;
 }
 
-export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress }) => {
+const RARITY_NAMES: Record<number, string> = {
+  1: "Обычные",
+  2: "Необычные",
+  3: "Редкие",
+  4: "Эпические",
+  5: "Легендарные",
+  6: "Мифические",
+  7: "Божественные",
+  8: "Трансцендентные"
+};
+
+const RARITY_COLORS: Record<number, string> = {
+  1: "bg-gray-500",
+  2: "bg-green-500",
+  3: "bg-blue-500",
+  4: "bg-purple-500",
+  5: "bg-orange-500",
+  6: "bg-red-500",
+  7: "bg-pink-500",
+  8: "bg-gradient-to-r from-purple-500 to-pink-500"
+};
+
+export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress, rarityTier }) => {
   const [matches, setMatches] = useState<MatchHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,23 +56,23 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress 
     if (walletAddress) {
       loadMatchHistory();
     }
-  }, [walletAddress]);
+  }, [walletAddress, rarityTier]);
 
   const loadMatchHistory = async () => {
     if (!walletAddress) return;
     
     setLoading(true);
 
-    // Use proper filter syntax for OR condition
     const { data, error } = await supabase
       .from("pvp_matches")
       .select("id, player1_wallet, player2_wallet, winner_wallet, loser_wallet, elo_change, player1_elo_before, player2_elo_before, finished_at, is_bot_match, rarity_tier")
       .eq("status", "completed")
+      .eq("rarity_tier", rarityTier)
       .or(`player1_wallet.eq.${walletAddress},player2_wallet.eq.${walletAddress}`)
       .order("finished_at", { ascending: false })
       .limit(20);
 
-    console.log("[PvP History] Query result:", { walletAddress, data, error });
+    console.log("[PvP History] Query result:", { walletAddress, rarityTier, data, error });
     if (!error && data) {
       setMatches(data);
     }
@@ -82,40 +105,15 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress 
     };
   };
 
-  const getRarityName = (tier: number) => {
-    const names: Record<number, string> = {
-      1: "Обычные",
-      2: "Необычные",
-      3: "Редкие",
-      4: "Эпические",
-      5: "Легендарные",
-      6: "Мифические",
-      7: "Божественные",
-      8: "Трансцендентные"
-    };
-    return names[tier] || `Тир ${tier}`;
-  };
-
-  const getRarityColor = (tier: number) => {
-    const colors: Record<number, string> = {
-      1: "bg-gray-500",
-      2: "bg-green-500",
-      3: "bg-blue-500",
-      4: "bg-purple-500",
-      5: "bg-orange-500",
-      6: "bg-red-500",
-      7: "bg-pink-500",
-      8: "bg-gradient-to-r from-purple-500 to-pink-500"
-    };
-    return colors[tier] || "bg-gray-500";
-  };
-
   return (
     <Card className="bg-card/80 backdrop-blur">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg">
           <History className="w-5 h-5 text-primary" />
           История матчей
+          <Badge className={`${RARITY_COLORS[rarityTier]} text-[10px] px-1.5`}>
+            {RARITY_NAMES[rarityTier]}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -130,7 +128,7 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress 
         ) : matches.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Swords className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            У вас ещё нет завершённых матчей
+            Нет матчей в лиге «{RARITY_NAMES[rarityTier]}»
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-2">
@@ -157,9 +155,6 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress 
                         {result.isBotMatch && (
                           <Bot className="w-4 h-4 text-muted-foreground" />
                         )}
-                        <Badge className={`${getRarityColor(match.rarity_tier)} text-[10px] px-1.5`}>
-                          {getRarityName(match.rarity_tier)}
-                        </Badge>
                       </div>
                       <div className={`flex items-center gap-1 font-bold ${
                         result.isWinner ? "text-green-500" : "text-red-500"
