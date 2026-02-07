@@ -2828,24 +2828,15 @@ export type Database = {
         Args: { p_items: Json; p_target_wallet_address: string }
         Returns: boolean
       }
-      admin_give_player_card:
-        | {
-            Args: {
-              p_card_data: Json
-              p_card_template_id: string
-              p_target_wallet_address: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_admin_wallet_address?: string
-              p_card_data: Json
-              p_card_template_id: string
-              p_target_wallet_address: string
-            }
-            Returns: string
-          }
+      admin_give_player_card: {
+        Args: {
+          p_admin_wallet_address?: string
+          p_card_data: Json
+          p_card_template_id: string
+          p_target_wallet_address: string
+        }
+        Returns: string
+      }
       admin_give_player_item:
         | {
             Args: { p_target_wallet_address: string; p_template_id: number }
