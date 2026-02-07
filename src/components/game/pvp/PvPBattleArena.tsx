@@ -13,7 +13,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw, Dices } from "lucide-react";
+import { Sword, Shield, Heart, ArrowLeft, Flag, Clock, Bot, RefreshCw, Dices, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { InlineDiceDisplay } from "../battle/InlineDiceDisplay";
 import { DamageIndicator } from "../battle/DamageIndicator";
@@ -193,6 +195,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
   const { adjustDelay } = useBattleSpeed();
   const [selectedPair, setSelectedPair] = useState<number | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
+  const [autoSelect, setAutoSelect] = useState(false);
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [diceKey, setDiceKey] = useState(0);
   const [showInitiative, setShowInitiative] = useState(turnNumber === 1 && !!initiative);
@@ -274,6 +277,17 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [showInitiative]);
+
+  // Auto-select first alive pairs when it's my turn and autoSelect is enabled
+  useEffect(() => {
+    if (!autoSelect || !isMyTurn) return;
+    
+    const firstAliveAttacker = myPairs.findIndex(p => p.currentHealth > 0);
+    const firstAliveTarget = opponentPairs.findIndex(p => p.currentHealth > 0);
+    
+    if (firstAliveAttacker >= 0) setSelectedPair(firstAliveAttacker);
+    if (firstAliveTarget >= 0) setSelectedTarget(firstAliveTarget);
+  }, [autoSelect, isMyTurn, myPairs, opponentPairs]);
 
   // Helper function to get card position relative to battle container
   const getCardPosition = useCallback((isMyTeam: boolean, pairIndex: number): { x: number; y: number } => {
@@ -851,21 +865,49 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                     label={isMyTurn ? "Ваш бросок" : (lastRoll?.source === "opponent" ? "Бросок противника" : "Ожидание...")}
                   />
 
-                  {/* Attack Button */}
+                  {/* Attack Button + Auto-select toggle */}
                   {isMyTurn ? (
-                    <Button
-                      onClick={handleAttack}
-                      disabled={selectedPair === null || selectedTarget === null || isLoading}
-                      size="sm"
-                      variant="menu"
-                      className="h-8 sm:h-10 px-4 sm:px-6 text-sm sm:text-base"
-                      style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
-                    >
-                      <Sword className="w-4 h-4 mr-2" />
-                      Атаковать
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleAttack}
+                        disabled={selectedPair === null || selectedTarget === null || isLoading}
+                        size="sm"
+                        variant="menu"
+                        className="h-8 sm:h-10 px-4 sm:px-6 text-sm sm:text-base"
+                        style={{ boxShadow: "-33px 15px 10px rgba(0, 0, 0, 0.6)" }}
+                      >
+                        <Sword className="w-4 h-4 mr-2" />
+                        Атаковать
+                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Switch
+                          id="auto-select"
+                          checked={autoSelect}
+                          onCheckedChange={setAutoSelect}
+                          className="scale-75 sm:scale-100"
+                        />
+                        <Label htmlFor="auto-select" className="text-[10px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
+                          <Zap className="w-3 h-3 text-yellow-400" />
+                          Авто
+                        </Label>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 sm:h-10 flex items-center text-white/70 text-sm">Ожидание хода...</div>
+                      <div className="flex items-center gap-1.5">
+                        <Switch
+                          id="auto-select-wait"
+                          checked={autoSelect}
+                          onCheckedChange={setAutoSelect}
+                          className="scale-75 sm:scale-100"
+                        />
+                        <Label htmlFor="auto-select-wait" className="text-[10px] sm:text-xs text-white/80 cursor-pointer flex items-center gap-0.5">
+                          <Zap className="w-3 h-3 text-yellow-400" />
+                          Авто
+                        </Label>
+                      </div>
+                    </div>
                   )}
                 </div>
 
