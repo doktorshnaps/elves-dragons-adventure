@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Shield, Crown, Users, Coins, LogOut, Trash2, Paintbrush } from 'lucide-react';
+import { Shield, Crown, Users, Coins, LogOut, Trash2, Paintbrush, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClanMembers } from './ClanMembers';
 import { ClanCustomization } from './ClanCustomization';
+import { ClanSettings, SocialLinksDisplay } from './ClanSettings';
 import type { ClanInfo, ClanMember } from '@/hooks/useClan';
 import {
   AlertDialog,
@@ -34,6 +35,7 @@ interface ClanOverviewProps {
   onChangeRole: (wallet: string, role: string) => Promise<boolean | undefined>;
   onTransferLeadership: (wallet: string) => Promise<boolean | undefined>;
   onCustomizationUpdate: () => void;
+  onUpdateClanInfo: (description: string, socialLinks: Record<string, string>) => Promise<boolean>;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -59,9 +61,11 @@ export const ClanOverview = ({
   onChangeRole,
   onTransferLeadership,
   onCustomizationUpdate,
+  onUpdateClanInfo,
 }: ClanOverviewProps) => {
   const isEmblemUrl = clan.emblem?.startsWith('http');
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -92,6 +96,7 @@ export const ClanOverview = ({
                 {clan.description && (
                   <p className="text-sm text-white/60 mt-0.5">{clan.description}</p>
                 )}
+                {clan.social_links && <SocialLinksDisplay links={clan.social_links} />}
               </div>
             </div>
             <Badge variant="outline" className="border-amber-500/50 text-amber-400">
@@ -120,29 +125,53 @@ export const ClanOverview = ({
         {/* Actions */}
         <div className="flex flex-wrap gap-2 mt-4">
           {(myRole === 'leader' || myRole === 'deputy') && (
-            <Dialog open={customizeOpen} onOpenChange={setCustomizeOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/20">
-                  <Paintbrush className="w-3.5 h-3.5 mr-1" />
-                  Оформление
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-gray-900 border-white/10 max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Оформление клана</DialogTitle>
-                </DialogHeader>
-                <ClanCustomization
-                  clanId={clan.id}
-                  currentEmblem={isEmblemUrl ? clan.emblem : null}
-                  currentBackground={clan.background_image}
-                  currentHeaderBackground={clan.header_background}
-                  onUpdate={() => {
-                    onCustomizationUpdate();
-                    setCustomizeOpen(false);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
+            <>
+              <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/20">
+                    <Settings className="w-3.5 h-3.5 mr-1" />
+                    Настройки
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-gray-900 border-white/10 max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Настройки клана</DialogTitle>
+                  </DialogHeader>
+                  <ClanSettings
+                    currentDescription={clan.description}
+                    currentSocialLinks={clan.social_links || {}}
+                    onSave={async (desc, links) => {
+                      const ok = await onUpdateClanInfo(desc, links);
+                      if (ok) setSettingsOpen(false);
+                      return ok;
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Dialog open={customizeOpen} onOpenChange={setCustomizeOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/20">
+                    <Paintbrush className="w-3.5 h-3.5 mr-1" />
+                    Оформление
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-gray-900 border-white/10 max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Оформление клана</DialogTitle>
+                  </DialogHeader>
+                  <ClanCustomization
+                    clanId={clan.id}
+                    currentEmblem={isEmblemUrl ? clan.emblem : null}
+                    currentBackground={clan.background_image}
+                    currentHeaderBackground={clan.header_background}
+                    onUpdate={() => {
+                      onCustomizationUpdate();
+                      setCustomizeOpen(false);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            </>
           )}
           {myRole !== 'leader' && (
             <AlertDialog>

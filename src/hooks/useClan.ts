@@ -18,6 +18,7 @@ export interface ClanInfo {
   join_policy: string;
   leader_wallet: string;
   created_at: string;
+  social_links: Record<string, string> | null;
 }
 
 export interface ClanMember {
@@ -264,6 +265,25 @@ export const useClan = () => {
     return true;
   }, [accountId, toast, invalidateClan]);
 
+  // Update clan info (description + social links)
+  const updateClanInfo = useCallback(async (description: string, socialLinks: Record<string, string>) => {
+    if (!accountId) return false;
+    const { data, error } = await supabase.rpc('update_clan_info', {
+      p_wallet: accountId,
+      p_description: description || null,
+      p_social_links: socialLinks,
+    });
+    if (error) throw error;
+    const result = data as any;
+    if (!result.success) {
+      toast({ title: 'Ошибка', description: result.error, variant: 'destructive' });
+      return false;
+    }
+    toast({ title: 'Информация обновлена!' });
+    await invalidateClan();
+    return true;
+  }, [accountId, toast, invalidateClan]);
+
   // Search clans
   const searchClans = useCallback(async (query?: string) => {
     const { data, error } = await supabase.rpc('search_clans', { p_query: query || null });
@@ -298,6 +318,7 @@ export const useClan = () => {
     transferLeadership,
     disbandClan,
     searchClans,
+    updateClanInfo,
     invalidateClan,
   };
 };
