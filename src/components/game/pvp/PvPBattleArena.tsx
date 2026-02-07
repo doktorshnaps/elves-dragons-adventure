@@ -264,9 +264,13 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
     }
   };
 
+  // Track processed rolls to prevent duplicates from dependency changes
+  const lastProcessedRollRef = useRef<typeof lastRoll>(null);
+
   // Handle dice roll animation when lastRoll changes
   useEffect(() => {
-    if (lastRoll) {
+    if (lastRoll && lastRoll !== lastProcessedRollRef.current) {
+      lastProcessedRollRef.current = lastRoll;
       setDiceKey((prev) => prev + 1);
       setIsDiceRolling(true);
       
