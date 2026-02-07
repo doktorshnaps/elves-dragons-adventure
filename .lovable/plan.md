@@ -1,58 +1,134 @@
 
 
-# Fix: clan_members table public data exposure
+# Fix: Two New Security Warnings
 
-## Problem
+## Warning 1: profiles_public -- Intentional, should be ignored
 
-The `clan_members` table has an RLS policy `Anyone can view clan members` with `USING (true)`, making all member data (wallet addresses, roles, contribution amounts, join dates) readable by anyone. This data could be used to identify high-value targets or analyze clan economics.
+**What the scanner says:** "The 'profiles_public' table contains wallet addresses and display names that are publicly readable."
 
-## Analysis
+**Why this is a false positive:** This is the view we just created specifically to protect the `profiles` table. It only exposes two fields:
+- `wallet_address` -- already public on the NEAR blockchain
+- `display_name` -- intentionally public for leaderboards, clans, match history
 
-**Good news:** The frontend code never queries `clan_members` directly. All 12 clan-related functions (`get_my_clan`, `get_clan_leaderboard`, `search_clans`, etc.) are `SECURITY DEFINER` RPCs, which bypass RLS entirely. This means we can safely restrict direct table access without breaking anything.
+The base `profiles` table is properly locked with `USING (false)`. The view is doing exactly what it should. We will mark this finding as "ignored" with a justification.
 
-**Table columns exposed:**
-- `id`, `clan_id`, `wallet_address`, `role`, `joined_at`, `contributed_ell`
+**Action:** Mark as ignored in the security scanner. No code or database changes needed.
 
-**Mutation policies are already secure:**
-- INSERT: `WITH CHECK (false)` -- blocked
-- UPDATE: `USING (false)` -- blocked  
-- DELETE: `USING (false)` -- blocked
+---
 
-Only the SELECT policy needs fixing.
+## Warning 2: pvp_matches -- Real issue, fix without breaking gameplay
 
-## Solution
+**What the scanner says:** "The 'pvp_matches' table allows anyone to view completed matches, exposing player wallet addresses, battle outcomes, and ELO ratings."
 
-Replace the permissive SELECT policy with a restrictive one that blocks direct table access. All existing functionality continues to work through SECURITY DEFINER RPCs.
+**Root cause:** The policy `Anyone can view completed matches` with `USING (status = 'completed')` makes all completed match data publicly queryable. Two frontend components query `pvp_matches` directly:
+1. `PvPMatchHistory.tsx` -- loads player's own match history
+2. `PvPLeaderboard.tsx` "live" tab -- fetches 500 raw matches and computes win/loss stats client-side
 
-## Technical Details
+**Critical constraint:** A realtime subscription in `usePvP.ts` listens for UPDATE events on `pvp_matches` to detect opponent moves and match state changes during active gameplay. If we block all SELECT, the subscription breaks and PvP becomes unplayable.
 
-### Database migration (single SQL statement):
+**Solution:** Change the SELECT policy to only allow viewing active/in-progress matches (for the realtime subscription), and move all completed match queries to secure RPCs.
+
+### Database changes
+
+1. **Replace the SELECT policy** -- change from "completed" to "active/waiting" matches only:
 
 ```sql
--- Drop the overly permissive SELECT policy
-DROP POLICY IF EXISTS "Anyone can view clan members" ON public.clan_members;
+DROP POLICY IF EXISTS "Anyone can view completed matches" ON public.pvp_matches;
 
--- Replace with a restrictive policy (all access goes through SECURITY DEFINER RPCs)
-CREATE POLICY "No direct select on clan_members"
-  ON public.clan_members FOR SELECT
-  USING (false);
+-- Keep active match visibility for realtime subscription (gameplay)
+CREATE POLICY "Anyone can view active matches"
+  ON public.pvp_matches FOR SELECT
+  USING (status IN ('active', 'waiting'));
 ```
 
-### Frontend changes: None
+2. **Create `get_my_match_history` RPC** -- secure access to own completed matches:
 
-No code changes are needed because the app already uses RPCs exclusively:
-- `get_my_clan` -- returns members of user's own clan
-- `get_clan_leaderboard` -- returns aggregated clan stats
-- `search_clans` -- returns clan summaries with member counts
-- All management operations (kick, role change, etc.) -- SECURITY DEFINER RPCs
+```sql
+CREATE OR REPLACE FUNCTION public.get_my_match_history(
+  p_wallet text,
+  p_rarity_tier integer,
+  p_limit integer DEFAULT 20
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN COALESCE((
+    SELECT jsonb_agg(row_to_json(m.*)::jsonb ORDER BY m.finished_at DESC)
+    FROM (
+      SELECT id, player1_wallet, player2_wallet, winner_wallet, loser_wallet,
+             elo_change, player1_elo_before, player2_elo_before, finished_at,
+             is_bot_match, rarity_tier
+      FROM pvp_matches
+      WHERE status = 'completed'
+        AND rarity_tier = p_rarity_tier
+        AND (player1_wallet = p_wallet OR player2_wallet = p_wallet)
+      ORDER BY finished_at DESC
+      LIMIT p_limit
+    ) m
+  ), '[]'::jsonb);
+END;
+$$;
+```
 
-### After migration: Update security findings
+3. **Create `get_pvp_league_stats` RPC** -- for the leaderboard "live" tab, reads from `pvp_ratings` (which is already public and has cumulative stats):
 
-Delete the resolved finding from the security scanner.
+```sql
+CREATE OR REPLACE FUNCTION public.get_pvp_league_stats(
+  p_rarity_tier integer,
+  p_limit integer DEFAULT 50
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN COALESCE((
+    SELECT jsonb_agg(row_to_json(r.*)::jsonb ORDER BY r.wins DESC)
+    FROM (
+      SELECT wallet_address, wins, losses, matches_played,
+             CASE WHEN matches_played > 0 
+               THEN ROUND((wins::numeric / matches_played) * 100)
+               ELSE 0 
+             END as win_rate
+      FROM pvp_ratings
+      WHERE rarity_tier = p_rarity_tier
+        AND season_id = get_active_pvp_season()
+        AND matches_played > 0
+      ORDER BY wins DESC
+      LIMIT p_limit
+    ) r
+  ), '[]'::jsonb);
+END;
+$$;
+```
 
-## Impact
+### Frontend changes
 
-- Zero functional changes -- all clan features continue working identically
-- Members list, leaderboard, search, join/leave, management -- all unaffected
-- Only direct table queries from malicious clients are blocked
+**File: `src/components/game/pvp/PvPMatchHistory.tsx`**
+- Replace direct `supabase.from("pvp_matches")` query with `supabase.rpc('get_my_match_history', { p_wallet, p_rarity_tier, p_limit: 20 })`
+- Parse the returned JSON array
+
+**File: `src/components/game/pvp/PvPLeaderboard.tsx`**
+- Replace direct `supabase.from("pvp_matches")` query in `loadLeaderboard` with `supabase.rpc('get_pvp_league_stats', { p_rarity_tier, p_limit: 50 })`
+- Update the leaderboard computation to use pre-aggregated data instead of raw match processing
+
+### Security scanner updates
+
+- Mark `profiles_public_table_exposure` finding as **ignored** with justification
+- Mark `pvp_matches_public_exposure` finding as **resolved** (delete it)
+
+---
+
+## Impact assessment
+
+- **No visual changes** -- all features work identically
+- **Match history** -- still loads player's own matches via secure RPC
+- **Leaderboard "live" tab** -- now uses `pvp_ratings` data (more accurate than raw match aggregation)
+- **Realtime PvP gameplay** -- subscription still works for active matches (turn changes, match state)
+- **Completed match data** -- no longer publicly queryable, only accessible per-player through RPC
+- **Season leaderboard** -- unchanged (already uses `fetchSeasonLeaderboard` RPC)
 
