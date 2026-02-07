@@ -26,6 +26,7 @@ import { ShopSettings } from "@/components/admin/ShopSettings";
 import { PlayerManagement } from "@/components/admin/PlayerManagement";
 import { GameMetrics } from "@/components/admin/GameMetrics";
 import { MgtExchangeAdmin } from "@/components/admin/MgtExchangeAdmin";
+import { PvPSeasonAdmin } from "@/components/admin/PvPSeasonAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -112,6 +113,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="shop" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Магазин</TabsTrigger>
                 <TabsTrigger value="players" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Игроки</TabsTrigger>
                 <TabsTrigger value="mgt-exchange" className="text-white data-[state=active]:bg-white/20 rounded-3xl">💰 mGT</TabsTrigger>
+                <TabsTrigger value="pvp-seasons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">⚔️ PvP Сезоны</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
@@ -179,6 +181,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="mgt-exchange" className="space-y-4">
                 <MgtExchangeAdmin />
+              </TabsContent>
+
+              <TabsContent value="pvp-seasons" className="space-y-4">
+                <PvPSeasonAdmin />
               </TabsContent>
             </>
           )}
