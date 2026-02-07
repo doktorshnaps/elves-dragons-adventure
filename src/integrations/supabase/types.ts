@@ -4023,6 +4023,10 @@ export type Database = {
         }[]
       }
       get_my_clan: { Args: { p_wallet: string }; Returns: Json }
+      get_my_match_history: {
+        Args: { p_limit?: number; p_rarity_tier: number; p_wallet: string }
+        Returns: Json
+      }
       get_my_queue_entry: { Args: { p_wallet: string }; Returns: Json }
       get_nft_card_instances_by_wallet: {
         Args: { p_wallet_address: string }
@@ -4101,6 +4105,10 @@ export type Database = {
           win_streak: number
           wins: number
         }[]
+      }
+      get_pvp_league_stats: {
+        Args: { p_limit?: number; p_rarity_tier: number }
+        Returns: Json
       }
       get_pvp_match: {
         Args: { p_match_id: string; p_wallet_address: string }

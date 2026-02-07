@@ -64,17 +64,17 @@ export const PvPMatchHistory: React.FC<PvPMatchHistoryProps> = ({ walletAddress,
     setLoading(true);
 
     const { data, error } = await supabase
-      .from("pvp_matches")
-      .select("id, player1_wallet, player2_wallet, winner_wallet, loser_wallet, elo_change, player1_elo_before, player2_elo_before, finished_at, is_bot_match, rarity_tier")
-      .eq("status", "completed")
-      .eq("rarity_tier", rarityTier)
-      .or(`player1_wallet.eq.${walletAddress},player2_wallet.eq.${walletAddress}`)
-      .order("finished_at", { ascending: false })
-      .limit(20);
+      .rpc('get_my_match_history', {
+        p_wallet: walletAddress,
+        p_rarity_tier: rarityTier,
+        p_limit: 20
+      });
 
-    console.log("[PvP History] Query result:", { walletAddress, rarityTier, data, error });
+    console.log("[PvP History] RPC result:", { walletAddress, rarityTier, data, error });
     if (!error && data) {
-      setMatches(data);
+      // RPC returns jsonb array
+      const parsed = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data) : []);
+      setMatches(parsed);
     }
     setLoading(false);
   };
