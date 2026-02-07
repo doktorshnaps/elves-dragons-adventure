@@ -184,9 +184,10 @@ export const PvPHub: React.FC = () => {
   const secondsUntilBot = Math.max(0, BOT_FALLBACK_SECONDS - queueStatus.searchTime);
 
   return (
-    <div className="min-h-screen bg-pvp p-4 relative">
+    <div className="h-screen bg-pvp relative flex flex-col">
       <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-      <div className="max-w-4xl mx-auto space-y-4 relative z-10">
+      <div className="flex-1 overflow-y-auto relative z-10 p-4">
+        <div className="max-w-4xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate("/menu")}>
@@ -504,6 +505,7 @@ export const PvPHub: React.FC = () => {
             <PvPMatchHistory walletAddress={walletAddress} rarityTier={selectedRarityTier} />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
 
       {/* Team Preview Dialog */}
