@@ -70,22 +70,25 @@ Deno.serve(async (req) => {
     
     const buildingLevels = gameData.building_levels || {};
 
-    // 3. Find the building upgrade
+    // 3. Find the building upgrade (optional for admin instant-complete)
     const upgradeIndex = upgrades.findIndex((u: any) => u.buildingId === building_id);
     
-    if (upgradeIndex === -1) {
-      console.warn('⚠️ No active upgrade found for building:', building_id);
-      return new Response(
-        JSON.stringify({ error: 'No active upgrade found for this building' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let targetLevel: number;
+    let updatedUpgrades: any[];
+
+    if (upgradeIndex !== -1) {
+      // Upgrade exists in queue — complete it
+      const upgrade = upgrades[upgradeIndex];
+      console.log('🔨 Found upgrade:', upgrade);
+      targetLevel = upgrade.targetLevel || ((buildingLevels[building_id] || 0) + 1);
+      updatedUpgrades = upgrades.filter((_: any, i: number) => i !== upgradeIndex);
+    } else {
+      // No active upgrade — admin force-set to current+1
+      console.log('⚠️ No active upgrade found, admin force-completing:', building_id);
+      targetLevel = (buildingLevels[building_id] || 0) + 1;
+      updatedUpgrades = upgrades;
     }
 
-    const upgrade = upgrades[upgradeIndex];
-    console.log('🔨 Found upgrade:', upgrade);
-
-    // 4. Complete the upgrade instantly using targetLevel from upgrade
-    const targetLevel = upgrade.targetLevel || ((buildingLevels[building_id] || 0) + 1);
     const updatedBuildingLevels = {
       ...buildingLevels,
       [building_id]: targetLevel
@@ -94,12 +97,8 @@ Deno.serve(async (req) => {
     console.log('⚡ Completing upgrade:', {
       building_id,
       currentLevel: buildingLevels[building_id] || 0,
-      targetLevel,
-      upgradeObject: upgrade
+      targetLevel
     });
-
-    // Remove the upgrade from active_building_upgrades
-    const updatedUpgrades = upgrades.filter((_: any, i: number) => i !== upgradeIndex);
 
     // 5. Update game_data
     const { error: updateError } = await supabaseClient
