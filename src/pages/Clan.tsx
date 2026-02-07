@@ -33,6 +33,7 @@ export const ClanPage = () => {
     transferLeadership,
     disbandClan,
     searchClans,
+    invalidateClan,
   } = useClan();
 
   if (loadingMyClan) {
@@ -94,6 +95,7 @@ export const ClanPage = () => {
                 onKick={kickMember}
                 onChangeRole={changeRole}
                 onTransferLeadership={transferLeadership}
+                onCustomizationUpdate={invalidateClan}
               />
             </TabsContent>
 

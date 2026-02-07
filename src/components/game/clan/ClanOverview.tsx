@@ -2,6 +2,7 @@ import { Shield, Crown, Users, Coins, LogOut, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClanMembers } from './ClanMembers';
+import { ClanCustomization } from './ClanCustomization';
 import type { ClanInfo, ClanMember } from '@/hooks/useClan';
 import {
   AlertDialog,
@@ -24,6 +25,7 @@ interface ClanOverviewProps {
   onKick: (wallet: string) => Promise<boolean | undefined>;
   onChangeRole: (wallet: string, role: string) => Promise<boolean | undefined>;
   onTransferLeadership: (wallet: string) => Promise<boolean | undefined>;
+  onCustomizationUpdate: () => void;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -48,27 +50,45 @@ export const ClanOverview = ({
   onKick,
   onChangeRole,
   onTransferLeadership,
+  onCustomizationUpdate,
 }: ClanOverviewProps) => {
+  const isEmblemUrl = clan.emblem?.startsWith('http');
+
   return (
     <div className="space-y-4">
-      {/* Clan header */}
-      <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">{clan.name}</h2>
-              {clan.description && (
-                <p className="text-sm text-white/60 mt-0.5">{clan.description}</p>
-              )}
-            </div>
+      {/* Clan header with optional background */}
+      <div
+        className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4 relative overflow-hidden"
+      >
+        {/* Background image */}
+        {clan.background_image && (
+          <div className="absolute inset-0">
+            <img src={clan.background_image} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/60" />
           </div>
-          <Badge variant="outline" className="border-amber-500/50 text-amber-400">
-            Ур. {clan.level}
-          </Badge>
-        </div>
+        )}
+
+        <div className="relative z-10">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center overflow-hidden">
+                {isEmblemUrl ? (
+                  <img src={clan.emblem} alt="Эмблема" className="w-full h-full object-cover" />
+                ) : (
+                  <Shield className="w-6 h-6 text-amber-400" />
+                )}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">{clan.name}</h2>
+                {clan.description && (
+                  <p className="text-sm text-white/60 mt-0.5">{clan.description}</p>
+                )}
+              </div>
+            </div>
+            <Badge variant="outline" className="border-amber-500/50 text-amber-400">
+              Ур. {clan.level}
+            </Badge>
+          </div>
 
         <div className="grid grid-cols-3 gap-3 mt-4">
           <div className="bg-black/30 rounded-lg p-3 text-center">
@@ -133,7 +153,18 @@ export const ClanOverview = ({
             </AlertDialog>
           )}
         </div>
+        </div>
       </div>
+
+      {/* Customization (leader/deputy only) */}
+      {(myRole === 'leader' || myRole === 'deputy') && (
+        <ClanCustomization
+          clanId={clan.id}
+          currentEmblem={isEmblemUrl ? clan.emblem : null}
+          currentBackground={clan.background_image}
+          onUpdate={onCustomizationUpdate}
+        />
+      )}
 
       {/* Members */}
       <ClanMembers

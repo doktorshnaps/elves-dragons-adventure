@@ -9,6 +9,7 @@ export interface ClanInfo {
   name: string;
   description: string | null;
   emblem: string;
+  background_image: string | null;
   level: number;
   experience: number;
   treasury_ell: number;
@@ -43,7 +44,7 @@ export interface ClanSearchResult {
 export interface ClanLeaderboardEntry {
   id: string;
   name: string;
-  emblem: string;
+  emblem: string | null;
   level: number;
   leader_wallet: string;
   leader_name: string | null;

@@ -49,8 +49,12 @@ export const ClanLeaderboard = ({ leaderboard, loading, myClanId }: ClanLeaderbo
               {index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`}
             </div>
 
-            <div className="w-9 h-9 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-amber-400" />
+            <div className="w-9 h-9 rounded-lg bg-amber-600/30 border border-amber-500/50 flex items-center justify-center overflow-hidden">
+              {entry.emblem?.startsWith('http') ? (
+                <img src={entry.emblem} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Shield className="w-4 h-4 text-amber-400" />
+              )}
             </div>
 
             <div className="flex-1 min-w-0">
