@@ -19,6 +19,8 @@ import { t } from '@/utils/translations';
 import { getTranslatedCardName } from '@/utils/cardNameTranslations';
 import { useBattleSpeed } from '@/contexts/BattleSpeedContext';
 import { resolveCardImageSync } from '@/utils/cardImageResolver';
+import { PvPRollHistory, RollHistoryEntry } from '@/components/game/pvp/PvPRollHistory';
+import { getDicePercentage } from '@/utils/diceFormula';
 interface TeamBattleArenaProps {
   playerPairs: TeamPair[];
   opponents: Opponent[];
@@ -65,10 +67,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const [autoBattle, setAutoBattle] = useState(false);
   const [isAttacking, setIsAttacking] = useState(false);
   
-  // Dice roll state - теперь берем из реальных бросков
+  // Dice roll state
   const [isDiceRolling, setIsDiceRolling] = useState(false);
   const [isPlayerAttacking, setIsPlayerAttacking] = useState(true);
   const [diceKey, setDiceKey] = useState(0);
+  
+  // Roll history (last entry)
+  const [rollHistory, setRollHistory] = useState<RollHistoryEntry[]>([]);
   
   // Damage indicators for each pair and enemy
   const [pairDamages, setPairDamages] = useState<Map<string, { damage: number; isCritical?: boolean; isBlocked?: boolean; key: number }>>(new Map());
@@ -186,15 +191,67 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     }
   }, [lastRoll, isDiceRolling, level]);
 
-  // Автоматический запуск анимации кубиков при получении lastRoll
+  // Автоматический запуск анимации кубиков + построение истории бросков при получении lastRoll
+  const lastProcessedRollRef = useRef<typeof lastRoll>(null);
+  
   useEffect(() => {
-    if (lastRoll && lastRoll.level === level) {
+    if (lastRoll && lastRoll.level === level && lastRoll !== lastProcessedRollRef.current) {
+      lastProcessedRollRef.current = lastRoll;
       console.log(`🎲 [UI] Starting dice animation for ${lastRoll.source} (${new Date().toISOString()})`);
       
       // Устанавливаем кто атакует
       setIsPlayerAttacking(lastRoll.source === 'player');
       setIsDiceRolling(true);
       setDiceKey(prev => prev + 1);
+      
+      // Построение записи истории бросков
+      const dicePercent = getDicePercentage(lastRoll.attackerRoll);
+      let attackerPower = 0;
+      let defenderDefense = 0;
+      let attackerName = '';
+      let targetName = '';
+      
+      if (lastRoll.source === 'player') {
+        const pair = playerPairs.find(p => p.id === selectedPair) || alivePairs[0];
+        const target = opponents.find(o => o.id === (lastRoll as any).targetOpponentId);
+        attackerPower = pair?.power || 0;
+        defenderDefense = target?.armor || 0;
+        attackerName = pair?.hero?.name || 'Игрок';
+        targetName = target?.name || 'Монстр';
+      } else {
+        const targetPairId = (lastRoll as any).targetPairId;
+        const targetPair = playerPairs.find(p => p.id === targetPairId) || alivePairs[0];
+        // Enemy attacker — find from opponents
+        attackerPower = 0; // We don't have the specific enemy stored, use damage calculation
+        defenderDefense = targetPair?.defense || 0;
+        attackerName = 'Монстр';
+        targetName = targetPair?.hero?.name || 'Игрок';
+        // Reverse-calculate attacker power from damage for display
+        if (!lastRoll.isMiss && lastRoll.damage > 0 && dicePercent > 0) {
+          attackerPower = Math.ceil((lastRoll.damage + defenderDefense) / (dicePercent / 100));
+        }
+      }
+      
+      const modifiedPower = Math.floor(attackerPower * (dicePercent / 100));
+      
+      const historyEntry: RollHistoryEntry = {
+        id: Date.now(),
+        source: lastRoll.source === 'player' ? 'player' : 'opponent',
+        diceRoll: lastRoll.attackerRoll,
+        dicePercent,
+        attackerPower,
+        defenderDefense,
+        modifiedPower,
+        netDamage: lastRoll.damage,
+        isMiss: !!lastRoll.isMiss,
+        isCritical: !!lastRoll.isCritical,
+        isCounterAttack: !!lastRoll.isCounterAttack,
+        counterAttackDamage: lastRoll.counterAttackDamage,
+        attackerName,
+        targetName,
+      };
+      
+      setRollHistory([historyEntry]);
       
       // Если атака врага, показываем урон на конкретной паре после задержки
       if (lastRoll.source === 'enemy' && lastRoll.damage >= 0 && (lastRoll as any).targetPairId) {
@@ -239,6 +296,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(stopDiceTimer);
     }
   }, [lastRoll, level, adjustDelay]);
+
+  // Авто-выбор первой живой пары и первой живой цели при ходе игрока
+  useEffect(() => {
+    if (isPlayerTurn && !isAttacking && !autoBattle) {
+      if (!selectedPair || !alivePairs.find(p => p.id === selectedPair)) {
+        const firstAlive = alivePairs[0];
+        if (firstAlive) setSelectedPair(firstAlive.id);
+      }
+      if (selectedTarget === null || !aliveOpponents.find(o => o.id === selectedTarget)) {
+        const firstAliveOpp = aliveOpponents[0];
+        if (firstAliveOpp) setSelectedTarget(firstAliveOpp.id);
+      }
+    }
+  }, [isPlayerTurn, isAttacking, autoBattle, alivePairs.length, aliveOpponents.length]);
 
   // Таймер хода врага — гарантирует единичное срабатывание даже при лагах сети
   const enemyAttackTimerRef = React.useRef<number | null>(null);
@@ -597,6 +668,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
                   </Button>
                 </div>
+                
+                {/* Roll History */}
+                {rollHistory.length > 0 && (
+                  <div className="border-t border-white/10 pt-1">
+                    <PvPRollHistory history={rollHistory} />
+                  </div>
+                )}
                 </div>
               </div>
             </CardContent>
