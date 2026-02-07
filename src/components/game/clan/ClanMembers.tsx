@@ -1,6 +1,7 @@
 import { Crown, Shield, Swords, User, UserMinus, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAdmin } from '@/contexts/AdminContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,7 @@ const ROLE_COLOR: Record<string, string> = {
 
 export const ClanMembers = ({ members, myRole, onKick, onChangeRole, onTransferLeadership }: ClanMembersProps) => {
   const { accountId } = useWalletContext();
+  const { isAdmin } = useAdmin();
   const canManage = myRole === 'leader' || myRole === 'deputy';
 
   const canKick = (targetRole: string, targetWallet: string) => {
@@ -84,6 +86,9 @@ export const ClanMembers = ({ members, myRole, onKick, onChangeRole, onTransferL
                     <span className="text-xs text-white/40 ml-1">(вы)</span>
                   )}
                 </div>
+                {isAdmin && (
+                  <div className="text-[10px] text-white/30 font-mono truncate">{member.wallet_address}</div>
+                )}
                 <div className="text-xs text-white/40">Elo: {member.elo}</div>
               </div>
             </div>

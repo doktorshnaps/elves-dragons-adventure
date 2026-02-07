@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase";
 import { usePvPSeason, PvPSeason, SeasonLeaderboardEntry } from "@/hooks/usePvPSeason";
 import { PlacementReward } from "@/components/admin/PlacementRewardEditor";
 import { BonusReward } from "@/components/admin/BonusRewardEditor";
+import { useDisplayNames } from "@/hooks/useDisplayNames";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const RARITY_NAMES: Record<number, string> = {
   1: "Обычные",
@@ -58,6 +60,7 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("live");
+  const { isAdmin } = useAdmin();
 
   const { activeSeason, allSeasons, fetchSeasonLeaderboard, countdown } = usePvPSeason();
 
@@ -139,6 +142,17 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
     return entries.slice(0, 50);
   }, [matches]);
 
+  // Fetch display names for all wallets in leaderboards
+  const allWallets = useMemo(() => {
+    const wallets = leaderboard.map(e => e.wallet_address);
+    seasonLeaderboard.forEach(e => {
+      if (!wallets.includes(e.wallet_address)) wallets.push(e.wallet_address);
+    });
+    return wallets;
+  }, [leaderboard, seasonLeaderboard]);
+  
+  const { getDisplayName } = useDisplayNames(allWallets);
+
   const getRankIcon = (index: number) => {
     if (index === 0) return <Crown className="w-5 h-5 text-yellow-500" />;
     if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
@@ -147,7 +161,8 @@ export const PvPLeaderboard: React.FC<PvPLeaderboardProps> = ({ currentWallet, r
   };
 
   const formatWallet = (wallet: string) => {
-    return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
+    if (isAdmin) return `${wallet.slice(0, 8)}...${wallet.slice(-4)}`;
+    return getDisplayName(wallet);
   };
 
   const getSeasonTierReward = (season: PvPSeason | null, elo: number, league?: number): number => {
