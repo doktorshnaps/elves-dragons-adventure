@@ -111,12 +111,7 @@ export const ClanCustomization = ({
   };
 
   return (
-    <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-xl p-4">
-      <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
-        <Camera className="w-4 h-4 text-amber-400" />
-        Оформление клана
-      </h3>
-
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         {/* Emblem */}
         <div className="space-y-2">
@@ -189,8 +184,8 @@ export const ClanCustomization = ({
         </div>
       </div>
 
-      <p className="text-[10px] text-white/30 mt-2">
-        Макс. 2 МБ. Формат: только WEBP. Доступно главе и заместителю.
+      <p className="text-[10px] text-white/40">
+        Макс. 2 МБ · Формат: только WEBP
       </p>
     </div>
   );

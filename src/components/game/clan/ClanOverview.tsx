@@ -1,4 +1,5 @@
-import { Shield, Crown, Users, Coins, LogOut, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, Crown, Users, Coins, LogOut, Trash2, Paintbrush } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ClanMembers } from './ClanMembers';
@@ -15,6 +16,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface ClanOverviewProps {
   clan: ClanInfo;
@@ -53,6 +61,7 @@ export const ClanOverview = ({
   onCustomizationUpdate,
 }: ClanOverviewProps) => {
   const isEmblemUrl = clan.emblem?.startsWith('http');
+  const [customizeOpen, setCustomizeOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -109,7 +118,31 @@ export const ClanOverview = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
+          {(myRole === 'leader' || myRole === 'deputy') && (
+            <Dialog open={customizeOpen} onOpenChange={setCustomizeOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="border-amber-500/50 text-amber-400 hover:bg-amber-500/20">
+                  <Paintbrush className="w-3.5 h-3.5 mr-1" />
+                  Оформление
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-gray-900 border-white/10 max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Оформление клана</DialogTitle>
+                </DialogHeader>
+                <ClanCustomization
+                  clanId={clan.id}
+                  currentEmblem={isEmblemUrl ? clan.emblem : null}
+                  currentBackground={clan.background_image}
+                  onUpdate={() => {
+                    onCustomizationUpdate();
+                    setCustomizeOpen(false);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
+          )}
           {myRole !== 'leader' && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -156,15 +189,7 @@ export const ClanOverview = ({
         </div>
       </div>
 
-      {/* Customization (leader/deputy only) */}
-      {(myRole === 'leader' || myRole === 'deputy') && (
-        <ClanCustomization
-          clanId={clan.id}
-          currentEmblem={isEmblemUrl ? clan.emblem : null}
-          currentBackground={clan.background_image}
-          onUpdate={onCustomizationUpdate}
-        />
-      )}
+      {/* Customization dialog (leader/deputy only) — no inline block */}
 
       {/* Members */}
       <ClanMembers
