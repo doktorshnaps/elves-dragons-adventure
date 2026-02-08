@@ -23,18 +23,33 @@ export async function initSelector({
       url.startsWith('http') ? (url.includes('?') ? `${url}&telegram=true` : `${url}?telegram=true`) : url;
 
     // Авто-открытие ссылки на Telegram из отрисованной модалки провайдера
+    // IMPORTANT: Only search inside wallet provider overlays, NOT the entire document
     try {
       let autoOpened = false;
+      const PROVIDER_SELECTORS = [
+        '.wallet-selector-modal',
+        '[class*="hot-wallet"]',
+        '[class*="here-wallet"]',
+        '[class*="wallet-selector"]',
+        '[class*="nightly"]',
+        '[id*="wallet"]',
+        '.modal-overlay',
+      ].join(', ');
+
       const tryAutoOpen = () => {
         if (autoOpened) return false;
-        const anchor = document.querySelector(
-          'a[href^="https://t.me/"], a[href^="tg://"], a[href*="telegram.me/"]'
-        ) as HTMLAnchorElement | null;
-        if (anchor?.href) {
-          autoOpened = true;
-          console.log('🔗 Auto-opening Telegram link from provider UI:', anchor.href);
-          tg.openLink(anchor.href);
-          return true;
+        // Only look for Telegram links inside wallet provider UI containers
+        const providerContainers = document.querySelectorAll(PROVIDER_SELECTORS);
+        for (const container of providerContainers) {
+          const anchor = container.querySelector(
+            'a[href^="https://t.me/"], a[href^="tg://"], a[href*="telegram.me/"]'
+          ) as HTMLAnchorElement | null;
+          if (anchor?.href) {
+            autoOpened = true;
+            console.log('🔗 Auto-opening Telegram link from provider UI:', anchor.href);
+            tg.openLink(anchor.href);
+            return true;
+          }
         }
         return false;
       };
