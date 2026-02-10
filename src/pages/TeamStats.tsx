@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { MultiTeamCards } from "@/components/game/team/MultiTeamCards";
 import { DragonEggProvider } from "@/contexts/DragonEggContext";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -14,15 +14,17 @@ export const TeamStats = () => {
     description: 'Собери непобедимую команду из героев и драконов. Комбинируй способности для максимального урона в подземельях.' 
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromPvP = searchParams.get('from') === 'pvp';
   const { language } = useLanguage();
-  return <div className="min-h-screen flex flex-col bg-team relative">
-      <div className="absolute inset-0 bg-black/30" />
+  return <div className="h-screen flex flex-col bg-team relative">
+      <div className="absolute inset-0 bg-black/30 pointer-events-none" />
       
-      <div className="relative z-10 flex flex-col min-h-screen p-2 sm:p-4">
+      <div className="relative z-10 flex flex-col flex-1 overflow-y-auto p-2 sm:p-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-6 flex-shrink-0">
-          <Button variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} className="whitespace-nowrap" onClick={() => navigate('/menu')}>
+          <Button variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} className="whitespace-nowrap" onClick={() => navigate(fromPvP ? '/pvp' : '/menu')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            {t(language, 'team.backToMenu')}
+            {fromPvP ? 'Назад в PvP' : t(language, 'team.backToMenu')}
           </Button>
           <h1 className="text-lg sm:text-2xl font-bold text-white">{t(language, 'team.title')}</h1>
         </div>
