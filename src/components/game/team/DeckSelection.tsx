@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
 import { useNFTCardIntegration } from "@/hooks/useNFTCardIntegration";
 import { ArrowUpDown, Sparkles, Swords } from "lucide-react";
-console.log('📋 [DeckSelection] Component loaded - will use centralized CardInstancesContext');
 interface DeckSelectionProps {
   cards: CardType[];
   selectedPairs: TeamPair[];
@@ -31,10 +30,6 @@ export const DeckSelection = ({
   onPairAssignDragon,
   onPairRemoveDragon
 }: DeckSelectionProps) => {
-  // Remove excessive logging in production
-  if (import.meta.env.DEV) {
-    console.log(`🎮 DeckSelection: ${cards.length} cards, ${selectedPairs.length} pairs`);
-  }
   const [showHeroDeck, setShowHeroDeck] = useState(false);
   const [showDragonDeck, setShowDragonDeck] = useState(false);
   const [activePairIndex, setActivePairIndex] = useState<number | null>(null);
@@ -42,13 +37,6 @@ export const DeckSelection = ({
   const [heroSortBy, setHeroSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
   const [dragonSortBy, setDragonSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
 
-  // Debug: track sort state changes
-  useEffect(() => {
-    console.log('🔄 Hero sort changed to:', heroSortBy);
-  }, [heroSortBy]);
-  useEffect(() => {
-    console.log('🔄 Dragon sort changed to:', dragonSortBy);
-  }, [dragonSortBy]);
   const [previewAction, setPreviewAction] = useState<{
     label: string;
     action: () => void;
@@ -71,11 +59,6 @@ export const DeckSelection = ({
   const {
     cardInstances
   } = useCardInstancesContext();
-  console.log('🎴 [DeckSelection] Loaded from CardInstancesContext:', {
-    totalInstances: cardInstances.length,
-    heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
-    dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
-  });
 
   // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {
@@ -113,44 +96,24 @@ export const DeckSelection = ({
 
     // Добавляем NFT карты (если есть)
     const result = [...instanceCards, ...nftCards];
-    console.log(`🎴 [DeckSelection] Created ${result.length} cards from ${cardInstances.length} instances`);
     return result;
   }, [cardInstances, nftCards]);
   const heroes = useMemo(() => {
-    console.log('🎯 Heroes useMemo triggered, sortBy:', heroSortBy);
-    // ПОКАЗЫВАЕМ все карты, включая мертвые, но исключаем карты в медпункте/кузнице
     const filtered = localCards.filter(card => card.type === 'character' && !card.isInMedicalBay);
-    console.log('📊 Filtered heroes (including dead):', filtered.length);
-
-    // Детальное логирование отфильтрованных Рекрутов
-    const filteredRecruits = filtered.filter(h => h.name?.includes('Рекрут'));
-    console.log(`✅ Живые РЕКРУТЫ (${filteredRecruits.length}):`, filteredRecruits.map(r => ({
-      id: r.id.substring(0, 8),
-      currentHealth: r.currentHealth,
-      health: r.health
-    })));
     if (heroSortBy === 'defense') {
-      console.log('🛡️ Sorting by max defense...');
-      const sorted = [...filtered].sort((a, b) => {
-        // Используем maxDefense, если доступна, иначе defense из card_data или базовое значение
+      return [...filtered].sort((a, b) => {
         const defenseA = typeof a.maxDefense === 'number' && a.maxDefense > 0 ? a.maxDefense : typeof a.defense === 'number' ? a.defense : 0;
         const defenseB = typeof b.maxDefense === 'number' && b.maxDefense > 0 ? b.maxDefense : typeof b.defense === 'number' ? b.defense : 0;
-        console.log(`Comparing: ${a.name} (${defenseA}) vs ${b.name} (${defenseB})`);
         return defenseB - defenseA;
       });
-      console.log('✅ Sorted heroes:', sorted.slice(0, 10).map(h => `${h.name}: maxDef=${h.maxDefense}, def=${h.defense}`));
-      return sorted;
     }
     if (heroSortBy === 'rarity') {
-      console.log('✨ Sorting by rarity...');
-      const sorted = [...filtered].sort((a, b) => {
+      return [...filtered].sort((a, b) => {
         const rarityA = typeof a.rarity === 'number' ? a.rarity : 1;
         const rarityB = typeof b.rarity === 'number' ? b.rarity : 1;
         return rarityB - rarityA;
       });
-      return sorted;
     }
-    console.log('📋 No sorting applied');
     return filtered;
   }, [localCards, heroSortBy]);
   const dragons = useMemo(() => {
@@ -275,15 +238,6 @@ export const DeckSelection = ({
       const dragonId = pair.dragon ? (pair.dragon as any).instanceId || pair.dragon.id : null;
       const updatedDragon = dragonId ? localCards.find(c => c.id === dragonId || (c as any).instanceId === dragonId) : undefined;
 
-      // Детальное логирование для отладки
-      if (!updatedHero) {
-        console.warn(`⚠️ [DeckSelection] Hero not found in localCards:`, {
-          heroName: pair.hero.name,
-          heroId: pair.hero.id,
-          heroInstanceId: (pair.hero as any).instanceId,
-          searchedId: heroId
-        });
-      }
 
       // КРИТИЧНО: ЯВНО добавляем instanceId к каждой карте для корректного поиска в useTeamBattle
       return {

@@ -167,7 +167,7 @@ export const PvPHub: React.FC = () => {
   const handleJoinQueue = async () => {
     if (!hasTeam) {
       switchTeam("pvp", selectedRarityTier);
-      navigate("/team");
+      navigate("/team?from=pvp");
       return;
     }
     await joinQueue(selectedRarityTier, createTeamSnapshot);
@@ -403,7 +403,7 @@ export const PvPHub: React.FC = () => {
                           </Button>
                         </div>
                         {/* Avatars row */}
-                        <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-1.5 mb-2 flex-wrap overflow-hidden max-w-full">
                           {selectedPairs.map((pair: TeamPair, idx: number) => (
                             <React.Fragment key={idx}>
                               {pair.hero?.image ? (
@@ -446,7 +446,7 @@ export const PvPHub: React.FC = () => {
                     ) : (
                       <div className="bg-muted/30 rounded-lg p-4 text-center border border-dashed border-muted-foreground/30">
                         <p className="text-xs text-muted-foreground mb-2">Соберите команду перед боем</p>
-                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { switchTeam("pvp", selectedRarityTier); navigate("/team"); }}>
+                        <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => { switchTeam("pvp", selectedRarityTier); navigate("/team?from=pvp"); }}>
                           Собрать команду
                         </Button>
                       </div>
@@ -602,7 +602,7 @@ export const PvPHub: React.FC = () => {
                   </div>
                 ))
               )}
-              <Button variant="outline" className="w-full" onClick={() => { setShowTeamDialog(false); switchTeam("pvp", selectedRarityTier); navigate("/team"); }}>
+              <Button variant="outline" className="w-full" onClick={() => { setShowTeamDialog(false); switchTeam("pvp", selectedRarityTier); navigate("/team?from=pvp"); }}>
                 Изменить команду
               </Button>
             </div>
