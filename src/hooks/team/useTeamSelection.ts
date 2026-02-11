@@ -65,7 +65,7 @@ export const useTeamSelection = () => {
         } : pair.dragon;
       })() : undefined
     })) as TeamPair[];
-  }, [dungeonTeam, gameData.selectedTeam, cardsMap]);
+  }, [dungeonTeam, cardsMap]);
 
   const selectedPairs: TeamPair[] = useMemo(() => {
     const source: TeamPair[] = selectedTeamWithHealth.length > 0
@@ -88,6 +88,10 @@ export const useTeamSelection = () => {
 
   // Cleanup: remove non-existing cards AND dead cards (health = 0) from selected team in player_teams
   useEffect(() => {
+    // CRITICAL: Don't cleanup while cards are still loading
+    // Empty cards array would incorrectly remove all team members
+    if (cardsLoading) return;
+    
     // ✅ Используем dungeonTeam из player_teams как источник правды
     const baseTeam = dungeonTeam as TeamPair[];
     if (!baseTeam || baseTeam.length === 0) return;
@@ -167,7 +171,7 @@ export const useTeamSelection = () => {
       // ✅ Обновляем player_teams вместо game_data
       updateTeam('dungeon', null, cleaned);
     }
-  }, [dungeonTeam, cards, updateTeam]);
+  }, [dungeonTeam, cards, cardsLoading, updateTeam]);
 
   // Listen for team updates from NFT cleanup via GameEventsContext
   useGameEvent('teamUpdate', (payload) => {
@@ -238,13 +242,25 @@ export const useTeamSelection = () => {
     
     try {
       // ✅ Обновляем player_teams вместо game_data
-      await updateTeam('dungeon', null, newPairs);
+      const success = await updateTeam('dungeon', null, newPairs);
+      if (!success) {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось добавить героя в команду. Попробуйте ещё раз.",
+          variant: "destructive"
+        });
+        return;
+      }
       
       const { setSelectedTeam } = useGameStore.getState();
       setSelectedTeam(newPairs);
-      console.log('✅ Successfully added hero to dungeon team');
     } catch (error) {
-      console.error('❌ Failed to add hero to team:', error);
+      console.error('Failed to add hero to team:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось добавить героя в команду",
+        variant: "destructive"
+      });
     }
   };
 
