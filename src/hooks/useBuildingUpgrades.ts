@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUnifiedGameState } from './useUnifiedGameState';
 import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useToast } from './use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 interface UpgradeProgress {
   buildingId: string;
@@ -15,20 +17,33 @@ export const useBuildingUpgrades = () => {
   const gameState = useUnifiedGameState();
   const { gameData } = useGameDataContext();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { accountId } = useWalletContext();
   const [activeUpgrades, setActiveUpgrades] = useState<UpgradeProgress[]>([]);
+
+  // Helper to sync upgrades to React Query cache
+  const syncToCache = useCallback((upgrades: UpgradeProgress[], extraUpdates?: Record<string, any>) => {
+    if (!accountId) return;
+    queryClient.setQueryData(['gameData', accountId], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        activeBuildingUpgrades: upgrades,
+        ...extraUpdates
+      };
+    });
+  }, [queryClient, accountId]);
 
   // Загружаем активные улучшения из GameDataContext (приоритет) или gameState (fallback)
   useEffect(() => {
-    const upgrades = gameData.activeBuildingUpgrades || gameState.activeBuildingUpgrades;
-    if (upgrades && Array.isArray(upgrades)) {
+    const upgrades = (gameData.activeBuildingUpgrades?.length > 0)
+      ? gameData.activeBuildingUpgrades
+      : gameState.activeBuildingUpgrades;
+    if (upgrades && Array.isArray(upgrades) && upgrades.length > 0) {
       console.log('🔄 [useBuildingUpgrades] Loading active upgrades:', upgrades);
       setActiveUpgrades(upgrades);
     }
   }, [gameData.activeBuildingUpgrades, gameState.activeBuildingUpgrades]);
-
-  // Убираем авто-синхронизацию, сохраняем только по явным действиям (start/ready/install)
-  // это предотвращает сетевой спам RPC вызовами
-
 
   // Проверяем завершенные улучшения и помечаем как готовые к установке
   useEffect(() => {
@@ -52,9 +67,10 @@ export const useBuildingUpgrades = () => {
 
     if (changed) {
       setActiveUpgrades(updated);
+      syncToCache(updated);
       gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
     }
-  }, [activeUpgrades, gameState.actions, toast]);
+  }, [activeUpgrades, gameState.actions, toast, syncToCache]);
 
   // Дополнительная проверка таймеров каждую секунду
   useEffect(() => {
@@ -79,12 +95,13 @@ export const useBuildingUpgrades = () => {
 
       if (needsUpdate) {
         setActiveUpgrades(updated);
+        syncToCache(updated);
         gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeUpgrades, gameState.actions, toast]);
+  }, [activeUpgrades, gameState.actions, toast, syncToCache]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
     console.log('🚀 [startUpgrade] Starting upgrade:', {
@@ -97,7 +114,7 @@ export const useBuildingUpgrades = () => {
     const upgrade: UpgradeProgress = {
       buildingId,
       startTime: Date.now(),
-      duration: duration * 60 * 1000, // Конвертируем минуты в миллисекунды
+      duration: duration * 60 * 1000,
       targetLevel,
       status: 'in_progress'
     };
@@ -106,6 +123,7 @@ export const useBuildingUpgrades = () => {
     console.log('🚀 [startUpgrade] New upgrades array:', newUpgrades);
     
     setActiveUpgrades(newUpgrades);
+    syncToCache(newUpgrades);
     gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades })
       .then(() => {
         console.log('✅ [startUpgrade] Successfully saved to server');
@@ -130,7 +148,6 @@ export const useBuildingUpgrades = () => {
       return;
     }
 
-    // Используем buildingLevels из gameData с приоритетом
     const currentBuildingLevels = gameData.buildingLevels || gameState.buildingLevels || {};
     const newBuildingLevels = { ...currentBuildingLevels, [buildingId]: upgrade.targetLevel };
     const remaining = activeUpgrades.filter(u => u.buildingId !== buildingId);
@@ -144,8 +161,8 @@ export const useBuildingUpgrades = () => {
     });
 
     setActiveUpgrades(remaining);
+    syncToCache(remaining, { buildingLevels: newBuildingLevels });
     
-    // Сначала обновляем локальное состояние, затем сервер
     gameState.actions.batchUpdate({
       buildingLevels: newBuildingLevels,
       activeBuildingUpgrades: remaining
@@ -160,6 +177,7 @@ export const useBuildingUpgrades = () => {
       description: `Здание обновлено до уровня ${upgrade.targetLevel}`
     });
   };
+
   const getUpgradeProgress = (buildingId: string) => {
     const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
     if (!upgrade) return null;
@@ -225,6 +243,7 @@ export const useBuildingUpgrades = () => {
       const newUpgrades = [...activeUpgrades, upgrade];
       console.log('🚀 [startUpgradeAtomic] Setting active upgrades:', newUpgrades);
       setActiveUpgrades(newUpgrades);
+      syncToCache(newUpgrades, resourcePatch);
 
       try {
         await gameState.actions.batchUpdate({
