@@ -118,26 +118,19 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   } = useQuery({
     queryKey: ['gameData', accountId],
     queryFn: async () => {
-      console.log('🎯🎯🎯 [GameDataContext] ========== QUERY FUNCTION CALLED ==========');
-      console.log('🎯 [GameDataContext] accountId:', accountId);
-      console.log('🎯 [GameDataContext] timestamp:', new Date().toISOString());
+      if (import.meta.env.DEV) console.log('🎯 [GameDataContext] QUERY FUNCTION CALLED, accountId:', accountId);
       const address = accountId || localStorage.getItem('walletAccountId');
-      console.log('🎯 [GameDataContext] resolved address:', address);
       
       if (!address) {
-        console.log('⚠️ [GameDataContext] No address available, returning default data');
         return DEFAULT_GAME_DATA;
       }
 
-      console.log('🔍 Loading game data for:', address);
       let gameDataArray = await loadGameDataDeduped(address);
-      console.log('📦 [GameDataContext] Loaded data array length:', gameDataArray?.length);
 
       // If no data exists, create initial record with 100 ELL
       if (!gameDataArray || gameDataArray.length === 0) {
-        console.log('✨ No game data found, creating new player with 100 ELL...');
+        if (import.meta.env.DEV) console.log('✨ No game data found, creating new player with 100 ELL...');
         try {
-          console.log('🔧 [GameDataContext] Calling ensure_game_data_exists for:', address);
           const { data: userId, error } = await supabase.rpc('ensure_game_data_exists', {
             p_wallet_address: address
           });
@@ -152,12 +145,10 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
             return DEFAULT_GAME_DATA;
           }
 
-          console.log('✅ Created new player, user_id:', userId);
+          if (import.meta.env.DEV) console.log('✅ Created new player, user_id:', userId);
           
-          // Reload data after creation with small delay to ensure DB propagation
           await new Promise(resolve => setTimeout(resolve, 500));
           gameDataArray = await loadGameDataDeduped(address);
-          console.log('📦 [GameDataContext] Reloaded data array length:', gameDataArray?.length);
           
           if (gameDataArray && gameDataArray.length > 0) {
             toast({
@@ -216,7 +207,7 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           gold: gameRecord.gold || 0,
           buildingLevels: (() => {
             const levels = gameRecord.building_levels as any;
-            console.log('🏗️ [GameDataContext] Parsing building_levels:', levels);
+            if (import.meta.env.DEV) console.log('🏗️ [GameDataContext] Parsing building_levels:', levels);
             
             // Если levels валидный объект с данными, возвращаем его
             if (levels && typeof levels === 'object' && Object.keys(levels).length > 0) {
@@ -274,7 +265,7 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!accountId) return;
 
-    console.log('🔔 [GameDataContext] Setting up Real-time subscription for game_data');
+    if (import.meta.env.DEV) console.log('🔔 [GameDataContext] Setting up Real-time subscription for game_data');
 
     const channel = supabase
       .channel('game-data-changes')
@@ -287,26 +278,23 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
           filter: `wallet_address=eq.${accountId}`
         },
         (payload) => {
-          console.log('🔔 [GameDataContext] game_data updated:', payload);
+          if (import.meta.env.DEV) console.log('🔔 [GameDataContext] game_data updated:', payload);
           queryClient.invalidateQueries({ queryKey: ['gameData', accountId] });
         }
       )
       .subscribe();
 
     return () => {
-      console.log('🔄 [GameDataContext] Cleaning up Real-time subscription');
+      if (import.meta.env.DEV) console.log('🔄 [GameDataContext] Cleaning up Real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [accountId, queryClient]);
 
   // Listen for admin force refetch commands via GameEventsContext
   useGameEvent('gameDataForceRefetch', (payload) => {
-    console.log('🔄 [GameDataContext] Force refetch requested for wallet:', payload?.wallet);
     if (!payload?.wallet || !accountId) return;
-    
-    // Проверяем, что это наш кошелек (с учетом регистра)
     if (payload.wallet.toLowerCase().trim() === accountId.toLowerCase().trim()) {
-      console.log('✅ [GameDataContext] Refetching game data after admin update');
+      if (import.meta.env.DEV) console.log('✅ [GameDataContext] Refetching after admin update');
       refetch();
     }
   }, [refetch, accountId]);
@@ -318,7 +306,7 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    console.log('💾 Updating game data:', Object.keys(updates));
+    if (import.meta.env.DEV) console.log('💾 Updating game data:', Object.keys(updates));
 
     // Optimistically update cache
     queryClient.setQueryData(['gameData', accountId], (old: GameData = DEFAULT_GAME_DATA) => ({
@@ -350,21 +338,9 @@ export const GameDataProvider = ({ children }: { children: ReactNode }) => {
   }, [accountId, queryClient, toast]);
 
   const loadGameDataManual = useCallback(async (walletAddress?: string) => {
-    console.log('🔄🔄🔄 [GameDataContext] ========== MANUAL RELOAD TRIGGERED ==========');
-    console.log('🔄 [GameDataContext] walletAddress:', walletAddress);
-    console.log('🔄 [GameDataContext] accountId:', accountId);
-    console.log('🔄 [GameDataContext] timestamp:', new Date().toISOString());
-    
-    // КРИТИЧНО: Используем cancelRefetch: true чтобы принудительно перезагрузить данные
-    // игнорируя staleTime кеш
-    console.log('🔄 [GameDataContext] Calling refetch with cancelRefetch: true...');
+    if (import.meta.env.DEV) console.log('🔄 [GameDataContext] Manual reload triggered');
     const result = await refetch({ cancelRefetch: true });
-    
-    console.log('✅✅✅ [GameDataContext] ========== REFETCH COMPLETED ==========');
-    console.log('✅ [GameDataContext] isSuccess:', result.isSuccess);
-    console.log('✅ [GameDataContext] isError:', result.isError);
-    console.log('✅ [GameDataContext] buildingLevels:', result.data?.buildingLevels);
-    console.log('✅ [GameDataContext] timestamp:', new Date().toISOString());
+    if (import.meta.env.DEV) console.log('✅ [GameDataContext] Refetch completed, success:', result.isSuccess);
   }, [refetch, accountId]);
 
   return (
