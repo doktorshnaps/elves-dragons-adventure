@@ -1,107 +1,86 @@
 
-# Fix: Hero Addition Error Due to Cleanup Race Condition
+# Fix: Building Upgrade Lost on Page Navigation
 
-## Root Cause Analysis
+## Root Cause
 
-The bug is a **race condition** between adding a hero and the cleanup effect in `useTeamSelection.ts`.
-
-### What happens step by step:
+The upgrade data is saved to the database but the React Query cache is never updated with the new data. Here's exactly what happens:
 
 ```text
-1. User clicks "Add Hero"
-2. handlePairSelect() runs:
-   - Reads current dungeonTeam
-   - Appends new hero
-   - Calls updateTeam() -> RPC succeeds, local state updates
-   - dungeonTeam recalculates with new hero
-
-3. Cleanup useEffect fires (triggered by dungeonTeam change)
-   - Builds validIds from cards array
-   - BUT if cards is still loading or temporarily empty
-     (cardInstances query refetching), validIds = empty Set
-   - ALL heroes fail the validIds.has() check
-   - Cleanup REMOVES the just-added hero as "non-existing"
-   - Calls updateTeam() again with empty/reduced team
-
-4. User sees error or empty team
-5. Navigating away and back -> cards loads properly -> hero is visible from DB
+1. User clicks "Build" on Clan Hall
+2. startUpgradeAtomic() fires:
+   - Sets local state (shows timer in UI) 
+   - Calls batchUpdate() -> writes to Supabase DB (via throttler)
+3. User navigates away from Shelter
+4. useBuildingUpgrades unmounts, local state is lost
+5. User navigates back to Shelter
+6. useBuildingUpgrades remounts with activeUpgrades = []
+7. useEffect reads gameData.activeBuildingUpgrades from GameDataContext
+8. GameDataContext has staleTime: 30 MINUTES + refetchOnMount: false
+   -> It still serves the OLD cached data (from before the upgrade)
+   -> activeBuildingUpgrades = [] (stale)
+9. No upgrade shown. User has to press again.
 ```
 
-### The critical missing guard (line 90-170 of useTeamSelection.ts):
+The Real-time subscription DOES fire `invalidateQueries`, but `refetchOnMount: false` prevents the stale query from being refetched when the component mounts again.
 
-The cleanup `useEffect` has NO check for whether `cards` has finished loading. When `cardInstances` is refetching (e.g., after a mutation or Real-time event), `cards` can temporarily be an empty array, causing `validIds` to be empty and wiping the entire team.
+Other buildings work because users typically stay on the Shelter page while they upgrade. The bug manifests when navigating away and back.
 
-### Secondary issue:
+## Solution
 
-The `selectedTeamWithHealth` useMemo (line 68) still has `gameData.selectedTeam` in its dependency array despite comments saying it's not used -- this causes unnecessary re-renders.
+Update `useBuildingUpgrades` to **optimistically update the React Query cache** after saving to the database. This is the same pattern already used by `GameDataContext.updateGameData()` (line 324) but currently NOT used by `batchUpdate()`.
 
----
+### File: `src/hooks/useBuildingUpgrades.ts`
 
-## Fix Plan
+**Change 1**: Import `useQueryClient` and get `accountId`
 
-### File: `src/hooks/team/useTeamSelection.ts`
+Add imports for `useQueryClient` from `@tanstack/react-query` and `useWalletContext` from WalletConnectContext. Get `queryClient` and `accountId` in the hook body.
 
-**Fix 1: Add loading guard to cleanup useEffect (CRITICAL)**
-
-Add `cardsLoading` check at the top of the cleanup effect. If cards haven't loaded yet, skip cleanup entirely -- we cannot determine which cards are valid without data.
+**Change 2**: After every successful `batchUpdate` that modifies `activeBuildingUpgrades`, also update the React Query cache:
 
 ```typescript
-// Line 90 - add guard
-useEffect(() => {
-  // CRITICAL: Don't cleanup while cards are still loading
-  // Empty cards array would incorrectly remove all team members
-  if (cardsLoading) return;
-  
-  const baseTeam = dungeonTeam as TeamPair[];
-  if (!baseTeam || baseTeam.length === 0) return;
-  // ... rest of cleanup logic
-```
-
-**Fix 2: Remove stale dependency from selectedTeamWithHealth**
-
-Line 68: Remove `gameData.selectedTeam` from the useMemo dependency array since it's explicitly not used anymore (per architecture memory).
-
-```typescript
-// Line 68 - change from:
-}, [dungeonTeam, gameData.selectedTeam, cardsMap]);
-// to:
-}, [dungeonTeam, cardsMap]);
-```
-
-**Fix 3: Add error feedback in handlePairSelect catch block**
-
-Currently the catch block (line 246-248) only does `console.error` but never fires because `updateTeam` catches internally. Add a toast for the case where `updateTeam` returns `false`:
-
-```typescript
-try {
-  const success = await updateTeam('dungeon', null, newPairs);
-  if (!success) {
-    toast({
-      title: "Ошибка",
-      description: "Не удалось добавить героя в команду. Попробуйте ещё раз.",
-      variant: "destructive"
-    });
-    return;
-  }
-  
-  const { setSelectedTeam } = useGameStore.getState();
-  setSelectedTeam(newPairs);
-} catch (error) {
-  console.error('Failed to add hero to team:', error);
-  toast({
-    title: "Ошибка",
-    description: "Не удалось добавить героя в команду",
-    variant: "destructive"
+// Helper to sync cache
+const syncToCache = (upgrades: UpgradeProgress[], extraUpdates?: Record<string, any>) => {
+  queryClient.setQueryData(['gameData', accountId], (old: any) => {
+    if (!old) return old;
+    return {
+      ...old,
+      activeBuildingUpgrades: upgrades,
+      ...extraUpdates
+    };
   });
-}
+};
 ```
 
-### Summary of changes:
+Apply this in 4 places:
+- `startUpgradeAtomic` (after batchUpdate succeeds) -- sync new upgrade list
+- `installUpgrade` (after batchUpdate succeeds) -- sync cleared upgrade list + new buildingLevels
+- Completion check effect (line 53-56) -- sync status change to "ready"
+- Interval completion check (line 80-83) -- sync status change to "ready"
 
-| Change | File | Lines | Impact |
-|--------|------|-------|--------|
-| Add `cardsLoading` guard to cleanup | useTeamSelection.ts | ~90 | Prevents race condition -- the core fix |
-| Remove stale dependency | useTeamSelection.ts | 68 | Eliminates unnecessary re-renders |
-| Add error toast on updateTeam failure | useTeamSelection.ts | 239-248 | Better user feedback |
+**Change 3**: Fix the loading guard in the initial load effect (line 21-27)
 
-These are minimal, targeted changes that fix the race condition without altering any existing game logic or data flow.
+The current code uses `||` operator:
+```typescript
+const upgrades = gameData.activeBuildingUpgrades || gameState.activeBuildingUpgrades;
+```
+
+Since `[]` is truthy, `gameData.activeBuildingUpgrades` (default `[]`) always wins over `gameState.activeBuildingUpgrades` even when gameState has real data. Fix to check array length:
+
+```typescript
+const upgrades = (gameData.activeBuildingUpgrades?.length > 0)
+  ? gameData.activeBuildingUpgrades 
+  : gameState.activeBuildingUpgrades;
+```
+
+### Summary of changes
+
+| Change | Location | Impact |
+|--------|----------|--------|
+| Add queryClient + accountId | Hook imports/body | Access to React Query cache |
+| Cache sync helper | New function in hook | Reusable cache updater |
+| Sync after startUpgradeAtomic | Line ~230 | Upgrade persists in cache across navigation |
+| Sync after installUpgrade | Line ~149 | Level change visible immediately |
+| Sync after completion checks | Lines ~53, ~80 | "Ready" status persists in cache |
+| Fix `\|\|` operator for loading | Line ~22 | Correct fallback when gameData has empty default |
+
+This is the minimal fix: 1 file changed, no architectural changes, follows the existing `queryClient.setQueryData` pattern already used in `GameDataContext.updateGameData`.
