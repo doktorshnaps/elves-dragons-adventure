@@ -57,7 +57,9 @@ const initialGameData: GameData = {
     quarry: 0,
     barracks: 0,
     dragon_lair: 0,
-    medical: 0
+    medical: 0,
+    forge: 0,
+    clan_hall: 0
   },
   activeBuildingUpgrades: []
 };
@@ -114,17 +116,7 @@ export const useUnifiedGameState = (): UnifiedGameState => {
       queryClient.setQueryData([GAME_DATA_KEY, accountId], updatedData);
       updateData(updatedData);
       
-      // Сохраняем activeWorkers в localStorage для синхронизации между страницами
-      if (Array.isArray(updatedData.activeWorkers) && updatedData.activeWorkers.length > 0) {
-        localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
-      }
-      
-      // Сохраняем в localStorage для быстрого доступа при переходах
-      try {
-        localStorage.setItem('gameData', JSON.stringify(updatedData));
-      } catch (error) {
-        console.warn('Failed to save to localStorage:', error);
-      }
+      // OPTIMIZATION: Removed localStorage sync - data only in React Query and Supabase
     },
     onError: (error) => {
       console.error('Failed to update game data:', error);
@@ -442,7 +434,9 @@ function transformServerData(serverData: any): GameData {
       quarry: 0,
       barracks: 0,
       dragon_lair: 0,
-      medical: 0
+      medical: 0,
+      forge: 0,
+      clan_hall: 0
     },
     activeBuildingUpgrades: serverData.active_building_upgrades ?? [],
     // Production data from DB

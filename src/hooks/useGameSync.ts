@@ -13,8 +13,6 @@ import { setSyncFreeze, clearSyncFreeze } from '@/utils/updateGameDataThrottle';
  * - inventory → используйте useItemInstances()
  */
 export const useGameSync = () => {
-  console.log('🚀🚀🚀 useGameSync HOOK CALLED 🚀🚀🚀');
-  
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
   const { gameData, updateGameData, loading } = useGameData();
@@ -23,15 +21,6 @@ export const useGameSync = () => {
   const lastSyncedRef = useRef<any>(null);
   const prevAccountIdRef = useRef<string | null>(null);
   const preventSyncAfterClearRef = useRef(false);
-  
-  console.log('🚀 useGameSync: State values:', {
-    accountId,
-    isConnected,
-    loading,
-    hasGameData: !!gameData,
-    walletLoading,
-    hasSelector: !!selector
-  });
 
   // Очищаем старые данные из localStorage при монтировании
   useEffect(() => {
@@ -54,17 +43,14 @@ export const useGameSync = () => {
     oldKeys.forEach(key => {
       if (localStorage.getItem(key)) {
         localStorage.removeItem(key);
-        console.log(`🧹 Cleared old localStorage key: ${key}`);
       }
     });
-    
-    console.log('✅ localStorage cleanup complete - все данные теперь только в Supabase');
   }, []);
 
   // Очищаем store при отключении или смене кошелька
   useEffect(() => {
     if (prevAccountIdRef.current && prevAccountIdRef.current !== accountId) {
-      console.log('🔄 Wallet changed, clearing all cached data');
+      if (import.meta.env.DEV) console.log('🔄 Wallet changed, clearing all cached data');
       
       preventSyncAfterClearRef.current = true;
       
@@ -103,9 +89,7 @@ export const useGameSync = () => {
       try {
         const { gameCache } = require('@/utils/cacheStrategy');
         gameCache.clear();
-        console.log('✅ Memory cache cleared');
       } catch (e) {
-        console.warn('Failed to clear memory cache:', e);
       }
     }
     prevAccountIdRef.current = accountId;
@@ -113,30 +97,11 @@ export const useGameSync = () => {
 
   // Загружаем данные из Supabase в локальное состояние при инициализации
   useEffect(() => {
-    console.log('🔍 useGameSync: Effect triggered with:', {
-      loading,
-      isConnected,
-      accountId,
-      hasGameData: !!gameData,
-      gameDataValue: gameData,
-      walletLoading,
-      hasSelector: !!selector
-    });
-    
-    if (walletLoading || !selector) {
-      console.log('⏸️ useGameSync: Waiting for wallet to be ready');
-      return;
-    }
+    if (walletLoading || !selector) return;
     
     if (!loading && isConnected && accountId && gameData) {
       isApplyingRef.current = true;
       try {
-        console.log('🔄 useGameSync: Loading data from Supabase:', {
-          balance: gameData.balance,
-          selectedTeam: gameData.selectedTeam?.length,
-          accountLevel: gameData.accountLevel,
-          accountExperience: gameData.accountExperience
-        });
         
         gameStore.setBalance(gameData.balance);
         
@@ -166,7 +131,7 @@ export const useGameSync = () => {
           clearSyncFreeze(accountId);
         }
         
-        console.log('✅ useGameSync: Data loaded to store');
+        
       } finally {
         setTimeout(() => { isApplyingRef.current = false; }, 0);
       }
@@ -180,12 +145,12 @@ export const useGameSync = () => {
     
     const activeBattle = gameStore.activeBattleInProgress;
     if (activeBattle) {
-      console.log('⏸️ [useGameSync] Sync blocked: battle in progress');
+      
       return;
     }
     
     if (preventSyncAfterClearRef.current) {
-      console.log('⏸️ Sync blocked: waiting for data to load after clear');
+      
       return;
     }
     
@@ -222,9 +187,6 @@ export const useGameSync = () => {
 
       const timeoutId = setTimeout(async () => {
         try {
-          console.log('🔄 useGameSync: Syncing to Supabase:', {
-            selectedTeamLength: snapshot.selectedTeam?.length,
-          });
           await updateGameData(snapshot);
           lastSyncedRef.current = snapshot;
         } catch (e) {
