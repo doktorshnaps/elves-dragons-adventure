@@ -16,6 +16,8 @@ const PvPBattleContent: React.FC = () => {
   const { accountId: walletAddress } = useWalletContext();
   
   const { submitMove, getMatchStatus, processTimeout, loading } = usePvP(walletAddress);
+  const botTurnInProgressRef = React.useRef(false);
+  const attackInProgressRef = React.useRef(false);
   const lastSeenMoveIdRef = React.useRef<string | null>(null);
   
   const [matchData, setMatchData] = useState<any>(null);
@@ -86,6 +88,7 @@ const PvPBattleContent: React.FC = () => {
   // Trigger bot turn if it's bot match and bot goes first
   const triggerBotTurnIfNeeded = useCallback(async (data: any) => {
     if (!matchId || !data) return;
+    if (botTurnInProgressRef.current) return; // Prevent duplicate calls
     
     // Check if it's a bot match, not my turn, and match is active
     const isBotMatch = data.player2?.wallet?.startsWith('BOT_') || data.player1?.wallet?.startsWith('BOT_');
@@ -93,31 +96,41 @@ const PvPBattleContent: React.FC = () => {
     const isNotMyTurn = !data.is_my_turn;
     
     if (isBotMatch && isActive && isNotMyTurn) {
+      botTurnInProgressRef.current = true;
       console.log('[PvP] Triggering bot turn...');
-      const result = await submitMove(matchId, 'trigger_bot_turn');
       
-      if (result?.success) {
-        // Show bot's dice roll animation
-        if (result.dice_roll !== undefined) {
-          setLastRoll({
-            attackerRoll: result.dice_roll,
-            source: 'opponent',
-            damage: result.damage_dealt || 0,
-            isCritical: result.is_critical || false,
-            isMiss: result.is_miss || false,
-            isCounterAttack: result.is_counter_attack || false,
-            counterAttackDamage: result.counter_attack_damage || 0,
-            description: result.description || ''
-          });
-        }
+      try {
+        const result = await submitMove(matchId, 'trigger_bot_turn');
         
-        // Reload match after animation
-        setTimeout(async () => {
-          const newData = await getMatchStatus(matchId);
-          if (newData) {
-            setMatchData(newData);
+        if (result?.success) {
+          // Show bot's dice roll animation
+          if (result.dice_roll !== undefined) {
+            setLastRoll({
+              attackerRoll: result.dice_roll,
+              source: 'opponent',
+              damage: result.damage_dealt || 0,
+              isCritical: result.is_critical || false,
+              isMiss: result.is_miss || false,
+              isCounterAttack: result.is_counter_attack || false,
+              counterAttackDamage: result.counter_attack_damage || 0,
+              description: result.description || ''
+            });
           }
-        }, 2000);
+          
+          // Reload match after animation
+          setTimeout(async () => {
+            const newData = await getMatchStatus(matchId);
+            if (newData) {
+              setMatchData(newData);
+            }
+            botTurnInProgressRef.current = false;
+          }, 2000);
+        } else {
+          botTurnInProgressRef.current = false;
+        }
+      } catch (e) {
+        console.error('[PvP] Bot turn error:', e);
+        botTurnInProgressRef.current = false;
       }
     }
   }, [matchId, submitMove, getMatchStatus]);
@@ -149,59 +162,69 @@ const PvPBattleContent: React.FC = () => {
 
   // Handle attack
   const handleAttack = async (attackerIndex: number, targetIndex: number) => {
-    if (!matchId) return;
+    if (!matchId || attackInProgressRef.current) return;
+    attackInProgressRef.current = true;
 
-    const result = await submitMove(matchId, 'attack', attackerIndex, targetIndex);
-    
-    if (result?.success) {
-      // Mark the player's move as seen so polling won't replay it
-      if (result.move_id) {
-        lastSeenMoveIdRef.current = result.move_id;
-      }
+    try {
+      const result = await submitMove(matchId, 'attack', attackerIndex, targetIndex);
       
-      // Show player's dice roll animation
-      if (result.dice_roll !== undefined) {
-        setLastRoll({
-          attackerRoll: result.dice_roll,
-          source: 'player',
-          damage: result.damage_dealt || 0,
-          isCritical: result.is_critical || false,
-          isMiss: result.is_miss || false,
-          isCounterAttack: result.is_counter_attack || false,
-          counterAttackDamage: result.counter_attack_damage || 0,
-          description: result.description || ''
-        });
-      }
-      
-      // If bot made a move, show bot's dice roll after player's animation
-      if (result.bot_turn) {
-        // Mark bot move as seen too
-        if (result.bot_turn.move_id) {
-          lastSeenMoveIdRef.current = result.bot_turn.move_id;
+      if (result?.success) {
+        // Mark the player's move as seen so polling won't replay it
+        if (result.move_id) {
+          lastSeenMoveIdRef.current = result.move_id;
         }
-        setTimeout(() => {
+        
+        // Show player's dice roll animation
+        if (result.dice_roll !== undefined) {
           setLastRoll({
-            attackerRoll: result.bot_turn.dice_roll,
-            source: 'opponent',
-            damage: result.bot_turn.damage_dealt || 0,
-            isCritical: result.bot_turn.is_critical || false,
-            isMiss: result.bot_turn.is_miss || false,
-            isCounterAttack: result.bot_turn.is_counter_attack || false,
-            counterAttackDamage: result.bot_turn.counter_attack_damage || 0,
-            description: result.bot_turn.description || ''
+            attackerRoll: result.dice_roll,
+            source: 'player',
+            damage: result.damage_dealt || 0,
+            isCritical: result.is_critical || false,
+            isMiss: result.is_miss || false,
+            isCounterAttack: result.is_counter_attack || false,
+            counterAttackDamage: result.counter_attack_damage || 0,
+            description: result.description || ''
           });
-          
-          // Reload match after bot's animation
+        }
+        
+        // If bot made a move, show bot's dice roll after player's animation
+        if (result.bot_turn) {
+          // Mark bot move as seen too
+          if (result.bot_turn.move_id) {
+            lastSeenMoveIdRef.current = result.bot_turn.move_id;
+          }
+          setTimeout(() => {
+            setLastRoll({
+              attackerRoll: result.bot_turn.dice_roll,
+              source: 'opponent',
+              damage: result.bot_turn.damage_dealt || 0,
+              isCritical: result.bot_turn.is_critical || false,
+              isMiss: result.bot_turn.is_miss || false,
+              isCounterAttack: result.bot_turn.is_counter_attack || false,
+              counterAttackDamage: result.bot_turn.counter_attack_damage || 0,
+              description: result.bot_turn.description || ''
+            });
+            
+            // Reload match after bot's animation
+            setTimeout(() => {
+              loadMatch();
+              attackInProgressRef.current = false;
+            }, 2000);
+          }, 2500); // Wait for player's animation to finish
+        } else {
+          // No bot turn, just reload after player's animation
           setTimeout(() => {
             loadMatch();
+            attackInProgressRef.current = false;
           }, 2000);
-        }, 2500); // Wait for player's animation to finish
+        }
       } else {
-        // No bot turn, just reload after player's animation
-        setTimeout(() => {
-          loadMatch();
-        }, 2000);
+        attackInProgressRef.current = false;
       }
+    } catch (e) {
+      console.error('[PvP] Attack error:', e);
+      attackInProgressRef.current = false;
     }
   };
 
