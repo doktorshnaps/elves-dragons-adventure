@@ -39,63 +39,69 @@ function mergePayload(base: Record<string, any>, next: Record<string, any>) {
   return out;
 }
 
-// Map camelCase state keys to RPC function parameter names (p_*)
+// Build p_updates JSONB object for update_game_data_by_wallet_v2 RPC
+// The v2 RPC accepts (p_wallet_address text, p_updates jsonb, p_force boolean)
 function buildRpcArgs(input: Record<string, any>): Record<string, any> {
-  const map: Record<string, string> = {
-    // core
-    p_wallet_address: 'p_wallet_address',
-    balance: 'p_balance',
-    cards: 'p_cards',
-    selectedTeam: 'p_selected_team',
-    dragonEggs: 'p_dragon_eggs',
-    accountLevel: 'p_account_level',
-    accountExperience: 'p_account_experience',
-    initialized: 'p_initialized',
-    marketplaceListings: 'p_marketplace_listings',
-    socialQuests: 'p_social_quests',
-    adventurePlayerStats: 'p_adventure_player_stats',
-    adventureCurrentMonster: 'p_adventure_current_monster',
-    battleState: 'p_battle_state',
-    barracksUpgrades: 'p_barracks_upgrades',
-    dragonLairUpgrades: 'p_dragon_lair_upgrades',
-    activeWorkers: 'p_active_workers',
-    buildingLevels: 'p_building_levels',
-    activeBuildingUpgrades: 'p_active_building_upgrades',
-    // resources
-    wood: 'p_wood',
-    stone: 'p_stone',
-    iron: 'p_iron',
-    gold: 'p_gold',
-    maxWood: 'p_max_wood',
-    maxStone: 'p_max_stone',
-    maxIron: 'p_max_iron',
-    woodLastCollectionTime: 'p_wood_last_collection_time',
-    stoneLastCollectionTime: 'p_stone_last_collection_time',
-    woodProductionData: 'p_wood_production_data',
-    stoneProductionData: 'p_stone_production_data',
+  const camelToSnake: Record<string, string> = {
+    balance: 'balance',
+    cards: 'cards',
+    selectedTeam: 'selected_team',
+    dragonEggs: 'dragon_eggs',
+    accountLevel: 'account_level',
+    accountExperience: 'account_experience',
+    initialized: 'initialized',
+    marketplaceListings: 'marketplace_listings',
+    socialQuests: 'social_quests',
+    adventurePlayerStats: 'adventure_player_stats',
+    adventureCurrentMonster: 'adventure_current_monster',
+    battleState: 'battle_state',
+    barracksUpgrades: 'barracks_upgrades',
+    dragonLairUpgrades: 'dragon_lair_upgrades',
+    activeWorkers: 'active_workers',
+    buildingLevels: 'building_levels',
+    activeBuildingUpgrades: 'active_building_upgrades',
+    wood: 'wood',
+    stone: 'stone',
+    iron: 'iron',
+    gold: 'gold',
+    maxWood: 'max_wood',
+    maxStone: 'max_stone',
+    maxIron: 'max_iron',
+    woodLastCollectionTime: 'wood_last_collection_time',
+    stoneLastCollectionTime: 'stone_last_collection_time',
+    woodProductionData: 'wood_production_data',
+    stoneProductionData: 'stone_production_data',
   };
 
-  const out: Record<string, any> = {};
+  const wallet = input.p_wallet_address;
+  const force = input.p_force ?? false;
+  const updates: Record<string, any> = {};
 
-  // If caller already passed p_* keys, keep them (except deprecated ones)
   for (const [k, v] of Object.entries(input)) {
+    if (k === 'p_wallet_address' || k === 'p_force') continue;
+    if (v === undefined) continue;
+
+    // Handle p_* keys (already prefixed from legacy callers)
     if (k.startsWith('p_')) {
       if (k === 'p_inventory') continue; // strip deprecated
-      if (v !== undefined) out[k] = v;
+      const fieldName = k.substring(2); // remove p_ prefix
+      updates[fieldName] = v;
+    } else if (k === 'inventory') {
+      continue; // strip deprecated
+    } else {
+      // Map camelCase to snake_case
+      const snakeKey = camelToSnake[k];
+      if (snakeKey) {
+        updates[snakeKey] = v;
+      }
     }
   }
 
-  // Map camelCase to p_* if not already present
-  for (const [k, v] of Object.entries(input)) {
-    if (k.startsWith('p_')) continue; // already handled
-    if (k === 'inventory') continue; // strip deprecated field to avoid 42703
-    const target = map[k];
-    if (target && out[target] === undefined) {
-      if (v !== undefined) out[target] = v;
-    }
-  }
-
-  return out;
+  return {
+    p_wallet_address: wallet,
+    p_updates: updates,
+    p_force: force,
+  };
 }
 
 interface QueueState {
@@ -189,38 +195,38 @@ export async function updateGameDataByWalletThrottled(payload: Record<string, an
     // Build safe args for stable RPC and strip deprecated fields
       const args = buildRpcArgs(toSend);
       
-      // КРИТИЧНО: Всегда добавляем p_force чтобы PostgREST мог выбрать правильную перегрузку
-      // Это решает PGRST203 (ambiguity) для update_game_data_by_wallet_v2
-      if (!args.p_force) {
-        args.p_force = false;
-      }
-      
-      const keys = Object.keys(args).filter(k => k !== 'p_wallet_address');
+      const updateKeys = Object.keys(args.p_updates || {});
 
-      // If we only have wallet, skip RPC to avoid PostgREST overload ambiguity (PGRST203)
-      if (keys.length === 0) {
+      // If no fields to update, skip RPC call
+      if (updateKeys.length === 0) {
         console.log('ℹ️ [throttler] No fields to update; skipping RPC call');
         return true;
       }
       try {
-        console.log('🔁 [throttler] Calling update_game_data_by_wallet_v2 with keys:', Object.keys(args));
+        console.log('🔁 [throttler] Calling update_game_data_by_wallet_v2 with update keys:', Object.keys(args.p_updates || {}));
         const { data, error } = await supabase.rpc('update_game_data_by_wallet_v2', args as any);
         if (error) throw error;
-        const ok = data === true;
+        // v2 returns jsonb like { success: true, version: N, ... }
+        const ok = typeof data === 'object' && data !== null && (data as any).success === true;
         if (!ok) {
-          console.warn('⚠️ [throttler] RPC returned false. Args keys:', Object.keys(args));
+          console.warn('⚠️ [throttler] RPC returned:', data);
         }
         return ok;
       } catch (err: any) {
-        console.error('❌ [throttler] RPC error:', { code: err?.code, message: err?.message, hint: err?.hint, args: Object.keys(args) });
-        // Ambiguity fallback: try sending fields one-by-one to disambiguate overloaded functions
-        if (err?.code === 'PGRST203' && keys.length > 0) {
-          for (const k of keys) {
-            const narrowArgs: Record<string, any> = { p_wallet_address: args.p_wallet_address, [k]: (args as any)[k] };
+        console.error('❌ [throttler] RPC error:', { code: err?.code, message: err?.message, hint: err?.hint, updateKeys: Object.keys(args.p_updates || {}) });
+        // PGRST203 fallback: try sending fields one-by-one
+        const failedKeys = Object.keys(args.p_updates || {});
+        if (err?.code === 'PGRST203' && failedKeys.length > 0) {
+          for (const k of updateKeys) {
+            const narrowArgs = {
+              p_wallet_address: args.p_wallet_address,
+              p_updates: { [k]: (args.p_updates as any)[k] },
+              p_force: args.p_force ?? false
+            };
             try {
-              console.log('🧪 [throttler] Retrying with narrow args:', Object.keys(narrowArgs));
+              console.log('🧪 [throttler] Retrying with narrow key:', k);
               const { data: d2, error: e2 } = await supabase.rpc('update_game_data_by_wallet_v2', narrowArgs as any);
-              if (!e2 && d2 === true) {
+              if (!e2 && typeof d2 === 'object' && d2 !== null && (d2 as any).success === true) {
                 console.log('✅ [throttler] Narrow update succeeded with key:', k);
                 return true;
               }
