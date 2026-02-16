@@ -851,7 +851,7 @@ export const PvPBattleArena: React.FC<PvPBattleArenaProps> = ({
                   <div className="flex items-center gap-1.5">
                     <Button
                       onClick={handleAttack}
-                      disabled={selectedPair === null || selectedTarget === null || isLoading}
+                      disabled={selectedPair === null || selectedTarget === null || isLoading || isDiceRolling}
                       size="sm"
                       variant="menu"
                       className="h-7 sm:h-10 px-2 sm:px-6 text-xs sm:text-base whitespace-nowrap"
