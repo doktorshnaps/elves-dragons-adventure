@@ -381,7 +381,7 @@ export const PvPHub: React.FC = () => {
                                   : "bg-muted/30 border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                               }`}
                             >
-                              <div className="text-[11px] sm:text-xs font-medium leading-tight">{name}</div>
+                              <div className="text-[10px] sm:text-xs font-medium leading-tight truncate">{name}</div>
                               <div className="text-[9px] sm:text-[10px] opacity-60 leading-tight">★ {range}</div>
                               {isActive && (
                                 <div className="absolute inset-0 rounded-md ring-1 ring-primary/50 pointer-events-none" />
