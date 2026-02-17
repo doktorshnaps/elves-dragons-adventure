@@ -1,180 +1,114 @@
 
-# Клановые Рейд-Боссы — Предложение по реализации
 
-## Концепция
+# Audit: Game Functionality -- Broken Connections and Issues Found
 
-Раз в сутки появляется мировой рейд-босс. У каждого игрока — **одна попытка атаки** в рамках рейда. Клан суммирует урон всех участников. По истечении времени (4-8 часов) — если босс убит, клан с максимальным нанесённым уроном получает главный приз. Все кланы, участвовавшие в убийстве, получают награды пропорционально урону.
+After a thorough review of the codebase, I found **4 confirmed issues** and **2 potential risks**.
 
 ---
 
-## Архитектура: 4 слоя
+## Issue 1 (CRITICAL): `buildingLevels` fallback missing `forge` and `clan_hall` in `useUnifiedGameState.ts`
 
-### Слой 1 — База данных (новые таблицы)
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 437-445
 
-**`clan_raid_events`** — активный/завершённый рейд-босс:
+The `transformServerData` function has a hardcoded fallback for `buildingLevels` that is missing `forge` and `clan_hall`:
+
 ```text
-id             uuid PK
-boss_name      text          -- "Дракон Хаоса", "Тёмный Лич"
-boss_image     text          -- URL картинки
-total_hp       bigint        -- например 100_000_000
-current_hp     bigint        -- убывает по мере атак
-max_hp         bigint        -- для прогресс-бара
-status         text          -- 'active' | 'defeated' | 'expired'
-started_at     timestamptz
-ends_at        timestamptz   -- started_at + 8 часов
-rewards_distributed boolean DEFAULT false
-winner_clan_id uuid FK clans
-created_by     text          -- admin wallet
+buildingLevels: serverData.building_levels ?? {
+  main_hall: 0, workshop: 0, storage: 0,
+  sawmill: 0, quarry: 0, barracks: 0,
+  dragon_lair: 0, medical: 0
+  // MISSING: forge, clan_hall
+}
 ```
 
-**`clan_raid_attacks`** — каждая атака игрока по боссу:
+Meanwhile, `GameDataContext.tsx` (line 66-77) and `useShelterState.ts` (line 161-192) correctly include both `forge` and `clan_hall`. This means when data flows through `useUnifiedGameState` (used by `useShelterState` via `useBatchedGameState`), the fallback object silently drops these two buildings, potentially resetting their levels to `undefined` in edge cases.
+
+**Impact**: If `building_levels` is null/undefined from DB, forge and clan_hall levels become `undefined`, causing UI to show them as unbuilt even after upgrading.
+
+**Fix**: Add `forge: 0` and `clan_hall: 0` to the fallback object in `transformServerData`.
+
+---
+
+## Issue 2 (MODERATE): `initialGameData` also missing `forge` and `clan_hall`
+
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 52-62
+
+The `initialGameData` constant (used as the default before any data loads) also has the same missing buildings:
+
 ```text
-id             uuid PK
-raid_event_id  uuid FK clan_raid_events
-wallet_address text          -- кто атаковал
-clan_id        uuid FK clans -- клан в момент атаки
-damage_dealt   bigint        -- нанесённый урон
-team_snapshot  jsonb         -- снимок команды (для честности)
-attacked_at    timestamptz
-```
-Уникальный индекс: `(raid_event_id, wallet_address)` — одна попытка на игрока.
-
-**`clan_raid_rankings`** — агрегированный урон по кланам (обновляется триггером):
-```text
-raid_event_id  uuid FK
-clan_id        uuid FK clans
-total_damage   bigint
-members_participated integer
-rank           integer       -- вычисляется при раздаче наград
+buildingLevels: {
+  main_hall: 0, workshop: 0, storage: 0,
+  sawmill: 0, quarry: 0, barracks: 0,
+  dragon_lair: 0, medical: 0
+  // MISSING: forge, clan_hall
+}
 ```
 
----
-
-### Слой 2 — Edge Functions (бэкенд логика)
-
-**`clan-raid-attack`** — основная функция атаки:
-1. Проверяет: рейд активен, не истёк, игрок ещё не атаковал
-2. Берёт команду игрока из `player_teams`
-3. Вычисляет урон: сумма power + magic всей команды × модификаторы (как в PvP)
-4. Атомарно обновляет `clan_raid_events.current_hp -= damage`
-5. Вставляет запись в `clan_raid_attacks`
-6. Upsert в `clan_raid_rankings` (clan_id, += damage)
-7. Если `current_hp <= 0`: устанавливает `status = 'defeated'`
-8. Возвращает: нанесённый урон, текущий HP босса, ранг клана
-
-**`clan-raid-distribute-rewards`** — вызывается автоматически cron-джобом после окончания рейда:
-1. Находит все завершённые рейды где `rewards_distributed = false`
-2. Сортирует кланы по total_damage
-3. Раздаёт ELL через существующий `apply_battle_rewards` механизм:
-   - Клан #1 (winner): 500 ELL × число участников
-   - Клан #2-3: 200 ELL × число участников
-   - Все участники убийства: 50 ELL базово
-4. Устанавливает `rewards_distributed = true`
+**Fix**: Add `forge: 0` and `clan_hall: 0`.
 
 ---
 
-### Слой 3 — Frontend компоненты
+## Issue 3 (MODERATE): Excessive `console.log` in production across multiple critical files
 
-**Новая вкладка в Кланах** — `ClanRaidTab.tsx`:
-```text
-┌─────────────────────────────────────┐
-│  [Картинка босса]  Дракон Хаоса     │
-│  HP: ████████░░░░  78,432,100 / 100M│
-│  Осталось: 05:32:17                 │
-│  Статус: АКТИВЕН                    │
-├─────────────────────────────────────┤
-│  [АТАКОВАТЬ БОССА]  ← кнопка        │
-│  Ваш урон: 4,200 (уже атаковали)    │
-├─────────────────────────────────────┤
-│  Рейтинг кланов:                    │
-│  🥇 Нагибаторы  — 12,400,000        │
-│  🥈 Мусорщики   — 8,900,000         │
-│  🥉 test        — 2,100,000         │
-└─────────────────────────────────────┘
+**Files affected**:
+- `src/contexts/GameDataContext.tsx` -- 93+ console.log calls
+- `src/hooks/useGameSync.ts` -- 30+ console.log calls  
+- `src/hooks/shelter/useShelterState.ts` -- 40+ console.log calls (including inside `canAffordUpgrade` which runs on every render)
+- `src/hooks/useBuildingUpgrades.ts` -- 15+ console.log calls
+
+These are not behind `import.meta.env.DEV` guards. In the Telegram bot context, excessive logging degrades performance -- especially `canAffordUpgrade` which logs on every render cycle with object dumps.
+
+**Impact**: Slower performance in TG bot, especially on shelter page. Contributes to the lag users experience.
+
+**Fix**: Wrap all debug logs in `if (import.meta.env.DEV)` blocks, or remove them entirely in frequently-called functions like `canAffordUpgrade`.
+
+---
+
+## Issue 4 (LOW): `useUnifiedGameState.onSuccess` writes to localStorage
+
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 117-127
+
+The mutation `onSuccess` handler saves `activeWorkers` and the full `gameData` object to localStorage:
+
+```typescript
+localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
+localStorage.setItem('gameData', JSON.stringify(updatedData));
 ```
 
-**`RaidBossCard.tsx`** — карточка с анимацией атаки (как в AdventureGame).
+This contradicts the architecture decision documented in `GameDataContext.tsx` (line 255-256): "OPTIMIZATION: Fully removed localStorage sync -- data only in React Query and Supabase". This creates inconsistency and potential stale data issues.
 
-**`useRaidBoss.ts`** — хук:
-- Загружает активный рейд через React Query (refetch каждые 30 сек)
-- Проверяет: атаковал ли текущий игрок
-- Вызывает `clan-raid-attack` Edge Function
+**Fix**: Remove the localStorage writes from `useUnifiedGameState.onSuccess`.
 
 ---
 
-### Слой 4 — Cron Job (автоматизация)
+## Potential Risk 1: `useGameSync` still syncs `selectedTeam` to game_data
 
-Каждые 15 минут cron проверяет рейды:
-```sql
-SELECT net.http_post(
-  url := 'https://[project].supabase.co/functions/v1/clan-raid-distribute-rewards',
-  ...
-) WHERE EXISTS (
-  SELECT 1 FROM clan_raid_events 
-  WHERE status = 'active' AND ends_at < now()
-);
-```
+**File**: `src/hooks/useGameSync.ts`, lines 196-228
 
-Администратор создаёт нового босса вручную через существующую Admin панель.
+The Zustand-to-Supabase sync subscriber still includes `selectedTeam` in its snapshot and syncs it to `game_data.selected_team`. However, per architecture memory, dungeon teams are now exclusively managed through `player_teams` table. This sync writes stale/empty `selectedTeam` to `game_data`, which is harmless for dungeons (since they read from `player_teams`) but wastes network traffic and could cause confusion.
+
+**Impact**: Low -- no functional breakage since dungeons read from `player_teams`, but it's dead code that could mask issues.
 
 ---
 
-## Технические детали реализации
+## Potential Risk 2: `useBuildingUpgrades` completion toast fires repeatedly
 
-### Безопасность урона
+**File**: `src/hooks/useBuildingUpgrades.ts`, lines 49-73 and 76-104
 
-Урон вычисляется **на сервере** в Edge Function — по тому же принципу, что `claim-battle-rewards`:
-- Берёт карты игрока из `card_instances` (нельзя подменить)
-- Применяет формулу: `total_power = SUM(hero.power + dragon.magic) × rarity_bonus`
-- Клиент только вызывает функцию, не передаёт сумму урона
+Both the `useEffect` (line 49) and the `setInterval` (line 76) check for completed upgrades and call `toast()`. Because the `useEffect` depends on `activeUpgrades` and `toast`, and `toast` is not stable (creates new reference each render), this can trigger repeatedly, showing duplicate "Upgrade complete" toasts.
 
-### Атомарность HP босса
-
-Чтобы избежать race condition при одновременных атаках:
-```sql
-UPDATE clan_raid_events 
-SET current_hp = GREATEST(0, current_hp - p_damage)
-WHERE id = p_raid_id AND status = 'active'
-RETURNING current_hp;
-```
-PostgreSQL гарантирует атомарность этого UPDATE.
-
-### Реалтайм обновление
-
-Supabase Realtime подписка на `clan_raid_events` — все игроки видят убывающий HP босса в реальном времени без дополнительных запросов.
+**Impact**: Users may see multiple toast notifications for the same upgrade completion.
 
 ---
 
-## Что нового создаём
+## Summary of Changes
 
-| Что | Тип | Комментарий |
-|-----|-----|-------------|
-| `clan_raid_events` | Таблица | Боссы |
-| `clan_raid_attacks` | Таблица | Атаки игроков |
-| `clan_raid_rankings` | Таблица | Агрегация по кланам |
-| `clan-raid-attack` | Edge Function | Логика атаки |
-| `clan-raid-distribute-rewards` | Edge Function | Раздача наград |
-| Cron job | SQL | Автозапуск раздачи |
-| `ClanRaidTab.tsx` | Компонент | UI вкладки рейда |
-| `RaidBossCard.tsx` | Компонент | Карточка босса |
-| `useRaidBoss.ts` | Хук | Данные + атака |
-| Кнопка запуска босса | Admin панель | Для администратора |
+| # | File | Issue | Severity |
+|---|------|-------|----------|
+| 1 | `useUnifiedGameState.ts` line 437 | Add `forge: 0, clan_hall: 0` to fallback | Critical |
+| 2 | `useUnifiedGameState.ts` line 52 | Add `forge: 0, clan_hall: 0` to initialData | Moderate |
+| 3 | Multiple files | Wrap console.log in DEV guard or remove | Moderate |
+| 4 | `useUnifiedGameState.ts` line 117 | Remove localStorage writes | Low |
 
----
+I recommend implementing fixes 1-4. The potential risks (5-6) can be addressed separately if needed.
 
-## Что НЕ нужно менять
-
-- Существующие таблицы `clans`, `clan_members` — только читаем
-- Боевая механика PvP — переиспользуем формулы урона
-- Система `reward_claims` — переиспользуем для идемпотентности наград
-- `apply_battle_rewards` RPC — переиспользуем для начисления ELL
-
----
-
-## Порядок реализации (5 этапов)
-
-1. **Миграция БД** — 3 новые таблицы + RLS политики
-2. **Edge Function `clan-raid-attack`** — логика атаки + расчёт урона на сервере
-3. **Edge Function `clan-raid-distribute-rewards`** + cron
-4. **Frontend** — `useRaidBoss`, `ClanRaidTab`, `RaidBossCard`
-5. **Admin UI** — кнопка создания нового босса с настройкой HP/времени/наград
