@@ -603,6 +603,170 @@ export type Database = {
           },
         ]
       }
+      clan_raid_attacks: {
+        Row: {
+          attacked_at: string
+          clan_id: string
+          damage_dealt: number
+          id: string
+          raid_event_id: string
+          team_snapshot: Json | null
+          wallet_address: string
+        }
+        Insert: {
+          attacked_at?: string
+          clan_id: string
+          damage_dealt?: number
+          id?: string
+          raid_event_id: string
+          team_snapshot?: Json | null
+          wallet_address: string
+        }
+        Update: {
+          attacked_at?: string
+          clan_id?: string
+          damage_dealt?: number
+          id?: string
+          raid_event_id?: string
+          team_snapshot?: Json | null
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_raid_attacks_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_raid_attacks_raid_event_id_fkey"
+            columns: ["raid_event_id"]
+            isOneToOne: false
+            referencedRelation: "clan_raid_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_raid_events: {
+        Row: {
+          boss_description: string | null
+          boss_image: string | null
+          boss_name: string
+          created_at: string
+          created_by: string
+          current_hp: number
+          ends_at: string
+          id: string
+          max_hp: number
+          reward_first_place: number
+          reward_participant: number
+          reward_second_place: number
+          rewards_distributed: boolean
+          started_at: string
+          status: string
+          total_hp: number
+          updated_at: string
+          winner_clan_id: string | null
+        }
+        Insert: {
+          boss_description?: string | null
+          boss_image?: string | null
+          boss_name: string
+          created_at?: string
+          created_by: string
+          current_hp?: number
+          ends_at: string
+          id?: string
+          max_hp?: number
+          reward_first_place?: number
+          reward_participant?: number
+          reward_second_place?: number
+          rewards_distributed?: boolean
+          started_at?: string
+          status?: string
+          total_hp?: number
+          updated_at?: string
+          winner_clan_id?: string | null
+        }
+        Update: {
+          boss_description?: string | null
+          boss_image?: string | null
+          boss_name?: string
+          created_at?: string
+          created_by?: string
+          current_hp?: number
+          ends_at?: string
+          id?: string
+          max_hp?: number
+          reward_first_place?: number
+          reward_participant?: number
+          reward_second_place?: number
+          rewards_distributed?: boolean
+          started_at?: string
+          status?: string
+          total_hp?: number
+          updated_at?: string
+          winner_clan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_raid_events_winner_clan_id_fkey"
+            columns: ["winner_clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_raid_rankings: {
+        Row: {
+          clan_emblem: string | null
+          clan_id: string
+          clan_name: string
+          id: string
+          members_participated: number
+          raid_event_id: string
+          rank: number | null
+          total_damage: number
+        }
+        Insert: {
+          clan_emblem?: string | null
+          clan_id: string
+          clan_name?: string
+          id?: string
+          members_participated?: number
+          raid_event_id: string
+          rank?: number | null
+          total_damage?: number
+        }
+        Update: {
+          clan_emblem?: string | null
+          clan_id?: string
+          clan_name?: string
+          id?: string
+          members_participated?: number
+          raid_event_id?: string
+          rank?: number | null
+          total_damage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_raid_rankings_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_raid_rankings_raid_event_id_fkey"
+            columns: ["raid_event_id"]
+            isOneToOne: false
+            referencedRelation: "clan_raid_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clans: {
         Row: {
           background_image: string | null
