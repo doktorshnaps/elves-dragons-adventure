@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUnifiedGameState } from './useUnifiedGameState';
 import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useToast } from './use-toast';
@@ -21,6 +21,10 @@ export const useBuildingUpgrades = () => {
   const { accountId } = useWalletContext();
   const [activeUpgrades, setActiveUpgrades] = useState<UpgradeProgress[]>([]);
 
+  // Флаг: были ли когда-либо получены реальные данные из БД (не дефолтный пустой массив).
+  // Нужен чтобы отличить "initial empty default" от "DB explicit empty after instant-complete".
+  const hasReceivedRealData = useRef(false);
+
   // Helper to sync upgrades to React Query cache
   const syncToCache = useCallback((upgrades: UpgradeProgress[], extraUpdates?: Record<string, any>) => {
     if (!accountId) return;
@@ -34,14 +38,33 @@ export const useBuildingUpgrades = () => {
     });
   }, [queryClient, accountId]);
 
-  // Загружаем активные улучшения из GameDataContext (приоритет) или gameState (fallback)
+  // Синхронизация с данными из БД (через GameDataContext) или gameState (fallback)
   useEffect(() => {
-    const upgrades = (gameData.activeBuildingUpgrades?.length > 0)
-      ? gameData.activeBuildingUpgrades
-      : gameState.activeBuildingUpgrades;
-    if (upgrades && Array.isArray(upgrades) && upgrades.length > 0) {
-      console.log('🔄 [useBuildingUpgrades] Loading active upgrades:', upgrades);
-      setActiveUpgrades(upgrades);
+    const dbUpgrades = gameData.activeBuildingUpgrades;
+
+    if (Array.isArray(dbUpgrades)) {
+      if (dbUpgrades.length > 0) {
+        // Есть реальные данные из БД — синхронизируем локальный state
+        hasReceivedRealData.current = true;
+        console.log('🔄 [useBuildingUpgrades] Syncing upgrades from DB:', dbUpgrades);
+        setActiveUpgrades(dbUpgrades);
+      } else if (hasReceivedRealData.current) {
+        // БД вернула пустой массив И ранее уже были реальные данные.
+        // Это значит: после instant-complete или installUpgrade данные реально удалены из БД.
+        // Очищаем локальный state.
+        console.log('🔄 [useBuildingUpgrades] DB returned empty after real data — clearing local state');
+        setActiveUpgrades([]);
+      }
+      // Если hasReceivedRealData = false и dbUpgrades = [] — это начальный дефолт, игнорируем.
+      return;
+    }
+
+    // Fallback: DB данные ещё не загружены, используем gameState
+    const gsUpgrades = gameState.activeBuildingUpgrades;
+    if (Array.isArray(gsUpgrades) && gsUpgrades.length > 0) {
+      hasReceivedRealData.current = true;
+      console.log('🔄 [useBuildingUpgrades] Loading active upgrades from gameState:', gsUpgrades);
+      setActiveUpgrades(gsUpgrades);
     }
   }, [gameData.activeBuildingUpgrades, gameState.activeBuildingUpgrades]);
 
