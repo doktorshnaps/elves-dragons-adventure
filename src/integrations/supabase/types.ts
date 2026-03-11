@@ -1871,6 +1871,41 @@ export type Database = {
           },
         ]
       }
+      pvp_match_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          match_id: string
+          session_token: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          match_id: string
+          session_token?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          match_id?: string
+          session_token?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pvp_match_sessions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "pvp_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pvp_matches: {
         Row: {
           battle_log: Json | null
@@ -3880,6 +3915,10 @@ export type Database = {
         Args: { p_item_id: string; p_listing_type: string; p_price: number }
         Returns: string
       }
+      create_pvp_match_session: {
+        Args: { p_match_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       create_shop_session: {
         Args: {
           p_item_id: number
@@ -4822,6 +4861,7 @@ export type Database = {
         }
         Returns: string
       }
+      validate_pvp_session: { Args: { p_session_token: string }; Returns: Json }
       validate_shop_session: {
         Args: { p_session_token: string }
         Returns: {

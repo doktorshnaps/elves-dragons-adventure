@@ -606,6 +606,24 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
     }
   }, [walletAddress, queueStatus.queueId, toast, clearIntervals]);
 
+  // Create or retrieve a PvP match session token
+  const getSessionToken = useCallback(async (matchId: string): Promise<string | null> => {
+    if (!walletAddress) return null;
+    
+    const { data, error } = await supabase.rpc('create_pvp_match_session', {
+      p_wallet_address: walletAddress,
+      p_match_id: matchId
+    });
+    
+    const result = data as any;
+    if (error || !result || result.error) {
+      console.error('[PvP] Failed to get session token:', error || result?.error);
+      return null;
+    }
+    
+    return result.session_token;
+  }, [walletAddress]);
+
   // Submit move (player or surrender)
   const submitMove = useCallback(async (
     matchId: string,
@@ -618,6 +636,18 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
 
     setLoading(true);
 
+    // Get session token for this match
+    const sessionToken = await getSessionToken(matchId);
+    if (!sessionToken) {
+      setLoading(false);
+      toast({ 
+        title: "Ошибка авторизации", 
+        description: "Не удалось получить токен сессии",
+        variant: "destructive" 
+      });
+      return null;
+    }
+
     const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
 
@@ -628,11 +658,10 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
-          'x-wallet-address': walletAddress
         },
         body: JSON.stringify({
           match_id: matchId,
-          wallet_address: walletAddress,
+          session_token: sessionToken,
           action_type: actionType,
           attacker_pair_index: attackerPairIndex,
           target_pair_index: targetPairIndex,
@@ -662,31 +691,33 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
           : "Удачи в следующем бою!"
       });
       loadRating();
-      // ❗ Refresh active matches list after surrender/completion
       loadActiveMatches();
     }
 
     return result;
-  }, [walletAddress, toast, loadRating, loadActiveMatches]);
+  }, [walletAddress, toast, loadRating, loadActiveMatches, getSessionToken]);
 
   // Get match status
   const getMatchStatus = useCallback(async (matchId: string) => {
+    // Get session token for this match
+    const sessionToken = await getSessionToken(matchId);
+    if (!sessionToken) return null;
+
     const supabaseUrl = 'https://oimhwdymghkwxznjarkv.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k';
     
     const response = await fetch(
-      `${supabaseUrl}/functions/v1/pvp-match-status?match_id=${matchId}`,
+      `${supabaseUrl}/functions/v1/pvp-match-status?match_id=${matchId}&session_token=${sessionToken}`,
       {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
-          'x-wallet-address': walletAddress || ''
         }
       }
     );
 
     if (!response.ok) return null;
     return response.json();
-  }, [walletAddress]);
+  }, [getSessionToken]);
 
   // Get leaderboard
   const getLeaderboard = useCallback(async (limit = 50, offset = 0) => {
