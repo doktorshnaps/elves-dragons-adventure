@@ -2,7 +2,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-wallet-address',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-pvp-session-token',
 };
 
 const json = (data: any, status = 200) =>
@@ -18,6 +18,18 @@ const getSupabaseServiceClient = () => {
     throw new Error('Missing Supabase environment variables');
   }
   return createClient(supabaseUrl, supabaseServiceKey);
+};
+
+// Validate session token and return wallet_address
+const validateSession = async (supabase: any, sessionToken: string): Promise<{ wallet_address: string; match_id: string } | null> => {
+  const { data, error } = await supabase.rpc('validate_pvp_session', {
+    p_session_token: sessionToken
+  });
+  if (error || !data || data.error) {
+    console.error('❌ [PvP Move] Session validation failed:', error || data?.error);
+    return null;
+  }
+  return data;
 };
 
 // D6 dice roll
@@ -72,11 +84,7 @@ const calculateDamageByRoll = (
       break;
   }
 
-  // New calculation order: power * dice modifier FIRST, then subtract defense
-  // Step 1: Apply dice percentage to attacker's power
   const modifiedPower = Math.floor(attackerPower * (damagePercent / 100));
-  
-  // Step 2: Subtract defender's defense to get final damage (minimum 1 if not a miss)
   const damage = isMiss ? 0 : Math.max(1, modifiedPower - defenderDefense);
 
   return { 
@@ -89,33 +97,25 @@ const calculateDamageByRoll = (
   };
 };
 
-// Apply damage to a pair (dragon/pet HP first, then hero HP)
-// Defense is already factored into damage calculation formula (attackerPower - defenderDefense)
-// So here we just reduce HP directly
 const applyDamageToPair = (pair: any, damage: number): any => {
   const updatedPair = JSON.parse(JSON.stringify(pair));
   let remainingDamage = damage;
   
-  // Apply damage to dragon/pet HP first (defense already calculated in damage formula)
   if (updatedPair.dragon && updatedPair.dragon.currentHealth > 0) {
     const dragonAbsorbed = Math.min(updatedPair.dragon.currentHealth, remainingDamage);
     updatedPair.dragon.currentHealth = Math.max(0, updatedPair.dragon.currentHealth - dragonAbsorbed);
     remainingDamage -= dragonAbsorbed;
   }
   
-  // If dragon is dead and damage remains, apply to hero HP
   if (remainingDamage > 0 && updatedPair.hero && updatedPair.hero.currentHealth > 0) {
     updatedPair.hero.currentHealth = Math.max(0, updatedPair.hero.currentHealth - remainingDamage);
   }
   
-  // Update pair totals
   updatedPair.currentHealth = (updatedPair.hero?.currentHealth || 0) + (updatedPair.dragon?.currentHealth || 0);
-  // Defense doesn't change during combat (it's used for damage calculation, not absorption)
   
   return updatedPair;
 };
 
-// Check if a team is defeated (pair is alive if hero OR dragon has health)
 const isTeamDefeated = (pairs: any[]): boolean => {
   return pairs.every(pair => {
     const heroAlive = pair.hero && pair.hero.currentHealth > 0;
@@ -124,7 +124,6 @@ const isTeamDefeated = (pairs: any[]): boolean => {
   });
 };
 
-// Helper: call update_pvp_elo RPC and return the calculated elo_change
 const updateEloAndGetChange = async (
   supabase: any,
   winnerWallet: string,
@@ -138,7 +137,7 @@ const updateEloAndGetChange = async (
   });
   if (error) {
     console.error('❌ [PvP] Error updating Elo:', error);
-    return 16; // fallback
+    return 16;
   }
   return data ?? 16;
 };
@@ -152,17 +151,21 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { 
       match_id, 
-      wallet_address, 
       action_type, 
       attacker_pair_index, 
-      target_pair_index 
+      target_pair_index,
+      session_token
     } = body;
 
-    const headerWallet = req.headers.get('x-wallet-address');
-    const playerWallet = wallet_address || headerWallet;
+    // Get session token from body or header
+    const token = session_token || req.headers.get('x-pvp-session-token');
 
-    if (!match_id || !playerWallet) {
-      return json({ error: 'match_id and wallet_address are required' }, 400);
+    if (!token) {
+      return json({ error: 'session_token is required' }, 401);
+    }
+
+    if (!match_id) {
+      return json({ error: 'match_id is required' }, 400);
     }
 
     if (!['attack', 'ability', 'surrender', 'trigger_bot_turn'].includes(action_type)) {
@@ -170,6 +173,19 @@ Deno.serve(async (req) => {
     }
 
     const supabase = getSupabaseServiceClient();
+
+    // Validate session token to get verified wallet address
+    const session = await validateSession(supabase, token);
+    if (!session) {
+      return json({ error: 'Invalid or expired session token' }, 401);
+    }
+
+    const playerWallet = session.wallet_address;
+
+    // Verify the session's match_id matches the requested match_id
+    if (session.match_id !== match_id) {
+      return json({ error: 'Session token does not match this match' }, 403);
+    }
 
     // Get match data
     const { data: match, error: matchError } = await supabase
@@ -192,7 +208,6 @@ Deno.serve(async (req) => {
     const isPlayer1 = playerWallet === match.player1_wallet;
     const isPlayer2 = playerWallet === match.player2_wallet;
     
-    // Validate player is in this match
     if (!isPlayer1 && !isPlayer2) {
       return json({ error: 'You are not in this match' }, 400);
     }
@@ -201,17 +216,14 @@ Deno.serve(async (req) => {
     const playerPairs = isPlayer1 ? battleState.player1_pairs : battleState.player2_pairs;
     const opponentPairs = isPlayer1 ? battleState.player2_pairs : battleState.player1_pairs;
 
-    // Handle surrender - allowed regardless of whose turn it is
+    // Handle surrender
     if (action_type === 'surrender') {
       const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       const loserWallet = playerWallet;
       
-      const reward = match.entry_fee * 2 * 0.9; // 10% fee
-      
-      // Update Elo ratings (dynamic calculation in DB)
+      const reward = match.entry_fee * 2 * 0.9;
       const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
-      // Update match as completed
       await supabase
         .from('pvp_matches')
         .update({
@@ -224,7 +236,6 @@ Deno.serve(async (req) => {
         })
         .eq('id', match_id);
 
-      // Credit winner reward
       if (!winnerWallet.startsWith('BOT_')) {
         await supabase.rpc('add_ell_balance', {
           p_wallet_address: winnerWallet,
@@ -243,9 +254,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Handle trigger_bot_turn - execute bot's move when it's bot's turn
+    // Handle trigger_bot_turn
     if (action_type === 'trigger_bot_turn') {
-      // Validate this is a bot match and it's the bot's turn
       if (!match.is_bot_match) {
         return json({ error: 'Not a bot match' }, 400);
       }
@@ -260,7 +270,6 @@ Deno.serve(async (req) => {
       const humanPairs = isBot1 ? battleState.player2_pairs : battleState.player1_pairs;
       const humanWallet = isBot1 ? match.player2_wallet : match.player1_wallet;
       
-      // Find first alive bot pair and first alive human pair
       const aliveBotPairIndex = botPairs.findIndex((p: any) => 
         (p.hero && p.hero.currentHealth > 0) || (p.dragon && p.dragon.currentHealth > 0)
       );
@@ -275,7 +284,6 @@ Deno.serve(async (req) => {
       const botAttackerPair = botPairs[aliveBotPairIndex];
       const botTargetPair = humanPairs[aliveHumanPairIndex];
       
-      // Bot rolls dice
       const botAttackerRoll = rollD6();
       
       const botAttackerPower = botAttackerPair.totalPower || 
@@ -296,7 +304,6 @@ Deno.serve(async (req) => {
         updatedHumanPairs[aliveHumanPairIndex] = updatedHumanPair;
       }
       
-      // Handle bot counterattack (if bot rolled 1)
       let botCounterDamage = 0;
       if (botResult.isCounterAttack) {
         const counterRoll = rollD6();
@@ -340,12 +347,10 @@ Deno.serve(async (req) => {
         botBattleState.player2_pairs = updatedBotPairs;
       }
       
-      // Check if human is defeated
       const humanDefeated = isTeamDefeated(updatedHumanPairs);
       const botDefeated = isTeamDefeated(updatedBotPairs);
       
       if (humanDefeated) {
-        // Bot wins — dynamic Elo
         const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', humanWallet, match.rarity_tier ?? 1);
         
         await supabase
@@ -361,7 +366,6 @@ Deno.serve(async (req) => {
           })
           .eq('id', match_id);
         
-        // Record move
         await supabase.from('pvp_moves').insert({
           match_id,
           player_wallet: botWallet,
@@ -395,7 +399,6 @@ Deno.serve(async (req) => {
       }
       
       if (botDefeated) {
-        // Human wins due to counterattack — dynamic Elo
         const eloChange = await updateEloAndGetChange(supabase, humanWallet, 'SKIP_BOT', match.rarity_tier ?? 1);
         const reward = match.entry_fee * 2 * 0.9;
         
@@ -417,7 +420,6 @@ Deno.serve(async (req) => {
           p_amount: reward
         });
         
-        // Record move
         await supabase.from('pvp_moves').insert({
           match_id,
           player_wallet: botWallet,
@@ -451,7 +453,6 @@ Deno.serve(async (req) => {
         });
       }
       
-      // Match continues - switch to human's turn
       await supabase
         .from('pvp_matches')
         .update({
@@ -461,7 +462,6 @@ Deno.serve(async (req) => {
         })
         .eq('id', match_id);
       
-      // Record bot move
       await supabase.from('pvp_moves').insert({
         match_id,
         player_wallet: botWallet,
@@ -513,24 +513,21 @@ Deno.serve(async (req) => {
     const attackerPair = playerPairs[attacker_pair_index];
     const targetPair = opponentPairs[target_pair_index];
 
-    // Check attacker is alive (pair is alive if hero OR dragon has health)
     const attackerAlive = attackerPair.hero.currentHealth > 0 || 
       (attackerPair.dragon && attackerPair.dragon.currentHealth > 0);
     if (!attackerAlive) {
       return json({ error: 'Attacker is dead' }, 400);
     }
 
-    // Check target is alive (pair is alive if hero OR dragon has health)
     const targetAlive = targetPair.hero.currentHealth > 0 || 
       (targetPair.dragon && targetPair.dragon.currentHealth > 0);
     if (!targetAlive) {
       return json({ error: 'Target is already dead' }, 400);
     }
 
-    // Roll dice (only attacker rolls now)
+    // Roll dice
     const attackerRoll = rollD6();
 
-    // Calculate damage using new D6 system
     const attackerTotalPower = attackerPair.totalPower || 
       (attackerPair.hero?.power || 0) + (attackerPair.dragon?.power || 0);
     const defenderTotalDefense = targetPair.currentDefense || 0;
@@ -541,7 +538,6 @@ Deno.serve(async (req) => {
       defenderTotalDefense
     );
 
-    // Apply damage to target
     let updatedOpponentPairs = [...opponentPairs];
     let updatedPlayerPairs = [...playerPairs];
     
@@ -550,10 +546,8 @@ Deno.serve(async (req) => {
       updatedOpponentPairs[target_pair_index] = updatedTargetPair;
     }
 
-    // Handle counterattack on roll 1
     let counterAttackDamage = 0;
     if (attackResult.isCounterAttack) {
-      // Target counterattacks the attacker
       const counterRoll = rollD6();
       const targetTotalPower = targetPair.totalPower || 
         (targetPair.hero?.power || 0) + (targetPair.dragon?.power || 0);
@@ -572,7 +566,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update battle state
     const newTurnNumber = (battleState.turn_number || 1) + 1;
     const newBattleState = {
       ...battleState,
@@ -593,7 +586,6 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Update the pairs arrays
     if (isPlayer1) {
       newBattleState.player1_pairs = updatedPlayerPairs;
       newBattleState.player2_pairs = updatedOpponentPairs;
@@ -602,18 +594,14 @@ Deno.serve(async (req) => {
       newBattleState.player2_pairs = updatedPlayerPairs;
     }
 
-    // Check for victory
     const opponentDefeated = isTeamDefeated(updatedOpponentPairs);
     const playerDefeated = isTeamDefeated(updatedPlayerPairs);
 
     if (opponentDefeated) {
-      // Match completed - attacker wins
       const winnerWallet = playerWallet;
       const loserWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       
-      const reward = match.entry_fee * 2 * 0.9; // 10% fee
-
-      // Dynamic Elo
+      const reward = match.entry_fee * 2 * 0.9;
       const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
       await supabase
@@ -629,7 +617,6 @@ Deno.serve(async (req) => {
         })
         .eq('id', match_id);
 
-      // Credit winner reward (skip bots)
       if (!winnerWallet.startsWith('BOT_')) {
         await supabase.rpc('add_ell_balance', {
           p_wallet_address: winnerWallet,
@@ -637,7 +624,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Record move
       await supabase.from('pvp_moves').insert({
         match_id,
         player_wallet: playerWallet,
@@ -672,13 +658,10 @@ Deno.serve(async (req) => {
     }
 
     if (playerDefeated) {
-      // Attacker lost due to counterattack
       const winnerWallet = isPlayer1 ? match.player2_wallet : match.player1_wallet;
       const loserWallet = playerWallet;
       
       const reward = match.entry_fee * 2 * 0.9;
-
-      // Dynamic Elo
       const eloChange = await updateEloAndGetChange(supabase, winnerWallet, loserWallet, match.rarity_tier ?? 1);
 
       await supabase
@@ -746,7 +729,6 @@ Deno.serve(async (req) => {
       })
       .eq('id', match_id);
 
-    // Record move
     await supabase.from('pvp_moves').insert({
       match_id,
       player_wallet: playerWallet,
@@ -762,13 +744,11 @@ Deno.serve(async (req) => {
       result_state: newBattleState
     });
 
-    // For bot matches, process bot's turn automatically and synchronously
+    // For bot matches, process bot's turn automatically
     if (match.is_bot_match && nextTurnWallet.startsWith('BOT_')) {
-      // Simple bot AI: attack first alive target with first alive pair
       const botPairs = isPlayer1 ? newBattleState.player2_pairs : newBattleState.player1_pairs;
       const humanPairs = isPlayer1 ? newBattleState.player1_pairs : newBattleState.player2_pairs;
       
-      // Check if pair is alive (hero OR dragon has health)
       const isPairAlive = (p: any) => 
         (p.hero && p.hero.currentHealth > 0) || (p.dragon && p.dragon.currentHealth > 0);
       
@@ -779,7 +759,6 @@ Deno.serve(async (req) => {
         const botAttackerPair = botPairs[aliveBotPairIndex];
         const botTargetPair = humanPairs[aliveHumanPairIndex];
 
-        // Bot rolls dice
         const botAttackerRoll = rollD6();
 
         const botAttackerPower = botAttackerPair.totalPower || 
@@ -800,7 +779,6 @@ Deno.serve(async (req) => {
           updatedHumanPairs[aliveHumanPairIndex] = updatedHumanPair;
         }
 
-        // Handle bot counterattack (if bot rolled 1)
         let botCounterDamage = 0;
         if (botResult.isCounterAttack) {
           const counterRoll = rollD6();
@@ -843,12 +821,10 @@ Deno.serve(async (req) => {
           botBattleState.player2_pairs = updatedHumanPairs;
         }
 
-        // Check if human is defeated
         const humanDefeated = isTeamDefeated(updatedHumanPairs);
         const botDefeated = isTeamDefeated(updatedBotPairs);
 
         if (humanDefeated) {
-          // Bot wins — dynamic Elo
           const eloChange = await updateEloAndGetChange(supabase, 'SKIP_BOT', playerWallet, match.rarity_tier ?? 1);
 
           await supabase
@@ -864,7 +840,6 @@ Deno.serve(async (req) => {
             })
             .eq('id', match_id);
         } else if (botDefeated) {
-          // Human wins due to counterattack — dynamic Elo
           const eloChange = await updateEloAndGetChange(supabase, playerWallet, 'SKIP_BOT', match.rarity_tier ?? 1);
           const reward = match.entry_fee * 2 * 0.9;
 
@@ -886,7 +861,6 @@ Deno.serve(async (req) => {
             p_amount: reward
           });
         } else {
-          // Match continues - back to human's turn
           await supabase
             .from('pvp_matches')
             .update({
@@ -897,7 +871,6 @@ Deno.serve(async (req) => {
             .eq('id', match_id);
         }
 
-        // Record bot move
         await supabase.from('pvp_moves').insert({
           match_id,
           player_wallet: nextTurnWallet,
@@ -913,12 +886,10 @@ Deno.serve(async (req) => {
           result_state: botBattleState
         });
 
-        // Get elo_change for response (need to read from match if completed)
         const humanDefeatedFinal = isTeamDefeated(updatedHumanPairs);
         const botDefeatedFinal = isTeamDefeated(updatedBotPairs);
         let responseEloChange: number | null = null;
         if (humanDefeatedFinal || botDefeatedFinal) {
-          // Re-read match to get the elo_change that was saved
           const { data: updatedMatch } = await supabase
             .from('pvp_matches')
             .select('elo_change')
@@ -927,11 +898,9 @@ Deno.serve(async (req) => {
           responseEloChange = updatedMatch?.elo_change ?? null;
         }
 
-        // Return response including bot's move data for animation
         return json({
           success: true,
           match_status: humanDefeatedFinal ? 'completed' : (botDefeatedFinal ? 'completed' : 'active'),
-          // Player's attack data
           dice_roll: attackerRoll,
           damage_dealt: attackResult.damage,
           damage_percent: attackResult.damagePercent,
@@ -940,7 +909,6 @@ Deno.serve(async (req) => {
           is_counter_attack: attackResult.isCounterAttack,
           counter_attack_damage: counterAttackDamage,
           description: attackResult.description,
-          // Bot's attack data for animation
           bot_turn: {
             dice_roll: botAttackerRoll,
             damage_dealt: botResult.damage,

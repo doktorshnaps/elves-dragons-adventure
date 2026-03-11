@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-wallet-address',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-pvp-session-token',
 };
 
 const json = (data: any, status = 200) =>
@@ -20,6 +20,17 @@ const getSupabaseServiceClient = () => {
   return createClient(supabaseUrl, supabaseServiceKey);
 };
 
+// Validate session token and return wallet_address
+const validateSession = async (supabase: any, sessionToken: string): Promise<{ wallet_address: string; match_id: string } | null> => {
+  const { data, error } = await supabase.rpc('validate_pvp_session', {
+    p_session_token: sessionToken
+  });
+  if (error || !data || data.error) {
+    return null;
+  }
+  return data;
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,15 +39,32 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const matchId = url.searchParams.get('match_id');
-    const walletAddress = req.headers.get('x-wallet-address');
+    const sessionToken = url.searchParams.get('session_token') || req.headers.get('x-pvp-session-token');
 
     if (!matchId) {
       return json({ error: 'match_id is required' }, 400);
     }
 
+    if (!sessionToken) {
+      return json({ error: 'session_token is required' }, 401);
+    }
+
     const supabase = getSupabaseServiceClient();
 
-    // Get match data (without strict FK joins that fail for bot matches)
+    // Validate session token to get verified wallet address
+    const session = await validateSession(supabase, sessionToken);
+    if (!session) {
+      return json({ error: 'Invalid or expired session token' }, 401);
+    }
+
+    const walletAddress = session.wallet_address;
+
+    // Verify session matches requested match
+    if (session.match_id !== matchId) {
+      return json({ error: 'Session token does not match this match' }, 403);
+    }
+
+    // Get match data
     const { data: match, error: matchError } = await supabase
       .from('pvp_matches')
       .select('*')
