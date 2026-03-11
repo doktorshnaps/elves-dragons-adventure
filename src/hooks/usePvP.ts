@@ -615,12 +615,13 @@ export const usePvP = (walletAddress: string | null, currentRarityTier: number =
       p_match_id: matchId
     });
     
-    if (error || !data || data.error) {
-      console.error('[PvP] Failed to get session token:', error || data?.error);
+    const result = data as any;
+    if (error || !result || result.error) {
+      console.error('[PvP] Failed to get session token:', error || result?.error);
       return null;
     }
     
-    return data.session_token;
+    return result.session_token;
   }, [walletAddress]);
 
   // Submit move (player or surrender)
