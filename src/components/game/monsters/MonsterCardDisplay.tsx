@@ -85,11 +85,11 @@ export const MonsterCardDisplay = memo(({
               width={240}
               height={320}
               placeholder="/placeholder.svg"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               progressive={true}
             />
           ) : (
-            <img src="/placeholder.svg" alt={name} className="w-full h-full object-cover" />
+            <img src="/placeholder.svg" alt={name} className="w-full h-full object-contain" />
           )}
         </div>
       )}
@@ -163,11 +163,11 @@ export const MonsterCardDisplay = memo(({
             width={320}
             height={427}
             placeholder="/placeholder.svg"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             progressive={true}
           />
         ) : (
-          <img src="/placeholder.svg" alt={name} className="w-full h-full object-cover" />
+          <img src="/placeholder.svg" alt={name} className="w-full h-full object-contain" />
         )}
         </div>
       )}
