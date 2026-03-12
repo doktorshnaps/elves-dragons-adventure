@@ -60,7 +60,6 @@ const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alig
 function App() {
   return (
     <ErrorBoundary>
-      <QueryProvider>
         <GameEventsProvider>
           <StaticGameDataProvider>
             <AdminProvider>
