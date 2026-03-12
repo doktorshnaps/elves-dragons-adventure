@@ -5,7 +5,7 @@ import { Toaster } from './components/ui/toaster';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
 import { MusicProvider } from './contexts/MusicContext';
-import { QueryProvider } from './providers/QueryProvider';
+
 import { AdminProvider } from './contexts/AdminContext';
 import { WhitelistProvider } from './contexts/WhitelistContext';
 import { BanStatusProvider } from './contexts/BanStatusContext';
@@ -60,7 +60,6 @@ const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alig
 function App() {
   return (
     <ErrorBoundary>
-      <QueryProvider>
         <GameEventsProvider>
           <StaticGameDataProvider>
             <AdminProvider>
@@ -127,7 +126,6 @@ function App() {
             </AdminProvider>
           </StaticGameDataProvider>
         </GameEventsProvider>
-      </QueryProvider>
     </ErrorBoundary>
   );
 }
