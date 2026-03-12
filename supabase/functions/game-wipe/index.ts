@@ -152,16 +152,7 @@ serve(async (req) => {
       throw medicalBayError;
     }
 
-    // Clear marketplace listings (except admin)
-    const { error: marketplaceError } = await supabase
-      .from('marketplace_listings')
-      .delete()
-      .neq('seller_wallet_address', adminWallet);
-
-    if (marketplaceError) {
-      console.error('❌ Error wiping marketplace_listings:', marketplaceError);
-      throw marketplaceError;
-    }
+    // NOTE: marketplace_listings table was removed, skipping wipe
 
     // Clear item instances (except admin)
     const { error: itemInstancesError } = await supabase
