@@ -127,7 +127,6 @@ function App() {
             </AdminProvider>
           </StaticGameDataProvider>
         </GameEventsProvider>
-      </QueryProvider>
     </ErrorBoundary>
   );
 }

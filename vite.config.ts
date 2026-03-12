@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
     'process.env': {},
   },
   resolve: {
+    dedupe: ['react', 'react-dom', 'react/jsx-runtime'],
     alias: {
       "@": path.resolve(__dirname, "./src"),
       buffer: "buffer",
