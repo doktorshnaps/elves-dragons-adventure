@@ -13,15 +13,31 @@ Deno.serve(async (req) => {
   try {
     const { wallet_address } = await req.json();
     
-    console.log(`🔄 Syncing cards for wallet: ${wallet_address}`);
-    
-    if (!wallet_address) {
-      throw new Error('wallet_address is required');
+    if (!wallet_address || typeof wallet_address !== 'string' || wallet_address.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'wallet_address is required', success: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify the caller is an admin
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_or_super_wallet', {
+      p_wallet_address: wallet_address,
+    });
+
+    if (adminError || !isAdmin) {
+      console.error('❌ Unauthorized sync attempt by:', wallet_address);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: admin access required', success: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    console.log(`🔄 Syncing cards for wallet: ${wallet_address} (admin verified)`);
 
     // Call the sync RPC function
     const { data, error } = await supabase.rpc('sync_card_instances_from_game_data', {
