@@ -178,7 +178,8 @@ export const createBalancedGenerator = (config: DungeonConfig) =>
             health: stats.hp,
             maxHealth: stats.hp,
             armor: stats.armor,
-            isBoss: type !== 'normal',
+            isBoss: type === 'boss50' || type === 'boss100',
+            isMiniboss: type === 'miniboss',
             image: finalImage
           });
         }
