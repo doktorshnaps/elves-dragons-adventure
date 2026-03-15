@@ -261,7 +261,7 @@ export const DungeonSearchDialog = ({
                   onClick={() => handleDungeonSelect(dungeon as DungeonType)}
                   disabled={!canEnter}
                   variant="menu"
-                  className={`w-full flex items-center justify-between ${
+                  className={`w-full flex items-center justify-between gap-1 px-3 py-2 min-h-[40px] ${
                     isActiveDungeon 
                       ? 'bg-green-600 hover:bg-green-700 border-green-500 text-white shadow-lg shadow-green-500/50' 
                       : activeDungeon 
@@ -272,22 +272,22 @@ export const DungeonSearchDialog = ({
                   }`}
                   style={!isActiveDungeon && !activeDungeon && canEnter ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
                     <DungeonElementBadge dungeonType={dungeon} />
-                    {getDungeonName(dungeon as DungeonType, language)}
+                    <span className="font-medium truncate">{getDungeonName(dungeon as DungeonType, language)}</span>
                     {isActiveDungeon && (
-                      <span className="flex items-center gap-1 text-xs font-bold bg-green-400/20 px-2 py-0.5 rounded-full">
+                      <span className="flex items-center gap-1 text-[10px] font-bold bg-green-400/20 px-1.5 py-0.5 rounded-full flex-shrink-0">
                         <span>⚔️</span>
                         <span>{t(language, 'dungeonSearch.active')}</span>
                       </span>
                     )}
                     {!canEnter && !isActiveDungeon && (
-                      <span className="text-xs opacity-70">
-                        (Требуется {requiredLevel} ур.)
+                      <span className="text-[10px] opacity-70 flex-shrink-0 whitespace-nowrap">
+                        ({requiredLevel} ур.)
                       </span>
                     )}
                   </span>
-                  <span className="text-xs opacity-70">
+                  <span className="text-[11px] opacity-70 flex-shrink-0 whitespace-nowrap">
                     Ур. {dungeonLevelRanges[dungeon as DungeonType].min}-{dungeonLevelRanges[dungeon as DungeonType].max}
                   </span>
                 </Button>
