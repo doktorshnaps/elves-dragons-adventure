@@ -60,6 +60,24 @@ const getDungeonName = (dungeon: DungeonType, lang: string) => {
   return t(lang as any, keys[dungeon]);
 };
 
+// Dungeon element mapping
+const dungeonElementMap: Record<string, string> = {
+  spider_nest: 'nature',
+  bone_dungeon: 'earth',
+  dark_mage: 'darkness',
+  forgotten_souls: 'darkness',
+  ice_throne: 'ice',
+  sea_serpent: 'water',
+  dragon_lair: 'fire',
+  pantheon_gods: 'light'
+};
+
+const DungeonElementBadge = ({ dungeonType }: { dungeonType: string }) => {
+  const element = dungeonElementMap[dungeonType];
+  if (!element) return null;
+  return <span className="text-sm">{getElementEmoji(element)}</span>;
+};
+
 export const DungeonSearchDialog = ({
   onClose,
   balance,
