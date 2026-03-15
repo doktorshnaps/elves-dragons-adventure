@@ -20,6 +20,8 @@ import { t } from "@/utils/translations";
 import { clearActiveBattle } from "@/utils/activeBattleChecker";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDungeonSettings } from "@/hooks/useDungeonSettings";
+import { getElementEmoji } from "@/hooks/useFactionElements";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
@@ -56,6 +58,24 @@ const getDungeonName = (dungeon: DungeonType, lang: string) => {
     pantheon_gods: 'dungeonSearch.pantheonGods'
   };
   return t(lang as any, keys[dungeon]);
+};
+
+// Dungeon element mapping
+const dungeonElementMap: Record<string, string> = {
+  spider_nest: 'nature',
+  bone_dungeon: 'earth',
+  dark_mage: 'darkness',
+  forgotten_souls: 'darkness',
+  ice_throne: 'ice',
+  sea_serpent: 'water',
+  dragon_lair: 'fire',
+  pantheon_gods: 'light'
+};
+
+const DungeonElementBadge = ({ dungeonType }: { dungeonType: string }) => {
+  const element = dungeonElementMap[dungeonType];
+  if (!element) return null;
+  return <span className="text-sm">{getElementEmoji(element)}</span>;
 };
 
 export const DungeonSearchDialog = ({
@@ -253,6 +273,7 @@ export const DungeonSearchDialog = ({
                   style={!isActiveDungeon && !activeDungeon && canEnter ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
                   <span className="flex items-center gap-2">
+                    <DungeonElementBadge dungeonType={dungeon} />
                     {getDungeonName(dungeon as DungeonType, language)}
                     {isActiveDungeon && (
                       <span className="flex items-center gap-1 text-xs font-bold bg-green-400/20 px-2 py-0.5 rounded-full">
