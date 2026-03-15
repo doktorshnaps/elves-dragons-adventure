@@ -990,7 +990,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
           </Button>
         </div>
         
-        <AttackOrderSelector playerPairs={battleState.playerPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} />
+        <AttackOrderSelector playerPairs={battleState.playerPairs} attackOrder={attackOrder} onOrderChange={updateAttackOrder} onStartBattle={handleStartBattle} dungeonType={dungeonType} />
         
         {/* Диалог предупреждения об активной сессии */}
         <ActiveDungeonWarning
