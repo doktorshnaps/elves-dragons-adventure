@@ -255,6 +255,7 @@ export const DungeonSearchDialog = ({
                   style={!isActiveDungeon && !activeDungeon && canEnter ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
                 >
                   <span className="flex items-center gap-2">
+                    <DungeonElementBadge dungeonType={dungeon} />
                     {getDungeonName(dungeon as DungeonType, language)}
                     {isActiveDungeon && (
                       <span className="flex items-center gap-1 text-xs font-bold bg-green-400/20 px-2 py-0.5 rounded-full">
