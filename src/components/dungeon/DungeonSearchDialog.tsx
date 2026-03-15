@@ -20,6 +20,8 @@ import { t } from "@/utils/translations";
 import { clearActiveBattle } from "@/utils/activeBattleChecker";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDungeonSettings } from "@/hooks/useDungeonSettings";
+import { getElementEmoji } from "@/hooks/useFactionElements";
 
 interface DungeonSearchDialogProps {
   onClose: () => void;
