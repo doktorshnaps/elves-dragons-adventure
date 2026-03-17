@@ -58,7 +58,7 @@ const NEAR_RPC_ENDPOINTS = [
 const createProviderWithFallback = async () => {
   for (const url of NEAR_RPC_ENDPOINTS) {
     try {
-      const provider = new providers.JsonRpcProvider({ url });
+      const provider = new JsonRpcProvider({ url });
       // Test the provider with a quick call
       await withTimeout(provider.status(), 5000);
       console.log(`✅ Using NEAR RPC: ${url}`);
