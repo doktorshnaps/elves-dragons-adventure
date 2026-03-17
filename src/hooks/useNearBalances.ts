@@ -60,7 +60,7 @@ const createProviderWithFallback = async () => {
     try {
       const provider = new JsonRpcProvider({ url });
       // Test the provider with a quick call
-      await withTimeout(provider.status(), 5000);
+      await withTimeout(provider.query({ request_type: 'view_account', account_id: 'system', finality: 'final' }), 5000);
       console.log(`✅ Using NEAR RPC: ${url}`);
       return provider;
     } catch (err) {
