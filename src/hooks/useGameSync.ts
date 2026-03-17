@@ -158,9 +158,9 @@ export const useGameSync = () => {
       if (isApplyingRef.current) return;
       
       // Синхронизируем только UI-состояние (без серверных данных)
+      // NOTE: selectedTeam removed — dungeons use player_teams table exclusively
       const snapshot = {
         balance: state.balance,
-        selectedTeam: state.selectedTeam,
         battleState: state.battleState,
         accountLevel: state.accountLevel,
         accountExperience: state.accountExperience,
@@ -168,7 +168,6 @@ export const useGameSync = () => {
 
       const serverSnapshot = {
         balance: gameData?.balance,
-        selectedTeam: gameData?.selectedTeam,
         battleState: gameData?.battleState,
         accountLevel: gameData?.accountLevel,
         accountExperience: gameData?.accountExperience,
@@ -179,11 +178,6 @@ export const useGameSync = () => {
 
       if (sameAsServer || sameAsLastSynced) return;
       
-      // Защита от затирания команды пустым массивом
-      if (snapshot.selectedTeam?.length === 0 && serverSnapshot.selectedTeam && serverSnapshot.selectedTeam.length > 0) {
-        console.warn('⚠️ Prevented syncing empty selectedTeam over existing team in DB');
-        return;
-      }
 
       const timeoutId = setTimeout(async () => {
         try {

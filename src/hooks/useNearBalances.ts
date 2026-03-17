@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import * as nearAPI from 'near-api-js';
+import { JsonRpcProvider, yoctoToNear } from 'near-api-js';
 import { useGameEvent } from '@/contexts/GameEventsContext';
 
-const { providers, utils } = nearAPI;
 
 
 interface NearBalances {
@@ -59,9 +58,9 @@ const NEAR_RPC_ENDPOINTS = [
 const createProviderWithFallback = async () => {
   for (const url of NEAR_RPC_ENDPOINTS) {
     try {
-      const provider = new providers.JsonRpcProvider({ url });
+      const provider = new JsonRpcProvider({ url });
       // Test the provider with a quick call
-      await withTimeout(provider.status(), 5000);
+      await withTimeout(provider.query({ request_type: 'view_account', account_id: 'system', finality: 'final' }), 5000);
       console.log(`✅ Using NEAR RPC: ${url}`);
       return provider;
     } catch (err) {
@@ -71,7 +70,7 @@ const createProviderWithFallback = async () => {
   }
   // Fallback to first endpoint if all fail
   console.warn('⚠️ All RPC endpoints failed, using default');
-  return new providers.JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
+  return new JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
 };
 
 export const useNearBalances = (accountId: string | null): NearBalances => {
@@ -120,7 +119,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             account_id: targetId,
             finality: 'final',
           }), 30000);
-          const totalNear = utils.format.formatNearAmount(view.amount);
+          const totalNear = yoctoToNear(view.amount);
           formattedNear = parseFloat(totalNear).toFixed(3);
           console.log('✅ NEAR balance:', formattedNear, '(raw yoctoNEAR:', view.amount, ')');
           setNearBalance(formattedNear);

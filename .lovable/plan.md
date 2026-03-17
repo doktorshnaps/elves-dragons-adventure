@@ -1,176 +1,114 @@
 
 
-# Comprehensive Game Audit: Game Design, Security, Architecture, and Performance
+# Audit: Game Functionality -- Broken Connections and Issues Found
 
-## 1. GAME DESIGN ISSUES
+After a thorough review of the codebase, I found **4 confirmed issues** and **2 potential risks**.
 
-### 1.1 Dice Formula -- High Frustration (CRITICAL)
-**File:** `src/utils/diceFormula.ts`
+---
 
-The D6 system has a 33% chance of dealing **zero damage** (rolls 1-2). Roll 1 = counterattack (0% damage + enemy free hit), Roll 2 = miss (0% damage). This means every third player action is wasted or punishing.
+## Issue 1 (CRITICAL): `buildingLevels` fallback missing `forge` and `clan_hall` in `useUnifiedGameState.ts`
 
-**Game design problem:** Players feel helpless. No agency mitigation, no pity system.
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 437-445
 
-**Fix:** Implement a pity system -- after 2 consecutive misses, guarantee minimum 50% damage on next roll. Or change Roll 2 from 0% to 25% (glancing blow). Already noted in your improvement roadmap (Phase 1) but not implemented.
+The `transformServerData` function has a hardcoded fallback for `buildingLevels` that is missing `forge` and `clan_hall`:
 
-### 1.2 Adventure Mode -- Client-Side Rewards (CRITICAL)
-**File:** `src/components/game/adventures/AdventuresTab.tsx`, line 47
-
-```typescript
-await updateGameData({ balance: balance + monster.reward });
+```text
+buildingLevels: serverData.building_levels ?? {
+  main_hall: 0, workshop: 0, storage: 0,
+  sawmill: 0, quarry: 0, barracks: 0,
+  dragon_lair: 0, medical: 0
+  // MISSING: forge, clan_hall
+}
 ```
 
-Adventure rewards are calculated and applied entirely on the client. Unlike dungeons (which use `claim-battle-rewards` Edge Function), adventure mode directly writes balance changes. A player can modify `monster.reward` in DevTools to give themselves arbitrary ELL.
+Meanwhile, `GameDataContext.tsx` (line 66-77) and `useShelterState.ts` (line 161-192) correctly include both `forge` and `clan_hall`. This means when data flows through `useUnifiedGameState` (used by `useShelterState` via `useBatchedGameState`), the fallback object silently drops these two buildings, potentially resetting their levels to `undefined` in edge cases.
 
-**Fix:** Create a server-side RPC or Edge Function for adventure reward claiming, similar to dungeon rewards.
+**Impact**: If `building_levels` is null/undefined from DB, forge and clan_hall levels become `undefined`, causing UI to show them as unbuilt even after upgrading.
 
-### 1.3 Item Selling -- Hardcoded Price (LOW)
-**File:** `src/components/game/adventures/AdventuresTab.tsx`, line 132
-
-All items sell for a fixed 10 ELL regardless of rarity, type, or value. This is both a game design and economic issue.
-
-**Fix:** Derive sell price from item rarity/type, e.g., `Math.floor(item.buyPrice * 0.3)`.
-
-### 1.4 Account Experience -- Client-Side Leveling (MODERATE)
-**File:** `src/stores/gameStore.ts`, lines 74-90
-
-`addAccountExperience` computes level-ups purely in Zustand with a simple `level * 100` formula. No server validation. A player can call `useGameStore.getState().setAccountLevel(999)` in console.
-
-**Fix:** Move experience/level calculation to a server-side RPC that validates and returns the new level.
-
-### 1.5 Adventure Projectiles -- requestAnimationFrame Leak (MODERATE)
-**File:** `src/components/game/adventures/game/hooks/useProjectiles.ts`, line 60
-
-The projectile movement uses a single `requestAnimationFrame` per render cycle instead of a proper animation loop. Each render schedules one frame and cancels it on cleanup, but the effect runs on every render due to `onHit` and `monsters` dependencies changing, causing rapid re-registration.
-
-**Fix:** Use a `useRef`-based animation loop with `requestAnimationFrame` inside a stable `useEffect`.
-
-### 1.6 No Energy System in Adventures (DESIGN GAP)
-Adventures have no energy/stamina cost. Players can farm indefinitely. Dungeons have energy, but adventures don't, creating an unlimited ELL faucet (especially with client-side rewards).
-
-**Fix:** Either add energy cost to adventures or cap rewards per session.
+**Fix**: Add `forge: 0` and `clan_hall: 0` to the fallback object in `transformServerData`.
 
 ---
 
-## 2. SECURITY ISSUES
+## Issue 2 (MODERATE): `initialGameData` also missing `forge` and `clan_hall`
 
-### 2.1 Client-Side Balance Mutation in Adventures (CRITICAL)
-Already described in 1.2. The `updateGameData({ balance: balance + monster.reward })` call is trivially exploitable.
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 52-62
 
-### 2.2 `localStorage` Auth Check in Router (MODERATE)
-**File:** `src/App.tsx`, line 81
+The `initialGameData` constant (used as the default before any data loads) also has the same missing buildings:
 
-```typescript
-localStorage.getItem('walletConnected') === 'true'
-  ? <Navigate to="/menu" replace />
-  : <Navigate to="/auth" replace />
+```text
+buildingLevels: {
+  main_hall: 0, workshop: 0, storage: 0,
+  sawmill: 0, quarry: 0, barracks: 0,
+  dragon_lair: 0, medical: 0
+  // MISSING: forge, clan_hall
+}
 ```
 
-Route decision based on localStorage. A user can set `walletConnected=true` to bypass the auth redirect. The `ProtectedRoute` component likely has proper checks, but the root `/` redirect is cosmetic-only.
-
-**Fix:** Check wallet connection state from WalletContext, not localStorage.
-
-### 2.3 `useResourceProduction` localStorage Fallback (LOW)
-**File:** `src/hooks/useResourceProduction.ts`, lines 31-45
-
-Resource collection timestamps fall back to localStorage, which can be manipulated to claim resources faster.
-
-**Fix:** Trust only DB timestamps; remove localStorage fallback or treat it as display-only cache.
-
-### 2.4 `useGameSync` Still Syncs `selectedTeam` to `game_data` (LOW)
-**File:** `src/hooks/useGameSync.ts`, line 163
-
-Per architecture notes, dungeon teams use `player_teams` table exclusively. This sync writes stale `selectedTeam` to `game_data`, wasting bandwidth. Already noted in plan.md.
+**Fix**: Add `forge: 0` and `clan_hall: 0`.
 
 ---
 
-## 3. ARCHITECTURE & CODE QUALITY
+## Issue 3 (MODERATE): Excessive `console.log` in production across multiple critical files
 
-### 3.1 Excessive `console.log` in Production (MODERATE)
-**Files:** 53 files, 1635+ console.log calls in `src/hooks/` alone.
+**Files affected**:
+- `src/contexts/GameDataContext.tsx` -- 93+ console.log calls
+- `src/hooks/useGameSync.ts` -- 30+ console.log calls  
+- `src/hooks/shelter/useShelterState.ts` -- 40+ console.log calls (including inside `canAffordUpgrade` which runs on every render)
+- `src/hooks/useBuildingUpgrades.ts` -- 15+ console.log calls
 
-Many are in hot paths (every-second timers, render cycles). This degrades performance in the Telegram bot context.
+These are not behind `import.meta.env.DEV` guards. In the Telegram bot context, excessive logging degrades performance -- especially `canAffordUpgrade` which logs on every render cycle with object dumps.
 
-**Fix (Phase 1):** Wrap all debug logs in `if (import.meta.env.DEV)` guards. Priority files: `useBuildingUpgrades.ts`, `useResourceProduction.ts`, `GameDataContext.tsx`, `useUnifiedGameState.ts`.
+**Impact**: Slower performance in TG bot, especially on shelter page. Contributes to the lag users experience.
 
-### 3.2 Weak Typing -- `any` Throughout (MODERATE)
-**File:** `src/stores/gameStore.ts`
-
-`selectedTeam: any[]`, `battleState: any | null`, `teamBattleState: any | null`. Same pattern across contexts and hooks. This hides bugs and makes refactoring dangerous.
-
-**Fix:** Define proper interfaces for `TeamPair[]`, `BattleState`, etc. and replace `any`.
-
-### 3.3 Duplicate Field Mapping in `mapClientToServer` (LOW)
-**File:** `src/hooks/useUnifiedGameState.ts`, lines 258-265
-
-`woodLastCollectionTime`, `stoneLastCollectionTime`, `woodProductionData`, `stoneProductionData` are each mapped twice (duplicate lines).
-
-**Fix:** Remove the 4 duplicate lines.
-
-### 3.4 `useBuildingUpgrades` Double Toast (MODERATE)
-**File:** `src/hooks/useBuildingUpgrades.ts`, lines 72-127
-
-Both the `useEffect` (line 72) and the `setInterval` (line 99) check for completed upgrades and fire `toast()`. The `toast` reference is unstable, causing the `useEffect` to re-trigger. Result: duplicate "Upgrade complete" notifications.
-
-**Fix:** Remove the toast from the `useEffect` and keep it only in the `setInterval`, or stabilize `toast` with `useRef`.
-
-### 3.5 Deep Provider Nesting (LOW)
-**File:** `src/App.tsx`, lines 62-120
-
-11 nested providers. While functional, this creates deep component trees and can cause unnecessary re-renders.
-
-**Fix:** Consider a `composeProviders` utility or consolidating related providers.
+**Fix**: Wrap all debug logs in `if (import.meta.env.DEV)` blocks, or remove them entirely in frequently-called functions like `canAffordUpgrade`.
 
 ---
 
-## 4. PERFORMANCE
+## Issue 4 (LOW): `useUnifiedGameState.onSuccess` writes to localStorage
 
-### 4.1 `useMonsterSpawning` Missing Dependency (LOW)
-**File:** `src/components/game/adventures/game/hooks/useMonsterSpawning.ts`, line 23
+**File**: `src/hooks/useUnifiedGameState.ts`, lines 117-127
 
-The initial monster spawn `useEffect` has an empty dependency array `[]` but references `monsters` and `generateMonster`. React will warn about missing deps.
+The mutation `onSuccess` handler saves `activeWorkers` and the full `gameData` object to localStorage:
 
-### 4.2 Adventure Projectile Re-renders (MODERATE)
-The `useProjectiles` hook creates new projectile objects on every animation frame via `setProjectiles`, triggering re-renders of the entire game tree every ~16ms.
+```typescript
+localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
+localStorage.setItem('gameData', JSON.stringify(updatedData));
+```
 
-**Fix:** Use `useRef` for projectile state and only sync to React state at a throttled rate (e.g., every 100ms).
+This contradicts the architecture decision documented in `GameDataContext.tsx` (line 255-256): "OPTIMIZATION: Fully removed localStorage sync -- data only in React Query and Supabase". This creates inconsistency and potential stale data issues.
+
+**Fix**: Remove the localStorage writes from `useUnifiedGameState.onSuccess`.
 
 ---
 
-## 5. RECOMMENDED ACTION PLAN
+## Potential Risk 1: `useGameSync` still syncs `selectedTeam` to game_data
 
-### Phase 1 -- Critical Security (1-2 days)
-| # | Task | Severity |
-|---|------|----------|
-| 1 | Server-side adventure rewards (Edge Function) | Critical |
-| 2 | Server-side account experience/leveling | Critical |
-| 3 | Replace localStorage auth check in App.tsx router | Moderate |
-| 4 | Remove localStorage fallback for resource timestamps | Low |
+**File**: `src/hooks/useGameSync.ts`, lines 196-228
 
-### Phase 2 -- Game Design Improvements (2-3 days)
-| # | Task | Severity |
-|---|------|----------|
-| 5 | Implement pity system for D6 (min 25% on roll 2, pity after 2 misses) | High |
-| 6 | Add energy cost or reward cap to adventures | High |
-| 7 | Dynamic item sell prices based on rarity | Low |
+The Zustand-to-Supabase sync subscriber still includes `selectedTeam` in its snapshot and syncs it to `game_data.selected_team`. However, per architecture memory, dungeon teams are now exclusively managed through `player_teams` table. This sync writes stale/empty `selectedTeam` to `game_data`, which is harmless for dungeons (since they read from `player_teams`) but wastes network traffic and could cause confusion.
 
-### Phase 3 -- Code Quality & Performance (2-3 days)
-| # | Task | Severity |
-|---|------|----------|
-| 8 | Wrap 1600+ console.logs in DEV guards (batch operation) | Moderate |
-| 9 | Fix duplicate toast in useBuildingUpgrades | Moderate |
-| 10 | Fix projectile animation loop (useRef pattern) | Moderate |
-| 11 | Remove duplicate field mappings in mapClientToServer | Low |
-| 12 | Replace `any` types in gameStore with proper interfaces | Low |
-| 13 | Remove dead `selectedTeam` sync from useGameSync | Low |
+**Impact**: Low -- no functional breakage since dungeons read from `player_teams`, but it's dead code that could mask issues.
 
-### Phase 4 -- Strategic Game Design (from roadmap, ongoing)
-| # | Task |
-|---|------|
-| 14 | Class-specific active abilities |
-| 15 | Faction synergy bonuses |
-| 16 | Roguelike dungeon mechanics (branching paths, events) |
-| 17 | Achievement system |
+---
 
-**Total estimated effort for Phases 1-3:** ~5-8 days of focused work.
+## Potential Risk 2: `useBuildingUpgrades` completion toast fires repeatedly
+
+**File**: `src/hooks/useBuildingUpgrades.ts`, lines 49-73 and 76-104
+
+Both the `useEffect` (line 49) and the `setInterval` (line 76) check for completed upgrades and call `toast()`. Because the `useEffect` depends on `activeUpgrades` and `toast`, and `toast` is not stable (creates new reference each render), this can trigger repeatedly, showing duplicate "Upgrade complete" toasts.
+
+**Impact**: Users may see multiple toast notifications for the same upgrade completion.
+
+---
+
+## Summary of Changes
+
+| # | File | Issue | Severity |
+|---|------|-------|----------|
+| 1 | `useUnifiedGameState.ts` line 437 | Add `forge: 0, clan_hall: 0` to fallback | Critical |
+| 2 | `useUnifiedGameState.ts` line 52 | Add `forge: 0, clan_hall: 0` to initialData | Moderate |
+| 3 | Multiple files | Wrap console.log in DEV guard or remove | Moderate |
+| 4 | `useUnifiedGameState.ts` line 117 | Remove localStorage writes | Low |
+
+I recommend implementing fixes 1-4. The potential risks (5-6) can be addressed separately if needed.
 

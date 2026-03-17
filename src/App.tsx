@@ -5,6 +5,7 @@ import { Toaster } from './components/ui/toaster';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
 import { MusicProvider } from './contexts/MusicContext';
+import { useWalletContext } from './contexts/WalletConnectContext';
 
 import { AdminProvider } from './contexts/AdminContext';
 import { WhitelistProvider } from './contexts/WhitelistContext';
@@ -57,6 +58,12 @@ const ClanPage = lazy(() => import('./pages/Clan').then(m => ({ default: m.ClanP
 // Simple loading fallback
 const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
+const RootRedirect = () => {
+  const { accountId, isLoading } = useWalletContext();
+  if (isLoading) return <PageLoader />;
+  return accountId ? <Navigate to="/menu" replace /> : <Navigate to="/auth" replace />;
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -77,11 +84,7 @@ function App() {
                                 <ReferralHandler />
                                 <MusicController />
                                 <Routes>
-                                  <Route path="/" element={
-                                    localStorage.getItem('walletConnected') === 'true' 
-                                      ? <Navigate to="/menu" replace /> 
-                                      : <Navigate to="/auth" replace />
-                                  } />
+                                <Route path="/" element={<RootRedirect />} />
                                   <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
                                   <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
                                   <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
