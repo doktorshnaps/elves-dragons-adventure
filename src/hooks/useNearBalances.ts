@@ -70,7 +70,7 @@ const createProviderWithFallback = async () => {
   }
   // Fallback to first endpoint if all fail
   console.warn('⚠️ All RPC endpoints failed, using default');
-  return new providers.JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
+  return new JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
 };
 
 export const useNearBalances = (accountId: string | null): NearBalances => {
