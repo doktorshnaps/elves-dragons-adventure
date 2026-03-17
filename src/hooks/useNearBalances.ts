@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import * as nearAPI from 'near-api-js';
+import { JsonRpcProvider } from 'near-api-js/lib/providers';
+import { formatNearAmount } from 'near-api-js/lib/utils/format';
 import { useGameEvent } from '@/contexts/GameEventsContext';
 
-const { providers, utils } = nearAPI;
 
 
 interface NearBalances {
