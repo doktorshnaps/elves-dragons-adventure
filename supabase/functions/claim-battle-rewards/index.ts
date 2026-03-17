@@ -474,6 +474,19 @@ Deno.serve(async (req) => {
       items: items.length
     });
 
+    // Server-side ELL cap: max reasonable ELL = level * 300 monsters * max formula
+    const maxReasonableEll = Math.max(5000, session.level * 600);
+    if (ell_reward > maxReasonableEll) {
+      console.error('❌ ELL reward exceeds cap:', { ell_reward, cap: maxReasonableEll });
+      await supabase.from('security_audit_log').insert({
+        event_type: 'REWARD_CAP_EXCEEDED',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { ell_reward, cap: maxReasonableEll, monsters: claimBody.killed_monsters.length }
+      }).then(null, () => {});
+      ell_reward = maxReasonableEll;
+    }
+
     // Вызываем RPC функцию для атомарного применения всех наград
     console.log('🎯 Calling apply_battle_rewards RPC');
     
