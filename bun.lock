@@ -7,7 +7,7 @@
       "dependencies": {
         "@hookform/resolvers": "^3.9.0",
         "@hot-labs/kit": "^1.6.4",
-        "@hot-labs/near-connect": "^0.4.2",
+        "@hot-labs/near-connect": "^0.11.1",
         "@near-wallet-selector/core": "10.1.4",
         "@near-wallet-selector/here-wallet": "10.1.4",
         "@near-wallet-selector/hot-wallet": "10.1.4",
@@ -231,7 +231,7 @@
 
     "@hot-labs/kit": ["@hot-labs/kit@1.6.4", "", { "dependencies": { "@defuse-protocol/one-click-sdk-typescript": "^0.1.13", "@hot-labs/near-connect": "^0.8.1", "@hot-labs/omni-sdk": "^2.24.7", "@lottiefiles/dotlottie-wc": "^0.8.11", "@near-js/crypto": "^2.3.3", "@near-js/providers": "^2.5.1", "@near-js/utils": "^2.2.4", "@noble/hashes": "^2.0.1", "@scure/base": "^2.0.0", "@walletconnect/universal-provider": "^2.23.0", "ethers": "^6.15.0", "mobx": "^6.15.0", "mobx-react-lite": "^4.1.1", "qr-code-styling": "^1.9.2", "styled-components": "^6.1.19", "uuid4": "^2.0.3" }, "optionalDependencies": { "@cosmjs/cosmwasm-stargate": "^0.37.0", "@cosmjs/stargate": "^0.37.0", "@keplr-wallet/proto-types": "^0.12.291", "@keplr-wallet/provider-extension": "^0.12.291", "@solana/spl-token": "^0.4.14", "@solana/wallet-standard-features": "^1.3.0", "@stellar/freighter-api": "^6.0.1", "@ton-api/client": "^0.4.0", "@ton/core": "^0.62.0", "@ton/crypto": "^3.3.0", "@tonconnect/ui": "^2.2.0", "@wallet-standard/base": "^1.1.0", "@wallet-standard/features": "^1.1.0" }, "peerDependencies": { "react": "^18.0.0", "react-dom": "^18.0.0" } }, "sha512-DCk6uiohIdeTIH86DkIy7agV6aKiPgzAdUiNwSoySvUn3Iu2HaAJenwQ6sIllfA9vGvumvjzNecgedhpF5gZ6A=="],
 
-    "@hot-labs/near-connect": ["@hot-labs/near-connect@0.4.2", "", {}, "sha512-uj8RfG/MRTYW3xuOXq3OfqoInLloNr765AovsK0k7lPutOf2kSKyXb4CfCAEdkkDUxSTW2PLZRPp7YTnt1SwVw=="],
+    "@hot-labs/near-connect": ["@hot-labs/near-connect@0.11.1", "", {}, "sha512-pREyFIGuC5CapWD0p1FkAJSB32AS5qM/7h4OtgRm6K2lZnUZtT6w8dnvs7Tn8vHmi4IASGRdTdpoYvQZ3nstUA=="],
 
     "@hot-labs/omni-sdk": ["@hot-labs/omni-sdk@2.25.1", "", { "dependencies": { "@near-js/crypto": "2.2.5", "@near-js/providers": "2.2.5", "@near-js/transactions": "2.2.5", "@near-js/types": "2.2.5", "@near-js/utils": "2.2.5", "@scure/base": "2.0.0", "@stellar/stellar-sdk": "14.1.1", "@ton-api/client": "0.4.0", "@ton-api/ton-adapter": "0.4.1", "@ton/core": "0.60.1", "@ton/crypto": "3.3.0", "@ton/ton": "15.2.1", "ethers": "6.15.0", "rlp": "3.0.0" }, "optionalDependencies": { "@coral-xyz/anchor": "0.29.0", "@cosmjs/cosmwasm-stargate": "0.37.0", "@cosmjs/stargate": "0.37.0", "@solana/spl-token": "0.4.13", "@solana/web3.js": "1.68.0", "cosmjs-types": "0.11.0" } }, "sha512-0ZexxBPOsUu8Vr/0pYbRo94IRoinrIpgL7wkPy5mpdRU4r/Q+13SLz/Gbw1hQGM8G3uLz0Zv0bp//fWGt8JXxg=="],
 
