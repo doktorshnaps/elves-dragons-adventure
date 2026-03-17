@@ -18,32 +18,47 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { cards, walletAddress } = await req.json();
-
-    if (!walletAddress || !cards || !Array.isArray(cards)) {
+    // Require JWT and resolve wallet server-side
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Missing walletAddress or cards array' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Проверяем админские права
-    const { data: isAdmin, error: adminError } = await supabaseClient.rpc('is_admin_or_super_wallet', {
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    const walletAddress = profile?.wallet_address;
+    if (!walletAddress) {
+      return new Response(
+        JSON.stringify({ error: 'No wallet linked to this account' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check admin using server-resolved wallet
+    const { data: isAdmin, error: adminError } = await supabaseAdmin.rpc('is_admin_or_super_wallet', {
       p_wallet_address: walletAddress
     });
 
@@ -51,6 +66,15 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { cards } = await req.json();
+
+    if (!cards || !Array.isArray(cards)) {
+      return new Response(
+        JSON.stringify({ error: 'Missing cards array' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -62,13 +86,8 @@ Deno.serve(async (req) => {
 
     for (const card of cards as CardData[]) {
       try {
-        // Всем картам назначаем редкость 1
         const rarity = 1;
-
-        // Преобразуем тип
         const cardType = card.type === 'character' ? 'hero' : card.type === 'pet' ? 'dragon' : card.type;
-
-        // Извлекаем UUID из пути изображения
         const imageUrl = card.image.replace('/lovable-uploads/', '').replace('.webp', '');
 
         const { error: upsertError } = await supabaseAdmin
@@ -102,11 +121,10 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error: any) {
     console.error('Auto-import error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

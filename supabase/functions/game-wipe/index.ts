@@ -16,11 +16,11 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get Authorization header
+    // Require JWT and resolve wallet server-side — no body fallback
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ 
-        error: 'Missing authorization header',
+        error: 'Unauthorized: missing Authorization header',
         success: false 
       }), {
         status: 401,
@@ -28,35 +28,14 @@ serve(async (req) => {
       });
     }
 
-    // Create client with user's JWT (may be anon) for contextual auth
-    const userSupabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Parse request body to get potential admin wallet fallback
-    const reqBody = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
-    const bodyAdminWallet = reqBody?.adminWallet || reqBody?.wallet_address;
-
-    // Try to resolve wallet from authenticated user first (if any)
-    let resolvedWallet: string | null = null;
-    const { data: authData } = await userSupabase.auth.getUser();
-    const user = authData?.user || null;
-
-    if (user) {
-      const { data: userData } = await userSupabase
-        .from('game_data')
-        .select('wallet_address')
-        .eq('user_id', user.id)
-        .single();
-      resolvedWallet = userData?.wallet_address || null;
-    }
-
-    // Fallback to wallet from request body
-    const adminWallet = (resolvedWallet || bodyAdminWallet || '').toString();
-
-    if (!adminWallet) {
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
       return new Response(JSON.stringify({
-        error: 'Missing admin wallet. Provide in body as {"adminWallet": "<wallet>"}',
+        error: 'Unauthorized: invalid token',
         success: false
       }), {
         status: 401,
@@ -64,7 +43,24 @@ serve(async (req) => {
       });
     }
 
-    // Verify admin via secure RPC
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    const adminWallet = profile?.wallet_address;
+    if (!adminWallet) {
+      return new Response(JSON.stringify({
+        error: 'No wallet linked to this account',
+        success: false
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify admin via secure RPC using server-resolved wallet
     const { data: isAdmin, error: roleErr } = await supabase.rpc('is_admin_or_super_wallet', {
       p_wallet_address: adminWallet
     });
@@ -85,7 +81,7 @@ serve(async (req) => {
     const { error: gameDataError } = await supabase
       .from('game_data')
       .update({
-        balance: 100, // Starting 100 ELL for all players after wipe
+        balance: 100,
         wood: 0,
         stone: 0,
         iron: 0,
@@ -123,7 +119,7 @@ serve(async (req) => {
         initialized: true,
         updated_at: new Date().toISOString()
       })
-      .neq('wallet_address', adminWallet); // Don't wipe admin data
+      .neq('wallet_address', adminWallet);
 
     if (gameDataError) {
       console.error('❌ Error wiping game_data:', gameDataError);
@@ -136,47 +132,29 @@ serve(async (req) => {
       .delete()
       .neq('wallet_address', adminWallet);
 
-    if (cardInstancesError) {
-      console.error('❌ Error wiping card_instances:', cardInstancesError);
-      throw cardInstancesError;
-    }
+    if (cardInstancesError) throw cardInstancesError;
 
-    // Clear medical bay entries (except admin)
     const { error: medicalBayError } = await supabase
       .from('medical_bay')
       .delete()
       .neq('wallet_address', adminWallet);
 
-    if (medicalBayError) {
-      console.error('❌ Error wiping medical_bay:', medicalBayError);
-      throw medicalBayError;
-    }
+    if (medicalBayError) throw medicalBayError;
 
-    // NOTE: marketplace_listings table was removed, skipping wipe
-
-    // Clear item instances (except admin)
     const { error: itemInstancesError } = await supabase
       .from('item_instances')
       .delete()
       .neq('wallet_address', adminWallet);
 
-    if (itemInstancesError) {
-      console.error('❌ Error wiping item_instances:', itemInstancesError);
-      throw itemInstancesError;
-    }
+    if (itemInstancesError) throw itemInstancesError;
 
-    // Clear soul donations (except admin)
     const { error: soulDonationsError } = await supabase
       .from('soul_donations')
       .delete()
       .neq('wallet_address', adminWallet);
 
-    if (soulDonationsError) {
-      console.error('❌ Error wiping soul_donations:', soulDonationsError);
-      throw soulDonationsError;
-    }
+    if (soulDonationsError) throw soulDonationsError;
 
-    // Reset shop inventory to default quantities
     const { error: shopResetError } = await supabase
       .from('shop_inventory')
       .update({
@@ -185,14 +163,10 @@ serve(async (req) => {
         next_reset_time: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString()
       })
-      .not('id', 'is', null); // WHERE id IS NOT NULL to satisfy PostgREST
+      .not('id', 'is', null);
 
-    if (shopResetError) {
-      console.error('❌ Error resetting shop_inventory:', shopResetError);
-      throw shopResetError;
-    }
+    if (shopResetError) throw shopResetError;
 
-    // Reactivate all quests globally (per-user completions already cleared in game_data)
     const { error: questsResetError } = await supabase
       .from('quests')
       .update({
@@ -201,14 +175,7 @@ serve(async (req) => {
       })
       .not('id', 'is', null);
 
-    if (questsResetError) {
-      console.error('❌ Error resetting quests:', questsResetError);
-      throw questsResetError;
-    }
-
-    // NOTE: Referral data (referrals and referral_earnings) is preserved during wipe
-    // to maintain the referral tree structure across game resets
-    // NOTE: social_quests in game_data are already reset to [] in the game_data update above
+    if (questsResetError) throw questsResetError;
 
     console.log('✅ Game wipe completed successfully');
 
@@ -221,7 +188,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('💥 Error in game-wipe function:', error);
     return new Response(JSON.stringify({ 
-      error: (error as any)?.message || 'Unknown error',
+      error: 'Internal server error',
       success: false 
     }), {
       status: 500,
