@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Схема для данных убитых монстров
 const KilledMonsterSchema = z.object({
-  monster_name: z.string(),
-  level: z.number().min(1)
+  monster_name: z.string().max(200),
+  level: z.number().min(1).max(100)
 });
 
 // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Клиент отправляет только минимум данных,
@@ -17,10 +17,10 @@ const KilledMonsterSchema = z.object({
 // ENHANCED SECURITY: Добавлен nonce для challenge-response pattern
 const ClaimBodySchema = z.object({
   claim_key: z.string().uuid(),
-  nonce: z.string().min(1), // Nonce для валидации
+  nonce: z.string().min(1),
   dungeon_type: z.string(),
-  level: z.number().min(1),
-  killed_monsters: z.array(KilledMonsterSchema), // Список убитых монстров для расчета дропа
+  level: z.number().min(1).max(100),
+  killed_monsters: z.array(KilledMonsterSchema).max(300),
   card_kills: z.array(z.object({
     card_template_id: z.string(),
     kills: z.number().min(1)
@@ -386,6 +386,23 @@ Deno.serve(async (req) => {
       return json({ error: 'Dungeon type mismatch' }, 403);
     }
 
+    // Cross-validate claimed level against session level
+    if (claimBody.level !== session.level) {
+      console.error('❌ Level mismatch:', {
+        expected: session.level,
+        received: claimBody.level
+      });
+      
+      await supabase.from('security_audit_log').insert({
+        event_type: 'LEVEL_MISMATCH',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { expected: session.level, received: claimBody.level }
+      }).then(null, () => {});
+      
+      return json({ error: 'Level mismatch' }, 403);
+    }
+
     console.log('✅ Session validated:', {
       wallet: wallet_address.substring(0, 10),
       dungeon: session.dungeon_type,
@@ -456,6 +473,19 @@ Deno.serve(async (req) => {
       experience_reward,
       items: items.length
     });
+
+    // Server-side ELL cap: max reasonable ELL = level * 300 monsters * max formula
+    const maxReasonableEll = Math.max(5000, session.level * 600);
+    if (ell_reward > maxReasonableEll) {
+      console.error('❌ ELL reward exceeds cap:', { ell_reward, cap: maxReasonableEll });
+      await supabase.from('security_audit_log').insert({
+        event_type: 'REWARD_CAP_EXCEEDED',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { ell_reward, cap: maxReasonableEll, monsters: claimBody.killed_monsters.length }
+      }).then(null, () => {});
+      ell_reward = maxReasonableEll;
+    }
 
     // Вызываем RPC функцию для атомарного применения всех наград
     console.log('🎯 Calling apply_battle_rewards RPC');
