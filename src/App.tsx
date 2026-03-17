@@ -5,6 +5,7 @@ import { Toaster } from './components/ui/toaster';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { BrightnessProvider } from './contexts/BrightnessContext';
 import { MusicProvider } from './contexts/MusicContext';
+import { useWalletContext } from './contexts/WalletConnectContext';
 
 import { AdminProvider } from './contexts/AdminContext';
 import { WhitelistProvider } from './contexts/WhitelistContext';
