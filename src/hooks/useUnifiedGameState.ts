@@ -259,10 +259,6 @@ function mapClientToServer(data: Partial<GameData> | GameData) {
   if (d.stoneLastCollectionTime !== undefined) out.stone_last_collection_time = d.stoneLastCollectionTime;
   if (d.woodProductionData !== undefined) out.wood_production_data = d.woodProductionData;
   if (d.stoneProductionData !== undefined) out.stone_production_data = d.stoneProductionData;
-  if (d.woodLastCollectionTime !== undefined) out.wood_last_collection_time = d.woodLastCollectionTime;
-  if (d.stoneLastCollectionTime !== undefined) out.stone_last_collection_time = d.stoneLastCollectionTime;
-  if (d.woodProductionData !== undefined) out.wood_production_data = d.woodProductionData;
-  if (d.stoneProductionData !== undefined) out.stone_production_data = d.stoneProductionData;
   return out;
 }
 

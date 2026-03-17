@@ -94,7 +94,7 @@ export const useBuildingUpgrades = () => {
     }
   }, [activeUpgrades, gameState.actions, syncToCache]);
 
-  // Дополнительная проверка таймеров каждую секунду
+  // Дополнительная проверка таймеров каждую секунду (single toast source)
   useEffect(() => {
     const interval = setInterval(() => {
       if (activeUpgrades.length === 0) return;
@@ -106,10 +106,15 @@ export const useBuildingUpgrades = () => {
         const isDone = now >= upgrade.startTime + upgrade.duration;
         if (isDone && upgrade.status !== 'ready') {
           needsUpdate = true;
-          toast({
-            title: 'Улучшение завершено',
-            description: `Доступно к установке: уровень ${upgrade.targetLevel}`
-          });
+          // Only toast if we haven't toasted for this specific upgrade yet
+          const key = `${upgrade.buildingId}_${upgrade.startTime}`;
+          if (!toastedUpgradesRef.current.has(key)) {
+            toastedUpgradesRef.current.add(key);
+            toast({
+              title: 'Улучшение завершено',
+              description: `Доступно к установке: уровень ${upgrade.targetLevel}`
+            });
+          }
           return { ...upgrade, status: 'ready' as const };
         }
         return upgrade;

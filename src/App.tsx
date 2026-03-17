@@ -84,11 +84,7 @@ function App() {
                                 <ReferralHandler />
                                 <MusicController />
                                 <Routes>
-                                  <Route path="/" element={
-                                    localStorage.getItem('walletConnected') === 'true' 
-                                      ? <Navigate to="/menu" replace /> 
-                                      : <Navigate to="/auth" replace />
-                                  } />
+                                <Route path="/" element={<RootRedirect />} />
                                   <Route path="/auth" element={<Suspense fallback={<PageLoader />}><Auth /></Suspense>} />
                                   <Route path="/menu" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><Menu /></ProtectedRoute></Suspense>} />
                                   <Route path="/admin-settings" element={<Suspense fallback={<PageLoader />}><ProtectedRoute><AdminSettings /></ProtectedRoute></Suspense>} />
