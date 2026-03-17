@@ -58,6 +58,12 @@ const ClanPage = lazy(() => import('./pages/Clan').then(m => ({ default: m.ClanP
 // Simple loading fallback
 const PageLoader = () => <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />;
 
+const RootRedirect = () => {
+  const { accountId, isLoading } = useWalletContext();
+  if (isLoading) return <PageLoader />;
+  return accountId ? <Navigate to="/menu" replace /> : <Navigate to="/auth" replace />;
+};
+
 function App() {
   return (
     <ErrorBoundary>
