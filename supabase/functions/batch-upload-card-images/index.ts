@@ -21,36 +21,45 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Require JWT and resolve wallet server-side
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
+        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabaseClient = createClient(
-      supabaseUrl,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
-    const { mappings, walletAddress } = await req.json();
-
-    if (!walletAddress || !mappings || !Array.isArray(mappings)) {
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
       return new Response(
-        JSON.stringify({ error: 'Invalid request: walletAddress and mappings array required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized: invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Batch upload request:', { walletAddress, count: mappings.length });
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
 
-    // Check if user is admin
-    const { data: isAdmin, error: adminError } = await supabaseClient
+    const walletAddress = profile?.wallet_address;
+    if (!walletAddress) {
+      return new Response(
+        JSON.stringify({ error: 'No wallet linked to this account' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check admin using server-resolved wallet
+    const { data: isAdmin, error: adminError } = await supabaseAdmin
       .rpc('is_admin_or_super_wallet', { p_wallet_address: walletAddress });
 
     if (adminError || !isAdmin) {
@@ -60,13 +69,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    const { mappings } = await req.json();
+
+    if (!mappings || !Array.isArray(mappings)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request: mappings array required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const results: { success: number; failed: number; errors: string[] } = {
       success: 0,
       failed: 0,
       errors: []
     };
 
-    // Process each mapping
     for (const mapping of mappings as CardImageMapping[]) {
       try {
         const { uuid, cardName, cardType, faction, rarity } = mapping;
@@ -77,10 +94,8 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Construct image URL
         const imageUrl = `/lovable-uploads/${uuid}.webp`;
 
-        // Insert into database using service role (bypasses RLS)
         const { error: dbError } = await supabaseAdmin
           .from('card_images')
           .upsert({
@@ -95,16 +110,14 @@ Deno.serve(async (req) => {
           });
 
         if (dbError) {
-          console.error('DB error for mapping:', mapping, dbError);
           results.failed++;
           results.errors.push(`Failed to insert ${cardName}: ${dbError.message}`);
         } else {
           results.success++;
-          console.log('Successfully mapped:', { cardName, faction, rarity, imageUrl });
         }
       } catch (err) {
         results.failed++;
-        results.errors.push(`Error processing mapping: ${err.message}`);
+        results.errors.push(`Error processing mapping: ${(err as Error).message}`);
       }
     }
 
@@ -115,11 +128,10 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error('Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

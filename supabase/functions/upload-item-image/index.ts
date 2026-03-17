@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rate limiting function to prevent abuse
+// Rate limiting function
 async function checkRateLimit(supabaseClient: any, clientIp: string, endpoint: string): Promise<void> {
   const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
   
@@ -21,17 +21,13 @@ async function checkRateLimit(supabaseClient: any, clientIp: string, endpoint: s
     return;
   }
   
-  // 3 uploads per minute for admin endpoint
   if (count && count >= 3) {
     throw new Error('Rate limit exceeded: maximum 3 uploads per minute');
   }
   
   await supabaseClient
     .from('api_rate_limits')
-    .insert({ 
-      ip_address: clientIp,
-      endpoint: endpoint
-    });
+    .insert({ ip_address: clientIp, endpoint: endpoint });
 }
 
 Deno.serve(async (req) => {
@@ -40,65 +36,81 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseServiceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseServiceClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
-    // Get client IP for rate limiting
+    // Require JWT and resolve wallet server-side
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: profile } = await supabaseServiceClient
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    const walletAddress = profile?.wallet_address;
+    if (!walletAddress) {
+      return new Response(
+        JSON.stringify({ error: 'No wallet linked to this account' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check super admin using server-resolved wallet
+    const { data: isSuperAdmin, error: adminCheckError } = await supabaseServiceClient
+      .rpc('is_super_admin_wallet', { p_wallet_address: walletAddress });
+
+    if (adminCheckError || !isSuperAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Access denied: Only super admin can upload item images' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit check
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-                     req.headers.get('x-real-ip') || 
-                     'unknown';
-
-    // Check rate limit before processing
+                     req.headers.get('x-real-ip') || 'unknown';
     try {
       await checkRateLimit(supabaseServiceClient, clientIp, 'upload-item-image');
     } catch (rateLimitError) {
-      console.error('Rate limit exceeded:', rateLimitError);
       return new Response(
-        JSON.stringify({ 
-          error: rateLimitError.message || 'Rate limit exceeded',
-          retryAfter: 60 
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Retry-After': '60'
-          } 
-        }
+        JSON.stringify({ error: (rateLimitError as Error).message, retryAfter: 60 }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
       );
     }
 
     const formData = await req.formData();
     const image = formData.get('image') as File;
     const filePath = formData.get('filePath') as string;
-    const walletAddress = formData.get('walletAddress') as string;
 
-    if (!image || !filePath || !walletAddress) {
-      throw new Error('Missing required fields: image, filePath, walletAddress');
+    if (!image || !filePath) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: image, filePath' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('📤 Item image upload request:', { filePath, walletAddress });
-
-    // Проверяем права super_admin через RPC
-    const { data: isSuperAdmin, error: adminCheckError } = await supabaseServiceClient
-      .rpc('is_super_admin_wallet', { p_wallet_address: walletAddress });
-
-    console.log('🔐 Super admin check result:', { isSuperAdmin, error: adminCheckError });
-
-    if (adminCheckError || !isSuperAdmin) {
-      throw new Error('Access denied: Only super admin can upload item images');
-    }
-
-    // Загружаем изображение в storage
     const imageBuffer = await image.arrayBuffer();
     const { data: uploadData, error: uploadError } = await supabaseServiceClient
       .storage
@@ -109,40 +121,30 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError);
-      throw uploadError;
+      return new Response(
+        JSON.stringify({ error: 'Upload failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('✅ Upload successful:', uploadData);
-
-    // Получаем публичный URL
     const { data: publicUrlData } = supabaseServiceClient
       .storage
       .from('item-images')
       .getPublicUrl(filePath);
 
-    const publicUrl = publicUrlData.publicUrl;
-    console.log('🔗 Public URL:', publicUrl);
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        url: publicUrl,
+        url: publicUrlData.publicUrl,
         message: 'Item image uploaded successfully'
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
     console.error('❌ Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

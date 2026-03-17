@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 const RequestSchema = z.object({
-  wallet_address: z.string().min(3).max(100).regex(/^[a-zA-Z0-9._-]+$/),
   building_id: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/),
 });
 
@@ -17,49 +16,74 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
 
+    // Require JWT and resolve wallet server-side
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    const wallet_address = profile?.wallet_address;
+    if (!wallet_address) {
+      return new Response(
+        JSON.stringify({ error: 'No wallet linked to this account' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate input
     const body = await req.json();
     const parseResult = RequestSchema.safeParse(body);
 
     if (!parseResult.success) {
-      console.error('❌ Input validation failed:', parseResult.error.flatten());
       return new Response(
         JSON.stringify({ error: 'Invalid input parameters', details: parseResult.error.flatten().fieldErrors }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { wallet_address, building_id } = parseResult.data;
+    const { building_id } = parseResult.data;
 
-    console.log('⚡ Instant complete building request:', { wallet_address, building_id });
-
-    // 1. Verify admin status
+    // Verify admin using server-resolved wallet
     const { data: isAdmin, error: adminError } = await supabaseClient.rpc(
       'is_admin_or_super_wallet',
       { p_wallet_address: wallet_address }
     );
 
     if (adminError || !isAdmin) {
-      console.error('❌ Admin check failed:', adminError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('✅ Admin verified');
-
-    // 2. Get current game data
+    // Get current game data
     const { data: gameData, error: gameError } = await supabaseClient
       .from('game_data')
       .select('active_building_upgrades, building_levels')
@@ -67,36 +91,27 @@ Deno.serve(async (req) => {
       .single();
 
     if (gameError || !gameData) {
-      console.error('❌ Failed to fetch game data:', gameError);
       return new Response(
         JSON.stringify({ error: 'Game data not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('📊 Current game data:', gameData);
-
     const upgrades = Array.isArray(gameData.active_building_upgrades) 
       ? gameData.active_building_upgrades 
       : [];
     
     const buildingLevels = gameData.building_levels || {};
-
-    // 3. Find the building upgrade (optional for admin instant-complete)
     const upgradeIndex = upgrades.findIndex((u: any) => u.buildingId === building_id);
     
     let targetLevel: number;
     let updatedUpgrades: any[];
 
     if (upgradeIndex !== -1) {
-      // Upgrade exists in queue — complete it
       const upgrade = upgrades[upgradeIndex];
-      console.log('🔨 Found upgrade:', upgrade);
       targetLevel = upgrade.targetLevel || ((buildingLevels[building_id] || 0) + 1);
       updatedUpgrades = upgrades.filter((_: any, i: number) => i !== upgradeIndex);
     } else {
-      // No active upgrade — admin force-set to current+1
-      console.log('⚠️ No active upgrade found, admin force-completing:', building_id);
       targetLevel = (buildingLevels[building_id] || 0) + 1;
       updatedUpgrades = upgrades;
     }
@@ -106,13 +121,6 @@ Deno.serve(async (req) => {
       [building_id]: targetLevel
     };
 
-    console.log('⚡ Completing upgrade:', {
-      building_id,
-      currentLevel: buildingLevels[building_id] || 0,
-      targetLevel
-    });
-
-    // 5. Update game_data
     const { error: updateError } = await supabaseClient
       .from('game_data')
       .update({
@@ -123,18 +131,11 @@ Deno.serve(async (req) => {
       .eq('wallet_address', wallet_address);
 
     if (updateError) {
-      console.error('❌ Failed to update game data:', updateError);
       return new Response(
         JSON.stringify({ error: 'Failed to complete upgrade' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    console.log('✅ Building upgrade completed instantly:', {
-      building_id,
-      new_level: targetLevel,
-      updated_levels: updatedBuildingLevels
-    });
 
     return new Response(
       JSON.stringify({
@@ -145,11 +146,10 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error('❌ Error in instant-complete-building:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

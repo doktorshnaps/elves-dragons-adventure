@@ -11,20 +11,47 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { wallet_address } = await req.json();
+    // Require JWT and resolve wallet server-side
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('wallet_address')
+      .eq('user_id', authData.user.id)
+      .single();
+
+    const wallet_address = profile?.wallet_address;
     if (!wallet_address) {
-      throw new Error('wallet_address is required');
+      return new Response(
+        JSON.stringify({ success: false, error: 'No wallet linked to this account' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`🧹 Cleaning NFT cards from game_data for wallet: ${wallet_address}`);
 
-    // Получаем текущие cards
     const { data: gameData, error: fetchError } = await supabase
       .from('game_data')
       .select('cards')
@@ -37,13 +64,9 @@ Deno.serve(async (req) => {
 
     const cards = gameData?.cards || [];
     const nftCount = cards.filter((c: any) => c.isNFT).length;
-    console.log(`Found ${nftCount} NFT cards in game_data`);
 
-    // Фильтруем только не-NFT карты
     const cleanedCards = cards.filter((c: any) => !c.isNFT);
-    console.log(`After filtering: ${cleanedCards.length} regular cards remain`);
 
-    // Обновляем game_data
     const { error: updateError } = await supabase
       .from('game_data')
       .update({ 
@@ -56,30 +79,19 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    console.log(`✅ Successfully cleaned ${nftCount} NFT cards from game_data`);
-
     return new Response(
       JSON.stringify({
         success: true,
         nft_cards_removed: nftCount,
         regular_cards_remaining: cleanedCards.length
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
     console.error('Error in cleanup-nft-gamedata:', error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      JSON.stringify({ success: false, error: 'Internal server error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

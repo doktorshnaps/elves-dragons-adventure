@@ -12,41 +12,71 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Require JWT and resolve wallet server-side
     const authHeader = req.headers.get("Authorization");
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      authHeader ? { global: { headers: { Authorization: authHeader } } } : {}
-    );
-
-    const formData = await req.formData();
-    const image = formData.get("image") as File;
-    const filePath = formData.get("filePath") as string;
-    const walletAddress = formData.get("walletAddress") as string;
-
-    if (!image || !filePath || !walletAddress) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Unauthorized: missing Authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if user is admin
-    const { data: isAdmin, error: adminError } = await supabaseClient.rpc(
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: authData, error: authError } = await userClient.auth.getUser();
+    if (authError || !authData?.user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    const walletAddress = profile?.wallet_address;
+    if (!walletAddress) {
+      return new Response(
+        JSON.stringify({ error: "No wallet linked to this account" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check admin using server-resolved wallet
+    const { data: isAdmin, error: adminError } = await supabaseAdmin.rpc(
       "is_admin_or_super_wallet",
       { p_wallet_address: walletAddress }
     );
 
     if (adminError || !isAdmin) {
-      console.error("Admin check failed:", adminError);
       return new Response(
         JSON.stringify({ error: "Unauthorized: Admin access required" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const formData = await req.formData();
+    const image = formData.get("image") as File;
+    const filePath = formData.get("filePath") as string;
+
+    if (!image || !filePath) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Upload image to storage
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from("monster-images")
       .upload(filePath, image, {
         contentType: image.type,
@@ -54,15 +84,13 @@ serve(async (req) => {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
       return new Response(
-        JSON.stringify({ error: uploadError.message }),
+        JSON.stringify({ error: "Upload failed" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get public URL
-    const { data: urlData } = supabaseClient.storage
+    const { data: urlData } = supabaseAdmin.storage
       .from("monster-images")
       .getPublicUrl(filePath);
 
@@ -73,7 +101,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
