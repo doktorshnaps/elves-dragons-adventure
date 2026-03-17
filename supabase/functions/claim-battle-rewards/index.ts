@@ -17,10 +17,10 @@ const KilledMonsterSchema = z.object({
 // ENHANCED SECURITY: Добавлен nonce для challenge-response pattern
 const ClaimBodySchema = z.object({
   claim_key: z.string().uuid(),
-  nonce: z.string().min(1), // Nonce для валидации
+  nonce: z.string().min(1),
   dungeon_type: z.string(),
-  level: z.number().min(1),
-  killed_monsters: z.array(KilledMonsterSchema), // Список убитых монстров для расчета дропа
+  level: z.number().min(1).max(100),
+  killed_monsters: z.array(KilledMonsterSchema).max(300),
   card_kills: z.array(z.object({
     card_template_id: z.string(),
     kills: z.number().min(1)
