@@ -386,6 +386,23 @@ Deno.serve(async (req) => {
       return json({ error: 'Dungeon type mismatch' }, 403);
     }
 
+    // Cross-validate claimed level against session level
+    if (claimBody.level !== session.level) {
+      console.error('❌ Level mismatch:', {
+        expected: session.level,
+        received: claimBody.level
+      });
+      
+      await supabase.from('security_audit_log').insert({
+        event_type: 'LEVEL_MISMATCH',
+        wallet_address,
+        claim_key: claimBody.claim_key,
+        details: { expected: session.level, received: claimBody.level }
+      }).then(null, () => {});
+      
+      return json({ error: 'Level mismatch' }, 403);
+    }
+
     console.log('✅ Session validated:', {
       wallet: wallet_address.substring(0, 10),
       dungeon: session.dungeon_type,
