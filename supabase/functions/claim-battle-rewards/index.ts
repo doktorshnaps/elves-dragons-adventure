@@ -8,8 +8,8 @@ const corsHeaders = {
 
 // Схема для данных убитых монстров
 const KilledMonsterSchema = z.object({
-  monster_name: z.string(),
-  level: z.number().min(1)
+  monster_name: z.string().max(200),
+  level: z.number().min(1).max(100)
 });
 
 // 🔒 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Клиент отправляет только минимум данных,
