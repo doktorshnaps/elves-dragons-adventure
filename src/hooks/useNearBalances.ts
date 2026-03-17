@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { JsonRpcProvider } from 'near-api-js/lib/providers';
-import { formatNearAmount } from 'near-api-js/lib/utils/format';
+import { JsonRpcProvider, yoctoToNear } from 'near-api-js';
 import { useGameEvent } from '@/contexts/GameEventsContext';
 
 
