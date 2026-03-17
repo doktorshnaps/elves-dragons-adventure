@@ -119,7 +119,7 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             account_id: targetId,
             finality: 'final',
           }), 30000);
-          const totalNear = utils.format.formatNearAmount(view.amount);
+          const totalNear = yoctoToNear(view.amount);
           formattedNear = parseFloat(totalNear).toFixed(3);
           console.log('✅ NEAR balance:', formattedNear, '(raw yoctoNEAR:', view.amount, ')');
           setNearBalance(formattedNear);
