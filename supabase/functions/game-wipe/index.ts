@@ -243,6 +243,20 @@ serve(async (req) => {
       .not('id', 'is', null);
     if (referralEarningsError) throw referralEarningsError;
 
+    // Clear daily quest progress
+    const { error: dailyQuestsError } = await supabase
+      .from('user_daily_quest_progress')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (dailyQuestsError) throw dailyQuestsError;
+
+    // Clear NFT card mappings
+    const { error: nftCardsError } = await supabase
+      .from('user_nft_cards')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (nftCardsError) throw nftCardsError;
+
     console.log('✅ Game wipe completed successfully');
 
     return new Response(JSON.stringify({ 
