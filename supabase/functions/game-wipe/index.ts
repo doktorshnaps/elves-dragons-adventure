@@ -106,7 +106,8 @@ serve(async (req) => {
           workshop: 0,
           main_hall: 0,
           dragon_lair: 0,
-          forge: 0
+          forge: 0,
+          clan_hall: 0
         },
         barracks_upgrades: [],
         dragon_lair_upgrades: [],
