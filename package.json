@@ -54,7 +54,6 @@
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-window": "^1.8.8",
     "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react": "^6.0.1",
     "@vitejs/plugin-react-swc": "^4.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
