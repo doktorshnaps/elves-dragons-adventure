@@ -378,6 +378,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const onAttackRef = useRef(onAttack);
   const alivePairsRef = useRef(alivePairs);
   const aliveOpponentsRef = useRef(aliveOpponents);
+  const autoAttackIndexRef = useRef(0);
   
   useEffect(() => { onAttackRef.current = onAttack; }, [onAttack]);
   useEffect(() => { alivePairsRef.current = alivePairs; }, [alivePairs]);
@@ -389,14 +390,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       const timer = setTimeout(() => {
         const currentAlivePairs = alivePairsRef.current;
         const currentAliveOpponents = aliveOpponentsRef.current;
-        const randomPair = currentAlivePairs[Math.floor(Math.random() * currentAlivePairs.length)];
-        const randomTarget = currentAliveOpponents[Math.floor(Math.random() * currentAliveOpponents.length)];
-        if (randomPair && randomTarget) {
+        // Deterministic attacker rotation by attackOrder
+        const sortedPairs = [...currentAlivePairs].sort((a, b) => a.attackOrder - b.attackOrder);
+        const attackerIndex = autoAttackIndexRef.current % sortedPairs.length;
+        const attacker = sortedPairs[attackerIndex];
+        autoAttackIndexRef.current = attackerIndex + 1;
+        // Focus-fire: always target the first alive opponent
+        const target = currentAliveOpponents[0];
+        if (attacker && target) {
           setIsAttacking(true);
-          setAttackingPair(randomPair.id);
-          setAttackedTarget(randomTarget.id);
+          setAttackingPair(attacker.id);
+          setAttackedTarget(target.id);
           setTimeout(() => {
-            onAttackRef.current(randomPair.id, randomTarget.id);
+            onAttackRef.current(attacker.id, target.id);
             setTimeout(() => {
               setAttackingPair(null);
               setAttackedTarget(null);
