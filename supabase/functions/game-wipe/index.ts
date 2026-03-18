@@ -185,7 +185,19 @@ serve(async (req) => {
       .neq('wallet_address', adminWallet);
     if (playerTeamsError) throw playerTeamsError;
 
-    // Clear PvP data
+    // Clear PvP data (order matters: moves/sessions → matches)
+    const { error: pvpMovesError } = await supabase
+      .from('pvp_moves')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpMovesError) throw pvpMovesError;
+
+    const { error: pvpSessionsError } = await supabase
+      .from('pvp_match_sessions')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpSessionsError) throw pvpSessionsError;
+
     const { error: pvpQueueError } = await supabase
       .from('pvp_queue')
       .delete()
