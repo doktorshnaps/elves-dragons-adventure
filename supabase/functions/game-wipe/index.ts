@@ -106,7 +106,8 @@ serve(async (req) => {
           workshop: 0,
           main_hall: 0,
           dragon_lair: 0,
-          forge: 0
+          forge: 0,
+          clan_hall: 0
         },
         barracks_upgrades: [],
         dragon_lair_upgrades: [],
@@ -176,6 +177,85 @@ serve(async (req) => {
       .not('id', 'is', null);
 
     if (questsResetError) throw questsResetError;
+
+    // Clear player teams (root cause of stale team bug)
+    const { error: playerTeamsError } = await supabase
+      .from('player_teams')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (playerTeamsError) throw playerTeamsError;
+
+    // Clear PvP data (order matters: moves/sessions → matches)
+    const { error: pvpMovesError } = await supabase
+      .from('pvp_moves')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpMovesError) throw pvpMovesError;
+
+    const { error: pvpSessionsError } = await supabase
+      .from('pvp_match_sessions')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpSessionsError) throw pvpSessionsError;
+
+    const { error: pvpQueueError } = await supabase
+      .from('pvp_queue')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpQueueError) throw pvpQueueError;
+
+    const { error: pvpMatchesError } = await supabase
+      .from('pvp_matches')
+      .delete()
+      .not('id', 'is', null);
+    if (pvpMatchesError) throw pvpMatchesError;
+
+    const { error: pvpRatingsError } = await supabase
+      .from('pvp_ratings')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (pvpRatingsError) throw pvpRatingsError;
+
+    const { error: pvpDecksError } = await supabase
+      .from('pvp_decks')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (pvpDecksError) throw pvpDecksError;
+
+    // Clear forge bay
+    const { error: forgeBayError } = await supabase
+      .from('forge_bay')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (forgeBayError) throw forgeBayError;
+
+    // Clear active dungeon sessions
+    const { error: dungeonSessionsError } = await supabase
+      .from('active_dungeon_sessions')
+      .delete()
+      .neq('account_id', adminWallet);
+    if (dungeonSessionsError) throw dungeonSessionsError;
+
+    // Clear referral earnings (but NOT referral links)
+    const { error: referralEarningsError } = await supabase
+      .from('referral_earnings')
+      .delete()
+      .not('id', 'is', null);
+    if (referralEarningsError) throw referralEarningsError;
+
+    // Clear daily quest progress
+    const { error: dailyQuestsError } = await supabase
+      .from('user_daily_quest_progress')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (dailyQuestsError) throw dailyQuestsError;
+
+    // Clear NFT card mappings
+    const { error: nftCardsError } = await supabase
+      .from('user_nft_cards')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (nftCardsError) throw nftCardsError;
 
     console.log('✅ Game wipe completed successfully');
 
