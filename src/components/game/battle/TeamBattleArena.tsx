@@ -417,300 +417,276 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, adjustDelay]);
   return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
       <div className="w-full h-full flex flex-col space-y-2">
-        {/* Header */}
-        <Card variant="menu" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-          <CardHeader className="py-2 sm:py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 sm:relative">
-              <div className="flex gap-1 sm:gap-2 sm:absolute sm:left-0 sm:top-0">
-                <Button variant="menu" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
-                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                  {t(language, 'battlePage.menu')}
-                </Button>
-                
-                <Button 
-                  variant="menu" 
-                  size="sm" 
-                  className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9" 
-                  style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                  onClick={() => setSpeed(speed === 4 ? 1 : speed === 2 ? 4 : 2)}
-                >
-                  <FastForward className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                  x{speed}
-                </Button>
-                
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="text-[10px] sm:text-sm px-2 py-1 h-auto sm:h-9">
-                      {t(language, 'battlePage.surrender')}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t(language, 'battlePage.leaveDungeon')}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t(language, 'battlePage.leaveDungeonWarning')}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t(language, 'battlePage.no')}</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSurrender}>{t(language, 'battlePage.yes')}</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              
-              <CardTitle className="text-center text-sm sm:text-lg text-white flex-1">
-                {t(language, 'battlePage.teamBattleLevel')} {level}
-              </CardTitle>
+        {/* Unified Player Block: Header + Combat + Team */}
+        <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          {/* Row 1: Compact Header (single line) */}
+          <div className="flex items-center justify-between px-2 py-1">
+            <div className="flex gap-1">
+              <Button variant="menu" size="sm" className="text-[10px] sm:text-sm px-1.5 py-0.5 h-auto sm:h-7" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }} onClick={handleMenuReturn}>
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5" />
+                {t(language, 'battlePage.menu')}
+              </Button>
+              <Button 
+                variant="menu" 
+                size="sm" 
+                className="text-[10px] sm:text-sm px-1.5 py-0.5 h-auto sm:h-7" 
+                style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                onClick={() => setSpeed(speed === 4 ? 1 : speed === 2 ? 4 : 2)}
+              >
+                <FastForward className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5" />
+                x{speed}
+              </Button>
             </div>
-            
-            {/* Account Level and XP Progress */}
-            <div className="flex items-center justify-center gap-2 sm:gap-4 mt-2">
-              <div className="text-[10px] sm:text-xs text-white/70">
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-xs text-white/70">
                 {t(language, 'battlePage.level')} {accountLevel}
-              </div>
-              <div className="w-32 sm:w-40">
+              </span>
+              <div className="w-20 sm:w-28">
                 <Progress value={xpProgress.progress * 100} className="h-1" />
-                <div className="flex justify-between text-[9px] sm:text-xs text-white/60 mt-1">
-                  <span>{xpProgress.currentLevelXP}</span>
-                  <span>{xpProgress.nextLevelXP}</span>
+              </div>
+              <span className="text-[9px] sm:text-xs text-white font-medium">
+                Ур. {level}
+              </span>
+            </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="text-[10px] sm:text-sm px-1.5 py-0.5 h-auto sm:h-7">
+                  {t(language, 'battlePage.surrender')}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t(language, 'battlePage.leaveDungeon')}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t(language, 'battlePage.leaveDungeonWarning')}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t(language, 'battlePage.no')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSurrender}>{t(language, 'battlePage.yes')}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+
+          {/* Row 2: Combat Actions */}
+          <div className="border-t border-white/10 px-1 py-0.5 sm:px-2 sm:py-1 relative">
+            {/* Attack Animation Overlay */}
+            <AttackAnimation 
+              isActive={attackAnimation.isActive}
+              type={attackAnimation.type}
+              source={attackAnimation.source}
+              attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
+              defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
+              damage={attackAnimation.damage}
+            />
+
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                <span className="text-[10px] sm:text-xs font-medium">
+                  {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
+                </span>
+
+                <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
+                  <InlineDiceDisplay
+                    key={`dice-${diceKey}`}
+                    isRolling={isDiceRolling}
+                    diceValue={lastRoll ? lastRoll.attackerRoll : null}
+                    isAttacker={lastRoll ? lastRoll.source === 'player' : isPlayerTurn}
+                    label={lastRoll ? (lastRoll.source === 'player' ? t(language, 'battlePage.player') : t(language, 'battlePage.monster')) : (isPlayerTurn ? t(language, 'battlePage.player') : t(language, 'battlePage.monster'))}
+                    damage={lastRoll ? lastRoll.damage : undefined}
+                    isBlocked={lastRoll ? lastRoll.isBlocked : undefined}
+                    isCritical={lastRoll ? lastRoll.isCritical : undefined}
+                  />
+                </div>
+
+                <div className="flex gap-1">
+                  {isPlayerTurn && !autoBattle ? (
+                    <Button 
+                      onClick={handleAttack} 
+                      disabled={isAttacking || !selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
+                      size="sm" 
+                      variant="menu"
+                      className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs flex-shrink-0"
+                      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                    >
+                      {t(language, 'battlePage.attackButton')}
+                    </Button>
+                  ) : null}
+
+                  <Button 
+                    variant={autoBattle ? "destructive" : "menu"} 
+                    size="sm" 
+                    onClick={handleAutoBattle}
+                    className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
+                    style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
+                  >
+                    {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
+                  </Button>
                 </div>
               </div>
-            </div>
-          </CardHeader>
-        </Card>
 
-        <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
-          {/* Player Team - Upper Part */}
-          <Card variant="menu" className="flex-1 min-h-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="h-full overflow-y-auto overflow-x-hidden p-0.5 sm:p-1 pt-1 sm:pt-2">
-              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
-                {playerPairs.map((pair, index) => {
-                  const pairDamage = pairDamages.get(pair.id);
-                  
-                  return (
-                    <div key={pair.id} className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
-                      if (pair.health > 0 && isPlayerTurn) {
-                        setSelectedPair(pair.id);
-                      }
-                    }}>
-                      {/* Damage Indicator */}
-                      {pairDamage && (
-                        <DamageIndicator
-                          key={pairDamage.key}
-                          damage={pairDamage.damage}
-                          isCritical={pairDamage.isCritical}
-                          isBlocked={pairDamage.isBlocked}
-                          onComplete={() => {
-                            setPairDamages(prev => {
-                              const newMap = new Map(prev);
-                              newMap.delete(pair.id);
-                              return newMap;
-                            });
-                          }}
-                        />
-                      )}
-                      
-                      <div className="flex flex-col items-center gap-0.5 sm:gap-1">
-                        <div className="flex gap-0.5 sm:gap-1 justify-center">
-                          {/* Hero Image */}
-                          <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+              <div className="flex-1 min-w-0 flex flex-col gap-0.5 pt-1">
+                <div className="text-[8px] sm:text-[10px] text-white/40 flex flex-wrap gap-x-1.5">
+                  <span className="text-red-400">1:⚔️</span>
+                  <span className="text-orange-400">2:✕</span>
+                  <span className="text-yellow-400">3:50%</span>
+                  <span className="text-green-400">4:100%</span>
+                  <span className="text-blue-400">5:150%</span>
+                  <span className="text-purple-400">6:200%</span>
+                </div>
+
+                {rollHistory.length > 0 && rollHistory[0] && (
+                  <div className="border-t border-white/10 pt-0.5 space-y-0.5">
+                    {(() => {
+                      const e = rollHistory[0];
+                      const isPlayer = e.source === 'player';
+                      const diceColor = [,'text-red-400','text-orange-400','text-yellow-400','text-green-400','text-blue-400','text-purple-400'][e.diceRoll] || 'text-white';
+                      return (
+                        <div className="text-[10px] sm:text-xs text-white/80 space-y-0.5">
+                          <div className={isPlayer ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+                            {isPlayer ? '👤' : '👾'} {e.attackerName}
+                          </div>
+                          <div className={`font-bold ${diceColor}`}>🎲 {e.diceRoll} ({e.dicePercent}%)</div>
+                          {!e.isMiss ? (
+                            <div className="font-mono">
+                              <span className="text-yellow-300">{e.modifiedPower}</span>
+                              <span className="text-white/40">−</span>
+                              <span className="text-blue-300">{e.defenderDefense}</span>
+                              <span className="text-white/40">=</span>
+                              <span className={`font-bold ${e.isCritical ? 'text-purple-400' : 'text-red-400'}`}>{e.netDamage}</span>
+                            </div>
+                          ) : (
+                            <div className="text-white/40 italic">промах</div>
+                          )}
+                          <div className="text-white/50">→{e.targetName}</div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Player Team */}
+          <div className="border-t border-white/10 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
+              {playerPairs.map((pair, index) => {
+                const pairDamage = pairDamages.get(pair.id);
+                
+                return (
+                  <div key={pair.id} className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
+                    if (pair.health > 0 && isPlayerTurn) {
+                      setSelectedPair(pair.id);
+                    }
+                  }}>
+                    {pairDamage && (
+                      <DamageIndicator
+                        key={pairDamage.key}
+                        damage={pairDamage.damage}
+                        isCritical={pairDamage.isCritical}
+                        isBlocked={pairDamage.isBlocked}
+                        onComplete={() => {
+                          setPairDamages(prev => {
+                            const newMap = new Map(prev);
+                            newMap.delete(pair.id);
+                            return newMap;
+                          });
+                        }}
+                      />
+                    )}
+                    
+                    <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                      <div className="flex gap-0.5 sm:gap-1 justify-center">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
+                          {(() => {
+                            const heroImage = resolveCardImageSync(pair.hero) || pair.hero.image;
+                            return heroImage ? (
+                              <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white">
+                                <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        
+                        {pair.dragon && (
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
                             {(() => {
-                              const heroImage = resolveCardImageSync(pair.hero) || pair.hero.image;
-                              return heroImage ? (
-                                <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
+                              const dragonImage = resolveCardImageSync(pair.dragon) || pair.dragon.image;
+                              return dragonImage ? (
+                                <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white">
-                                  <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
+                                  <span className="text-base sm:text-lg md:text-xl">🐲</span>
                                 </div>
                               );
                             })()}
                           </div>
-                          
-                          {/* Dragon Image */}
-                          {pair.dragon && (
-                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-md sm:rounded-lg overflow-hidden border border-white/30 bg-white/10 flex-shrink-0">
-                              {(() => {
-                                const dragonImage = resolveCardImageSync(pair.dragon) || pair.dragon.image;
-                                return dragonImage ? (
-                                  <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-white">
-                                    <span className="text-base sm:text-lg md:text-xl">🐲</span>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          )}
+                        )}
+                      </div>
+                      
+                      <div className="text-center w-full">
+                        <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
+                          <span className="font-semibold text-[8px] sm:text-[10px] bg-white/20 text-white px-0.5 sm:px-1 rounded">
+                            #{pair.attackOrder}
+                          </span>
                         </div>
-                        
-                        <div className="text-center w-full">
-                          <div className="flex items-center gap-0.5 sm:gap-1 justify-center">
-                            <span className="font-semibold text-[8px] sm:text-[10px] bg-white/20 text-white px-0.5 sm:px-1 rounded">
-                              #{pair.attackOrder}
-                            </span>
+                        <span className="font-medium text-[9px] sm:text-[10px] md:text-xs text-white block truncate px-0.5">{getTranslatedCardName(pair.hero.name, language)}</span>
+                        {pair.dragon && <div className="text-[8px] sm:text-[9px] md:text-[10px] text-white/70 truncate px-0.5">
+                            + {getTranslatedCardName(pair.dragon.name, language)}
+                          </div>}
+                      </div>
+                      
+                      <div className="w-full space-y-0.5">
+                        <div className="w-full">
+                          <Progress 
+                            value={(pair.hero.currentHealth ?? pair.hero.health) / pair.hero.health * 100} 
+                            className="h-1 sm:h-1.5" 
+                          />
+                          <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white">
+                            <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
+                            {pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}
                           </div>
-                          <span className="font-medium text-[9px] sm:text-[10px] md:text-xs text-white block truncate px-0.5">{getTranslatedCardName(pair.hero.name, language)}</span>
-                          {pair.dragon && <div className="text-[8px] sm:text-[9px] md:text-[10px] text-white/70 truncate px-0.5">
-                              + {getTranslatedCardName(pair.dragon.name, language)}
-                            </div>}
                         </div>
                         
-                        {/* Health Bars - Разделены для героя и питомца */}
-                        <div className="w-full space-y-0.5">
-                          {/* Hero Health Bar */}
+                        {pair.dragon && (
                           <div className="w-full">
                             <Progress 
-                              value={(pair.hero.currentHealth ?? pair.hero.health) / pair.hero.health * 100} 
+                              value={(pair.dragon.currentHealth ?? pair.dragon.health) / pair.dragon.health * 100} 
                               className="h-1 sm:h-1.5" 
                             />
-                            <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white">
+                            <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white/80">
                               <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
-                              {pair.hero.currentHealth ?? pair.hero.health}/{pair.hero.health}
+                              {pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}
                             </div>
                           </div>
-                          
-                          {/* Dragon Health Bar - показывается только если есть дракон */}
-                          {pair.dragon && (
-                            <div className="w-full">
-                              <Progress 
-                                value={(pair.dragon.currentHealth ?? pair.dragon.health) / pair.dragon.health * 100} 
-                                className="h-1 sm:h-1.5" 
-                              />
-                              <div className="text-[8px] sm:text-[9px] md:text-[10px] text-center mt-0.5 text-white/80">
-                                <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline mr-0.5" />
-                                {pair.dragon.currentHealth ?? pair.dragon.health}/{pair.dragon.health}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        )}
+                      </div>
 
-                        {/* Stats */}
-                        <div className="flex gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] md:text-[10px] text-white justify-center">
-                          <span className="flex items-center">
-                            <Sword className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
-                            {pair.power}
-                          </span>
-                          <span className="flex items-center">
-                            <Shield className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
-                            {pair.currentDefense ?? pair.defense}/{pair.maxDefense ?? pair.defense}
-                          </span>
-                        </div>
+                      <div className="flex gap-1 sm:gap-1.5 text-[8px] sm:text-[9px] md:text-[10px] text-white justify-center">
+                        <span className="flex items-center">
+                          <Sword className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
+                          {pair.power}
+                        </span>
+                        <span className="flex items-center">
+                          <Shield className="w-2 h-2 sm:w-2.5 sm:h-2.5 mr-0.5" />
+                          {pair.currentDefense ?? pair.defense}/{pair.maxDefense ?? pair.defense}
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Combat Actions - Compact */}
-          <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
-            <CardContent className="px-1 py-0.5 sm:px-2 sm:py-1 relative">
-              {/* Attack Animation Overlay */}
-              <AttackAnimation 
-                isActive={attackAnimation.isActive}
-                type={attackAnimation.type}
-                source={attackAnimation.source}
-                attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
-                defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
-                damage={attackAnimation.damage}
-              />
-
-              {/* Main row: Left=dice+buttons, Right=last roll info */}
-              <div className="flex items-start gap-2 sm:gap-3">
-                {/* Left side: Turn indicator + Dice + Buttons */}
-                <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                  <span className="text-[10px] sm:text-xs font-medium">
-                    {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
-                  </span>
-
-                  <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
-                    <InlineDiceDisplay
-                      key={`dice-${diceKey}`}
-                      isRolling={isDiceRolling}
-                      diceValue={lastRoll ? lastRoll.attackerRoll : null}
-                      isAttacker={lastRoll ? lastRoll.source === 'player' : isPlayerTurn}
-                      label={lastRoll ? (lastRoll.source === 'player' ? t(language, 'battlePage.player') : t(language, 'battlePage.monster')) : (isPlayerTurn ? t(language, 'battlePage.player') : t(language, 'battlePage.monster'))}
-                      damage={lastRoll ? lastRoll.damage : undefined}
-                      isBlocked={lastRoll ? lastRoll.isBlocked : undefined}
-                      isCritical={lastRoll ? lastRoll.isCritical : undefined}
-                    />
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
 
-                  <div className="flex gap-1">
-                    {isPlayerTurn && !autoBattle ? (
-                      <Button 
-                        onClick={handleAttack} 
-                        disabled={isAttacking || !selectedPair || selectedTarget === null || typeof selectedTarget === 'string'} 
-                        size="sm" 
-                        variant="menu"
-                        className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs flex-shrink-0"
-                        style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                      >
-                        {t(language, 'battlePage.attackButton')}
-                      </Button>
-                    ) : null}
-
-                    <Button 
-                      variant={autoBattle ? "destructive" : "menu"} 
-                      size="sm" 
-                      onClick={handleAutoBattle}
-                      className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs"
-                      style={!autoBattle ? { boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' } : undefined}
-                    >
-                      {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Right side: D6 Legend + Last roll details */}
-                <div className="flex-1 min-w-0 flex flex-col gap-0.5 pt-1">
-                  {/* D6 Legend */}
-                  <div className="text-[8px] sm:text-[10px] text-white/40 flex flex-wrap gap-x-1.5">
-                    <span className="text-red-400">1:⚔️</span>
-                    <span className="text-orange-400">2:✕</span>
-                    <span className="text-yellow-400">3:50%</span>
-                    <span className="text-green-400">4:100%</span>
-                    <span className="text-blue-400">5:150%</span>
-                    <span className="text-purple-400">6:200%</span>
-                  </div>
-
-                  {/* Last roll info */}
-                  {rollHistory.length > 0 && rollHistory[0] && (
-                    <div className="border-t border-white/10 pt-0.5 space-y-0.5">
-                      {(() => {
-                        const e = rollHistory[0];
-                        const isPlayer = e.source === 'player';
-                        const diceColor = [,'text-red-400','text-orange-400','text-yellow-400','text-green-400','text-blue-400','text-purple-400'][e.diceRoll] || 'text-white';
-                        return (
-                          <div className="text-[10px] sm:text-xs text-white/80 space-y-0.5">
-                            <div className={isPlayer ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
-                              {isPlayer ? '👤' : '👾'} {e.attackerName}
-                            </div>
-                            <div className={`font-bold ${diceColor}`}>🎲 {e.diceRoll} ({e.dicePercent}%)</div>
-                            {!e.isMiss ? (
-                              <div className="font-mono">
-                                <span className="text-yellow-300">{e.modifiedPower}</span>
-                                <span className="text-white/40">−</span>
-                                <span className="text-blue-300">{e.defenderDefense}</span>
-                                <span className="text-white/40">=</span>
-                                <span className={`font-bold ${e.isCritical ? 'text-purple-400' : 'text-red-400'}`}>{e.netDamage}</span>
-                              </div>
-                            ) : (
-                              <div className="text-white/40 italic">промах</div>
-                            )}
-                            <div className="text-white/50">→{e.targetName}</div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Enemy Team - Lower Part */}
           <Card variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardHeader className="py-2 flex-shrink-0">
