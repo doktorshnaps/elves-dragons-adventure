@@ -1,114 +1,89 @@
 
 
-# Audit: Game Functionality -- Broken Connections and Issues Found
+# Объединение хедера, боя и команды в один блок
 
-After a thorough review of the codebase, I found **4 confirmed issues** and **2 potential risks**.
-
----
-
-## Issue 1 (CRITICAL): `buildingLevels` fallback missing `forge` and `clan_hall` in `useUnifiedGameState.ts`
-
-**File**: `src/hooks/useUnifiedGameState.ts`, lines 437-445
-
-The `transformServerData` function has a hardcoded fallback for `buildingLevels` that is missing `forge` and `clan_hall`:
+## Текущая структура (4 карточки)
 
 ```text
-buildingLevels: serverData.building_levels ?? {
-  main_hall: 0, workshop: 0, storage: 0,
-  sawmill: 0, quarry: 0, barracks: 0,
-  dragon_lair: 0, medical: 0
-  // MISSING: forge, clan_hall
-}
+┌─────────────────────────────────┐
+│ Card #1: Header (кнопки, XP)    │  ~80px
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ Card #2: Команда (5 пар)        │  flex-1
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ Card #3: Бой (кубик, лог, авто) │  ~60px
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│ Card #4: Враги                  │  flex-1
+└─────────────────────────────────┘
 ```
 
-Meanwhile, `GameDataContext.tsx` (line 66-77) and `useShelterState.ts` (line 161-192) correctly include both `forge` and `clan_hall`. This means when data flows through `useUnifiedGameState` (used by `useShelterState` via `useBatchedGameState`), the fallback object silently drops these two buildings, potentially resetting their levels to `undefined` in edge cases.
-
-**Impact**: If `building_levels` is null/undefined from DB, forge and clan_hall levels become `undefined`, causing UI to show them as unbuilt even after upgrading.
-
-**Fix**: Add `forge: 0` and `clan_hall: 0` to the fallback object in `transformServerData`.
-
----
-
-## Issue 2 (MODERATE): `initialGameData` also missing `forge` and `clan_hall`
-
-**File**: `src/hooks/useUnifiedGameState.ts`, lines 52-62
-
-The `initialGameData` constant (used as the default before any data loads) also has the same missing buildings:
+## Новая структура (2 карточки)
 
 ```text
-buildingLevels: {
-  main_hall: 0, workshop: 0, storage: 0,
-  sawmill: 0, quarry: 0, barracks: 0,
-  dragon_lair: 0, medical: 0
-  // MISSING: forge, clan_hall
-}
+┌─────────────────────────────────┐
+│ Меню >>x4  Ур.18 XP▓▓░  Сдаться│ ← 1 строка хедер
+├─────────────────────────────────┤
+│ [Ход] 🎲 [Атака][Авто] │ Лог   │ ← бой (компактно)
+├─────────────────────────────────┤
+│ [Пара#1] [Пара#2] [Пара#3]     │ ← команда
+│ [Пара#4] [Пара#5]              │
+└─────────────────────────────────┘
+┌─────────────────────────────────┐
+│         🔥 Враги                │ ← без изменений
+└─────────────────────────────────┘
 ```
 
-**Fix**: Add `forge: 0` and `clan_hall: 0`.
+## Что делаем в `TeamBattleArena.tsx`
 
----
+### 1. Объединить Card #1, #2, #3 в одну Card
 
-## Issue 3 (MODERATE): Excessive `console.log` in production across multiple critical files
+Убираем 3 отдельных `<Card>` (строки 421-712) и заменяем одним:
 
-**Files affected**:
-- `src/contexts/GameDataContext.tsx` -- 93+ console.log calls
-- `src/hooks/useGameSync.ts` -- 30+ console.log calls  
-- `src/hooks/shelter/useShelterState.ts` -- 40+ console.log calls (including inside `canAffordUpgrade` which runs on every render)
-- `src/hooks/useBuildingUpgrades.ts` -- 15+ console.log calls
+```text
+<Card variant="menu">
+  <!-- Строка 1: Хедер (одна линия) -->
+  <div className="flex items-center justify-between px-2 py-1">
+    <div> [Меню] [>>x4] </div>
+    <div> Ур.18 [===XP===] </div>
+    <div> [Сдаться] </div>
+  </div>
 
-These are not behind `import.meta.env.DEV` guards. In the Telegram bot context, excessive logging degrades performance -- especially `canAffordUpgrade` which logs on every render cycle with object dumps.
+  <!-- Строка 2: Боевые действия (кубик + кнопки + лог) -->
+  <div className="flex items-start gap-2 px-1 py-0.5 border-t border-white/10">
+    ... существующий контент Combat Actions без обёртки Card ...
+  </div>
 
-**Impact**: Slower performance in TG bot, especially on shelter page. Contributes to the lag users experience.
-
-**Fix**: Wrap all debug logs in `if (import.meta.env.DEV)` blocks, or remove them entirely in frequently-called functions like `canAffordUpgrade`.
-
----
-
-## Issue 4 (LOW): `useUnifiedGameState.onSuccess` writes to localStorage
-
-**File**: `src/hooks/useUnifiedGameState.ts`, lines 117-127
-
-The mutation `onSuccess` handler saves `activeWorkers` and the full `gameData` object to localStorage:
-
-```typescript
-localStorage.setItem('activeWorkers', JSON.stringify(updatedData.activeWorkers));
-localStorage.setItem('gameData', JSON.stringify(updatedData));
+  <!-- Строка 3: Команда игрока -->
+  <div className="border-t border-white/10">
+    ... существующий grid с парами без обёртки Card ...
+  </div>
+</Card>
 ```
 
-This contradicts the architecture decision documented in `GameDataContext.tsx` (line 255-256): "OPTIMIZATION: Fully removed localStorage sync -- data only in React Query and Supabase". This creates inconsistency and potential stale data issues.
+### 2. Сжать хедер в одну строку
 
-**Fix**: Remove the localStorage writes from `useUnifiedGameState.onSuccess`.
+- Убрать `flex-col` → сделать `flex items-center justify-between`
+- Кнопки Меню и >>x4 — слева
+- Уровень + мини XP-бар — по центру (inline)
+- Кнопка Сдаться — справа
+- Убрать `CardHeader`/`CardTitle` обёртки, всё в одном `div`
 
----
+### 3. Разделители вместо отступов
 
-## Potential Risk 1: `useGameSync` still syncs `selectedTeam` to game_data
+Между хедером, боем и командой — тонкие `border-t border-white/10` вместо space-y и отдельных Card с padding.
 
-**File**: `src/hooks/useGameSync.ts`, lines 196-228
+### Экономия пространства
 
-The Zustand-to-Supabase sync subscriber still includes `selectedTeam` in its snapshot and syncs it to `game_data.selected_team`. However, per architecture memory, dungeon teams are now exclusively managed through `player_teams` table. This sync writes stale/empty `selectedTeam` to `game_data`, which is harmless for dungeons (since they read from `player_teams`) but wastes network traffic and could cause confusion.
+| Элемент | Было | Станет |
+|---------|------|--------|
+| Хедер | ~80px (3 строки) | ~32px (1 строка) |
+| Gaps между Card'ами | ~24px (3 × 8px) | 0 |
+| Card borders/padding | ~48px (3 × 16px) | 0 |
+| **Итого экономия** | | **~120px** |
 
-**Impact**: Low -- no functional breakage since dungeons read from `player_teams`, but it's dead code that could mask issues.
+### Файл
 
----
-
-## Potential Risk 2: `useBuildingUpgrades` completion toast fires repeatedly
-
-**File**: `src/hooks/useBuildingUpgrades.ts`, lines 49-73 and 76-104
-
-Both the `useEffect` (line 49) and the `setInterval` (line 76) check for completed upgrades and call `toast()`. Because the `useEffect` depends on `activeUpgrades` and `toast`, and `toast` is not stable (creates new reference each render), this can trigger repeatedly, showing duplicate "Upgrade complete" toasts.
-
-**Impact**: Users may see multiple toast notifications for the same upgrade completion.
-
----
-
-## Summary of Changes
-
-| # | File | Issue | Severity |
-|---|------|-------|----------|
-| 1 | `useUnifiedGameState.ts` line 437 | Add `forge: 0, clan_hall: 0` to fallback | Critical |
-| 2 | `useUnifiedGameState.ts` line 52 | Add `forge: 0, clan_hall: 0` to initialData | Moderate |
-| 3 | Multiple files | Wrap console.log in DEV guard or remove | Moderate |
-| 4 | `useUnifiedGameState.ts` line 117 | Remove localStorage writes | Low |
-
-I recommend implementing fixes 1-4. The potential risks (5-6) can be addressed separately if needed.
+`src/components/game/battle/TeamBattleArena.tsx` — строки 420-712: объединение трёх Card в одну с внутренними секциями.
 
