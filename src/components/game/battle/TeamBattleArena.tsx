@@ -482,23 +482,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Row 2: Combat Actions */}
           <div className="border-t border-white/10 px-1 py-0.5 sm:px-2 sm:py-1 relative">
-            {/* Attack Animation Overlay */}
-            <AttackAnimation 
-              isActive={attackAnimation.isActive}
-              type={attackAnimation.type}
-              source={attackAnimation.source}
-              attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
-              defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
-              damage={attackAnimation.damage}
-            />
-
             <div className="flex items-start gap-2 sm:gap-3">
               <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                 <span className="text-[10px] sm:text-xs font-medium">
                   {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
                 </span>
 
-                <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
+                <div>
                   <InlineDiceDisplay
                     key={`dice-${diceKey}`}
                     isRolling={isDiceRolling}
