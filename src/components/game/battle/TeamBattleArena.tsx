@@ -92,19 +92,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     damage: 0
   });
 
-  // Refs для получения позиций кубиков
-  const playerDiceRef = React.useRef<HTMLDivElement>(null);
-  const enemyDiceRef = React.useRef<HTMLDivElement>(null);
+  // Refs для позиций блоков команды и врагов
+  const battleContainerRef = React.useRef<HTMLDivElement>(null);
+  const playerTeamRef = React.useRef<HTMLDivElement>(null);
+  const enemyTeamRef = React.useRef<HTMLDivElement>(null);
 
-  // Функция для получения центра элемента относительно его родителя
-  const getDicePosition = (ref: React.RefObject<HTMLDivElement>) => {
-    if (!ref.current) return { x: 0, y: 0 };
+  // Функция для получения центра элемента относительно контейнера боя
+  const getSectionCenter = (ref: React.RefObject<HTMLDivElement>) => {
+    if (!ref.current || !battleContainerRef.current) return { x: 0, y: 0 };
     const rect = ref.current.getBoundingClientRect();
-    const parentRect = ref.current.offsetParent?.getBoundingClientRect();
-    if (!parentRect) return { x: 0, y: 0 };
+    const containerRect = battleContainerRef.current.getBoundingClientRect();
     return {
-      x: rect.left - parentRect.left + rect.width / 2,
-      y: rect.top - parentRect.top + rect.height / 2
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top + rect.height / 2
     };
   };
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
@@ -415,7 +415,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, adjustDelay]);
-  return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+  return <div ref={battleContainerRef} className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+      {/* Attack Animation Overlay - на уровне всего экрана */}
+      <AttackAnimation 
+        isActive={attackAnimation.isActive}
+        type={attackAnimation.type}
+        source={attackAnimation.source}
+        attackerPosition={attackAnimation.source === 'player' ? getSectionCenter(playerTeamRef) : getSectionCenter(enemyTeamRef)}
+        defenderPosition={attackAnimation.source === 'player' ? getSectionCenter(enemyTeamRef) : getSectionCenter(playerTeamRef)}
+        damage={attackAnimation.damage}
+      />
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Unified Player Block: Header + Combat + Team */}
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
@@ -473,23 +482,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
           {/* Row 2: Combat Actions */}
           <div className="border-t border-white/10 px-1 py-0.5 sm:px-2 sm:py-1 relative">
-            {/* Attack Animation Overlay */}
-            <AttackAnimation 
-              isActive={attackAnimation.isActive}
-              type={attackAnimation.type}
-              source={attackAnimation.source}
-              attackerPosition={attackAnimation.source === 'player' ? getDicePosition(playerDiceRef) : getDicePosition(enemyDiceRef)}
-              defenderPosition={attackAnimation.source === 'player' ? getDicePosition(enemyDiceRef) : getDicePosition(playerDiceRef)}
-              damage={attackAnimation.damage}
-            />
-
             <div className="flex items-start gap-2 sm:gap-3">
               <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                 <span className="text-[10px] sm:text-xs font-medium">
                   {isPlayerTurn ? <span className="text-green-400">{t(language, 'battlePage.yourTurn')}</span> : <span className="text-red-400">{t(language, 'battlePage.enemyTurn')}</span>}
                 </span>
 
-                <div ref={lastRoll?.source === 'player' ? playerDiceRef : enemyDiceRef}>
+                <div>
                   <InlineDiceDisplay
                     key={`dice-${diceKey}`}
                     isRolling={isDiceRolling}
@@ -572,7 +571,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </div>
 
           {/* Row 3: Player Team */}
-          <div className="border-t border-white/10 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+          <div ref={playerTeamRef} className="border-t border-white/10 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
             <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
               {playerPairs.map((pair, index) => {
                 const pairDamage = pairDamages.get(pair.id);
@@ -688,7 +687,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
         <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Enemy Team - Lower Part */}
-          <Card variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <Card ref={enemyTeamRef} variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardHeader className="py-2 flex-shrink-0">
               <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
                 <Sword className="w-4 h-4" />
