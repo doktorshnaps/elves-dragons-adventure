@@ -415,7 +415,16 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
       return () => clearTimeout(timer);
     }
   }, [autoBattle, isPlayerTurn, isAttacking, alivePairs.length, aliveOpponents.length, adjustDelay]);
-  return <div className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+  return <div ref={battleContainerRef} className="h-screen w-screen overflow-hidden p-2 flex flex-col relative">
+      {/* Attack Animation Overlay - на уровне всего экрана */}
+      <AttackAnimation 
+        isActive={attackAnimation.isActive}
+        type={attackAnimation.type}
+        source={attackAnimation.source}
+        attackerPosition={attackAnimation.source === 'player' ? getSectionCenter(playerTeamRef) : getSectionCenter(enemyTeamRef)}
+        defenderPosition={attackAnimation.source === 'player' ? getSectionCenter(enemyTeamRef) : getSectionCenter(playerTeamRef)}
+        damage={attackAnimation.damage}
+      />
       <div className="w-full h-full flex flex-col space-y-2">
         {/* Unified Player Block: Header + Combat + Team */}
         <Card variant="menu" className="flex-shrink-0" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
