@@ -687,7 +687,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
         <div className="flex-1 flex flex-col space-y-2 overflow-hidden">
           {/* Enemy Team - Lower Part */}
-          <Card variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <Card ref={enemyTeamRef} variant="menu" className="flex-1 min-h-0 flex flex-col overflow-hidden" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <CardHeader className="py-2 flex-shrink-0">
               <CardTitle className="flex items-center gap-2 text-red-400 justify-center text-sm">
                 <Sword className="w-4 h-4" />
