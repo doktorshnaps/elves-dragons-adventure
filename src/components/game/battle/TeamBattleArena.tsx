@@ -571,7 +571,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           </div>
 
           {/* Row 3: Player Team */}
-          <div className="border-t border-white/10 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
+          <div ref={playerTeamRef} className="border-t border-white/10 overflow-y-auto overflow-x-hidden p-0.5 sm:p-1">
             <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 sm:gap-1">
               {playerPairs.map((pair, index) => {
                 const pairDamage = pairDamages.get(pair.id);
