@@ -92,19 +92,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     damage: 0
   });
 
-  // Refs для получения позиций кубиков
-  const playerDiceRef = React.useRef<HTMLDivElement>(null);
-  const enemyDiceRef = React.useRef<HTMLDivElement>(null);
+  // Refs для позиций блоков команды и врагов
+  const battleContainerRef = React.useRef<HTMLDivElement>(null);
+  const playerTeamRef = React.useRef<HTMLDivElement>(null);
+  const enemyTeamRef = React.useRef<HTMLDivElement>(null);
 
-  // Функция для получения центра элемента относительно его родителя
-  const getDicePosition = (ref: React.RefObject<HTMLDivElement>) => {
-    if (!ref.current) return { x: 0, y: 0 };
+  // Функция для получения центра элемента относительно контейнера боя
+  const getSectionCenter = (ref: React.RefObject<HTMLDivElement>) => {
+    if (!ref.current || !battleContainerRef.current) return { x: 0, y: 0 };
     const rect = ref.current.getBoundingClientRect();
-    const parentRect = ref.current.offsetParent?.getBoundingClientRect();
-    if (!parentRect) return { x: 0, y: 0 };
+    const containerRect = battleContainerRef.current.getBoundingClientRect();
     return {
-      x: rect.left - parentRect.left + rect.width / 2,
-      y: rect.top - parentRect.top + rect.height / 2
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top + rect.height / 2
     };
   };
   const alivePairs = playerPairs.filter(pair => pair.health > 0);
