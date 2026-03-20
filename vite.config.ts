@@ -1,17 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
     nodePolyfills({
       include: ['buffer', 'stream', 'crypto', 'util', 'assert', 'process'],
       globals: {
@@ -21,7 +19,7 @@ export default defineConfig(({ mode }) => ({
       },
       protocolImports: true,
     }),
-  ].filter(Boolean),
+  ],
   base: "./",
   define: {
     'global': 'globalThis',
