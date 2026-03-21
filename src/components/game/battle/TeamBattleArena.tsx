@@ -194,7 +194,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           isActive: true,
           type: animationType,
           source: lastRoll.source,
-          damage: lastRoll.damage
+          damage: lastRoll.damage,
+          attackerId: lastRoll.source === 'player' 
+            ? (selectedPair || alivePairs[0]?.id) 
+            : (lastRoll as any).attackerOpponentId,
+          targetId: lastRoll.source === 'player' 
+            ? (lastRoll as any).targetOpponentId 
+            : (lastRoll as any).targetPairId
         });
 
         // Останавливаем анимацию через 2000мс (длительность всей анимации)
