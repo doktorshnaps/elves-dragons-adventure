@@ -196,7 +196,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           source: lastRoll.source,
           damage: lastRoll.damage,
           attackerId: lastRoll.source === 'player' 
-            ? (selectedPair || alivePairs[0]?.id) 
+            ? ((lastRoll as any).attackerPairId || selectedPair || alivePairs[0]?.id) 
             : (lastRoll as any).attackerOpponentId,
           targetId: lastRoll.source === 'player' 
             ? (lastRoll as any).targetOpponentId 
