@@ -734,7 +734,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 {opponents.map((opponent, index) => {
                   const enemyDamage = enemyDamages.get(opponent.id);
                   
-                  return <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
+                  return <div key={opponent.id} data-opponent-id={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }
