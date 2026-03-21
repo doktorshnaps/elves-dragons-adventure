@@ -442,8 +442,22 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         isActive={attackAnimation.isActive}
         type={attackAnimation.type}
         source={attackAnimation.source}
-        attackerPosition={attackAnimation.source === 'player' ? getSectionCenter(playerTeamRef) : getSectionCenter(enemyTeamRef)}
-        defenderPosition={attackAnimation.source === 'player' ? getSectionCenter(enemyTeamRef) : getSectionCenter(playerTeamRef)}
+        attackerPosition={
+          attackAnimation.attackerId 
+            ? getCardCenter(
+                attackAnimation.source === 'player' ? 'data-pair-id' : 'data-opponent-id', 
+                attackAnimation.attackerId
+              )
+            : getSectionCenter(attackAnimation.source === 'player' ? playerTeamRef : enemyTeamRef)
+        }
+        defenderPosition={
+          attackAnimation.targetId
+            ? getCardCenter(
+                attackAnimation.source === 'player' ? 'data-opponent-id' : 'data-pair-id',
+                attackAnimation.targetId
+              )
+            : getSectionCenter(attackAnimation.source === 'player' ? enemyTeamRef : playerTeamRef)
+        }
         damage={attackAnimation.damage}
       />
       <div className="w-full h-full flex flex-col space-y-2">
