@@ -85,6 +85,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     type: 'normal' | 'critical' | 'blocked';
     source: 'player' | 'enemy';
     damage?: number;
+    attackerId?: string | number;
+    targetId?: string | number;
   }>({
     isActive: false,
     type: 'normal',
@@ -97,7 +99,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const playerTeamRef = React.useRef<HTMLDivElement>(null);
   const enemyTeamRef = React.useRef<HTMLDivElement>(null);
 
-  // Функция для получения центра элемента относительно контейнера боя
+  // Функция для получения центра конкретной карточки по data-атрибуту
+  const getCardCenter = (dataAttr: string, id: string | number) => {
+    if (!battleContainerRef.current) return { x: 0, y: 0 };
+    const el = battleContainerRef.current.querySelector(`[${dataAttr}="${id}"]`) as HTMLElement | null;
+    if (!el) return getSectionCenter(dataAttr.includes('pair') ? playerTeamRef : enemyTeamRef);
+    const rect = el.getBoundingClientRect();
+    const containerRect = battleContainerRef.current.getBoundingClientRect();
+    return {
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top + rect.height / 2
+    };
+  };
+
+  // Fallback: центр секции
   const getSectionCenter = (ref: React.RefObject<HTMLDivElement>) => {
     if (!ref.current || !battleContainerRef.current) return { x: 0, y: 0 };
     const rect = ref.current.getBoundingClientRect();
@@ -179,7 +194,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
           isActive: true,
           type: animationType,
           source: lastRoll.source,
-          damage: lastRoll.damage
+          damage: lastRoll.damage,
+          attackerId: lastRoll.source === 'player' 
+            ? ((lastRoll as any).attackerPairId || selectedPair || alivePairs[0]?.id) 
+            : (lastRoll as any).attackerOpponentId,
+          targetId: lastRoll.source === 'player' 
+            ? (lastRoll as any).targetOpponentId 
+            : (lastRoll as any).targetPairId
         });
 
         // Останавливаем анимацию через 2000мс (длительность всей анимации)
@@ -421,8 +442,22 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
         isActive={attackAnimation.isActive}
         type={attackAnimation.type}
         source={attackAnimation.source}
-        attackerPosition={attackAnimation.source === 'player' ? getSectionCenter(playerTeamRef) : getSectionCenter(enemyTeamRef)}
-        defenderPosition={attackAnimation.source === 'player' ? getSectionCenter(enemyTeamRef) : getSectionCenter(playerTeamRef)}
+        attackerPosition={
+          attackAnimation.attackerId 
+            ? getCardCenter(
+                attackAnimation.source === 'player' ? 'data-pair-id' : 'data-opponent-id', 
+                attackAnimation.attackerId
+              )
+            : getSectionCenter(attackAnimation.source === 'player' ? playerTeamRef : enemyTeamRef)
+        }
+        defenderPosition={
+          attackAnimation.targetId
+            ? getCardCenter(
+                attackAnimation.source === 'player' ? 'data-opponent-id' : 'data-pair-id',
+                attackAnimation.targetId
+              )
+            : getSectionCenter(attackAnimation.source === 'player' ? enemyTeamRef : playerTeamRef)
+        }
         damage={attackAnimation.damage}
       />
       <div className="w-full h-full flex flex-col space-y-2">
@@ -577,7 +612,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 const pairDamage = pairDamages.get(pair.id);
                 
                 return (
-                  <div key={pair.id} className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
+                  <div key={pair.id} data-pair-id={pair.id} className={`relative p-1 sm:p-1.5 rounded-lg sm:rounded-2xl border-2 transition-all cursor-pointer ${pair.health <= 0 ? 'bg-black/30 border-white/30 opacity-50' : attackingPair === pair.id ? 'bg-red-500/30 border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50' : defendingPair === pair.id ? 'bg-blue-500/30 border-blue-500 animate-pulse shadow-lg shadow-blue-500/50' : selectedPair === pair.id ? 'bg-white/20 border-white' : 'bg-black/20 border-white/50 hover:border-white'}`} onClick={() => {
                     if (pair.health > 0 && isPlayerTurn) {
                       setSelectedPair(pair.id);
                     }
@@ -699,7 +734,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                 {opponents.map((opponent, index) => {
                   const enemyDamage = enemyDamages.get(opponent.id);
                   
-                  return <div key={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
+                  return <div key={opponent.id} data-opponent-id={opponent.id} className={`relative rounded-lg sm:rounded-2xl border-2 transition-all overflow-hidden h-32 sm:h-40 md:h-48 ${opponent.health <= 0 ? 'border-white/30' : attackedTarget === opponent.id ? 'border-red-500 animate-pulse scale-105 shadow-lg shadow-red-500/50 cursor-pointer' : selectedTarget === opponent.id ? 'border-red-400 bg-red-400/10 cursor-pointer' : 'border-white/50 hover:border-red-400/50 cursor-pointer'}`} onClick={() => {
                 if (opponent.health > 0 && isPlayerTurn) {
                   setSelectedTarget(opponent.id);
                 }
