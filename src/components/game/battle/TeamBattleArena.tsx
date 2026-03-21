@@ -85,6 +85,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     type: 'normal' | 'critical' | 'blocked';
     source: 'player' | 'enemy';
     damage?: number;
+    attackerId?: string | number;
+    targetId?: string | number;
   }>({
     isActive: false,
     type: 'normal',
@@ -97,7 +99,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const playerTeamRef = React.useRef<HTMLDivElement>(null);
   const enemyTeamRef = React.useRef<HTMLDivElement>(null);
 
-  // Функция для получения центра элемента относительно контейнера боя
+  // Функция для получения центра конкретной карточки по data-атрибуту
+  const getCardCenter = (dataAttr: string, id: string | number) => {
+    if (!battleContainerRef.current) return { x: 0, y: 0 };
+    const el = battleContainerRef.current.querySelector(`[${dataAttr}="${id}"]`) as HTMLElement | null;
+    if (!el) return getSectionCenter(dataAttr.includes('pair') ? playerTeamRef : enemyTeamRef);
+    const rect = el.getBoundingClientRect();
+    const containerRect = battleContainerRef.current.getBoundingClientRect();
+    return {
+      x: rect.left - containerRect.left + rect.width / 2,
+      y: rect.top - containerRect.top + rect.height / 2
+    };
+  };
+
+  // Fallback: центр секции
   const getSectionCenter = (ref: React.RefObject<HTMLDivElement>) => {
     if (!ref.current || !battleContainerRef.current) return { x: 0, y: 0 };
     const rect = ref.current.getBoundingClientRect();
