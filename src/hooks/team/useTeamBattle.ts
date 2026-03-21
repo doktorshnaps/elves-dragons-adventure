@@ -372,7 +372,8 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
       isMiss: missed,
       isCounterAttack: isCounter,
       level: battleState.level,
-      targetOpponentId: targetId
+      targetOpponentId: targetId,
+      attackerPairId: pairId
     } as any);
 
     // Toast уведомления убраны - урон отображается визуально на карточках
