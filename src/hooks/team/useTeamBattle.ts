@@ -69,7 +69,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   // Тайминги последовательности боя (синхронизированы с UI анимациями)
   const DICE_ROLL_MS = 1500; // кубики крутятся
-  const ATTACK_ANIMATION_MS = 2000; // анимация атаки
+  const ATTACK_ANIMATION_MS = 2500; // анимация атаки (500ms полёт + 800ms импакт + запас на UI задержку)
   const TURN_DELAY_MS = 1000; // пауза перед сменой хода
   const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, adjustDelay(ms)));
 
