@@ -97,15 +97,28 @@ export const InventoryManager = () => {
   const sellItem = async (groupedItem: GroupedItem) => {
     try {
       const item = groupedItem.items[0];
-      // Используем sell_price из item_templates, если он определен
-      const sellPrice = item.sell_price !== undefined ? item.sell_price : Math.floor(item.value * 0.7);
       
-      await removeItemInstancesByIds([item.id]);
-      useGameStore.getState().addBalance(sellPrice);
+      // 🔒 Server-side sell: validates ownership, gets price from DB, atomic balance update
+      const { data, error } = await supabase.functions.invoke('sell-item', {
+        body: { item_instance_id: item.id },
+      });
+
+      if (error || !data?.success) {
+        handleError({ message: data?.error || 'Ошибка при продаже предмета' });
+        return;
+      }
+
+      // Update local balance from server response
+      if (data.newBalance !== null && data.newBalance !== undefined) {
+        useGameStore.getState().setBalance(data.newBalance);
+      }
+
+      // Refresh item instances cache
+      queryClient.invalidateQueries({ queryKey: ['itemInstances'] });
       
       handleSuccess(
         'Предмет продан',
-        `Получено ${sellPrice} ELL`
+        `Получено ${data.sellPrice} ELL`
       );
     } catch (error) {
       handleError(error, 'sellItem');

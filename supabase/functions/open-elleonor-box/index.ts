@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // 🔒 Input validation schema
 const OpenBoxSchema = z.object({
-  wallet_address: z.string().min(3).max(100),
+  wallet_address: z.string().min(3).max(100), // now set server-side from JWT
   box_instance_id: z.string().optional(),
   count: z.number().int().min(1).max(10).default(1),
 });
@@ -59,46 +59,61 @@ serve(async (req) => {
   }
 
   try {
-    // 🔒 Parse and validate input
+    // 🔒 JWT verification — resolve wallet server-side
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return json({ success: false, error: "Invalid token" }, 401);
+    }
+
+    const userId = claimsData.claims.sub;
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+
+    // Resolve wallet from profiles
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("user_id", userId)
+      .single();
+
+    if (profileErr || !profile?.wallet_address) {
+      return json({ success: false, error: "No wallet linked" }, 403);
+    }
+
+    const wallet_address = profile.wallet_address;
+
+    // 🔒 Parse and validate input (wallet_address no longer from body)
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return json({ success: false, error: "Invalid request body" }, 400);
+      body = {};
     }
 
-    const parseResult = OpenBoxSchema.safeParse(body);
+    const parseResult = OpenBoxSchema.safeParse({ ...((body as any) || {}), wallet_address });
     if (!parseResult.success) {
       console.error("❌ Validation error:", parseResult.error.flatten());
       return json({ success: false, error: "Invalid request parameters" }, 400);
     }
 
-    const { wallet_address, count } = parseResult.data;
+    const { count } = parseResult.data;
     console.log(`📦 Opening Elleonor Box for wallet: ${wallet_address}, count: ${count}`);
-
-    // Create Supabase client with service role for bypassing RLS
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // 🔒 SECURITY: Verify wallet exists in game_data (proves ownership)
-    const { data: gameDataCheck, error: verifyError } = await supabaseAdmin
-      .from('game_data')
-      .select('wallet_address')
-      .eq('wallet_address', wallet_address)
-      .single();
-
-    if (verifyError || !gameDataCheck) {
-      console.error('❌ Wallet verification failed:', verifyError);
-      await supabaseAdmin.from('security_audit_log').insert({
-        event_type: 'BOX_OPEN_UNVERIFIED_WALLET',
-        wallet_address,
-        details: { count, error: 'Wallet not registered' }
-      });
-      return json({ success: false, error: 'Wallet not verified' }, 401);
-    }
 
     // 🔒 SECURITY: Check rate limiting
     const { data: rateLimitOk } = await supabaseAdmin.rpc('check_api_rate_limit', {
