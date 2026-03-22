@@ -15,6 +15,8 @@ import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useItemInstances } from '@/hooks/useItemInstances';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
