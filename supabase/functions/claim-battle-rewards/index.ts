@@ -178,7 +178,21 @@ async function calculateRewards(
                               cleanNameLower.includes(monsterIdLower) ||
                               monsterIdLower.includes(cleanNameLower);
         
-        if (matchesMonster && treasureEvent.found_quantity < treasureEvent.total_quantity) {
+        if (matchesMonster) {
+          // 🔒 Atomic check: UPDATE with WHERE to prevent race condition
+          const { data: updatedEvent, error: updateError } = await supabase
+            .from('treasure_hunt_events')
+            .update({ found_quantity: treasureEvent.found_quantity + 1 })
+            .eq('id', treasureEvent.id)
+            .lt('found_quantity', treasureEvent.total_quantity)
+            .select('id')
+            .maybeSingle();
+
+          if (updateError || !updatedEvent) {
+            console.log('⚠️ Treasure hunt item limit reached or update failed');
+            continue;
+          }
+
           const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
           const dropChance = treasureEvent.drop_chance || 0;
           
@@ -202,6 +216,12 @@ async function calculateRewards(
                 treasureHuntEventId: treasureEvent.id
               });
             }
+          } else {
+            // Roll failed, revert the atomic increment
+            await supabase
+              .from('treasure_hunt_events')
+              .update({ found_quantity: treasureEvent.found_quantity })
+              .eq('id', treasureEvent.id);
           }
         }
       }
