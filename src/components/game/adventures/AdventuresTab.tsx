@@ -28,6 +28,7 @@ export const AdventuresTab = () => {
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { incrementMonsterKills } = useCardInstances();
   const { removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
+  const { accountId } = useWalletContext();
 
   // Adventure монстр - чисто локальное состояние, не нужно сохранять в localStorage
   // При перезагрузке страницы просто генерируется новый монстр
