@@ -15,6 +15,8 @@ import { addAccountExperience } from '@/utils/accountLeveling';
 import { useGameStore } from '@/stores/gameStore';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { useItemInstances } from '@/hooks/useItemInstances';
+import { supabase } from '@/integrations/supabase/client';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 export const AdventuresTab = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export const AdventuresTab = () => {
   const { accountLevel, accountExperience, addAccountExperience: addAccountExp } = useGameStore();
   const { incrementMonsterKills } = useCardInstances();
   const { removeItemInstancesByIds, getInstancesByItemId } = useItemInstances();
+  const { accountId } = useWalletContext();
 
   // Adventure монстр - чисто локальное состояние, не нужно сохранять в localStorage
   // При перезагрузке страницы просто генерируется новый монстр
@@ -44,28 +47,35 @@ export const AdventuresTab = () => {
     const newMonsterHealth = monster.health - damage;
 
     if (newMonsterHealth <= 0) {
-      await updateGameData({ balance: balance + monster.reward });
+      // 🔒 Server-side balance update via atomic RPC
+      const { error: balanceErr } = await supabase.rpc('atomic_balance_update', {
+        p_wallet_address: accountId || '',
+        p_price_deduction: -monster.reward, // negative = add balance
+      });
+      
+      if (balanceErr) {
+        console.error('Balance update failed:', balanceErr);
+      }
+
       addExperience(monster.experienceReward);
       
       // Инкремент убийств монстров для всех карт в команде
       const selectedTeam = gameData.selectedTeam || [];
-      console.log('Selected team for monster kills:', selectedTeam);
       for (const pair of selectedTeam) {
         if (pair?.hero?.id) {
-          const result = await incrementMonsterKills(pair.hero.id);
-          console.log(`Hero ${pair.hero.id} monster kill increment result:`, result);
+          await incrementMonsterKills(pair.hero.id);
         }
         if (pair?.dragon?.id) {
-          const result = await incrementMonsterKills(pair.dragon.id);
-          console.log(`Dragon ${pair.dragon.id} monster kill increment result:`, result);
+          await incrementMonsterKills(pair.dragon.id);
         }
       }
       
-      // Добавляем опыт аккаунта за убийство монстра
-      // 50 exp за обычного монстра, 200 exp за босса
+      // 🔒 Account XP: calculate locally for UI display, but don't sync to DB
+      // The accountExperience in Zustand is display-only; real XP is in game_data
       const accountExpReward = monster.isBoss ? 200 : 50;
       const experienceResult = addAccountExperience(accountExperience, accountExpReward);
       
+      // Update local display only (not synced to DB anymore)
       addAccountExp(accountExpReward);
       
       if (experienceResult.leveledUp) {
