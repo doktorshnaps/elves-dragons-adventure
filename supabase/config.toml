@@ -74,3 +74,9 @@ verify_jwt = false
 
 [functions.upload-card-image]
 verify_jwt = false
+
+[functions.sell-item]
+verify_jwt = false
+
+[functions.open-elleonor-box]
+verify_jwt = false

@@ -614,20 +614,9 @@ Deno.serve(async (req) => {
       gameData = { cards: created?.cards ?? [] } as any;
     }
 
-    const existingCards = Array.isArray((gameData as any).cards) ? (gameData as any).cards : [];
-    const updatedCards = [...existingCards, ...newCards];
-
-    const { error: updateCardsErr } = await supabase
-      .from('game_data')
-      .update({ cards: updatedCards, updated_at: new Date().toISOString() })
-      .eq('wallet_address', wallet_address);
-
-    if (updateCardsErr) {
-      console.error('❌ Error updating cards array:', updateCardsErr);
-      throw updateCardsErr;
-    }
-
-    console.log('✅ Cards added to game_data.cards');
+    // 🔒 DEPRECATED: game_data.cards is legacy. card_instances is the source of truth.
+    // No longer writing to game_data.cards to prevent data duplication.
+    console.log('ℹ️ Skipping game_data.cards update (deprecated, using card_instances only)');
 
     // Создаем записи в card_instances для каждой карты
     console.log(`📝 Creating ${newCards.length} card_instances records...`);

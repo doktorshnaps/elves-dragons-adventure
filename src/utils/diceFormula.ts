@@ -3,7 +3,7 @@
  * D6 roll determines damage multiplier applied to attacker's power.
  *
  * Roll 1: 0% damage — Counterattack (opponent strikes back)
- * Roll 2: 25% damage — Glancing blow (was 0% miss, reduced frustration)
+ * Roll 2: 25% damage — Glancing blow
  * Roll 3: 50% damage — Weak hit
  * Roll 4: 100% damage — Normal hit
  * Roll 5: 150% damage — Strong hit
@@ -12,32 +12,44 @@
  * Pity system: after 2 consecutive low rolls (1-2), next roll guarantees minimum 50% damage.
  */
 
-// Pity counter — tracks consecutive low rolls per combat session
-let pityCounter = 0;
+/**
+ * Per-session pity tracker. Create one per combat session to avoid
+ * cross-session contamination from the old global counter.
+ */
+export interface PityTracker {
+  counter: number;
+}
+
+export const createPityTracker = (): PityTracker => ({ counter: 0 });
+
+// Legacy global tracker — kept for backward compat but prefer createPityTracker
+let globalPityCounter = 0;
 
 export const resetPityCounter = (): void => {
-  pityCounter = 0;
+  globalPityCounter = 0;
 };
 
-export const getPityCounter = (): number => pityCounter;
+export const getPityCounter = (): number => globalPityCounter;
 
-export const getDiceMultiplier = (roll: number): number => {
+export const getDiceMultiplier = (roll: number, pity?: PityTracker): number => {
+  const counter = pity ? pity.counter : globalPityCounter;
+
   // Pity system: after 2 consecutive low rolls, guarantee minimum 50%
-  if (pityCounter >= 2 && roll <= 2) {
-    pityCounter = 0;
+  if (counter >= 2 && roll <= 2) {
+    if (pity) pity.counter = 0; else globalPityCounter = 0;
     return 0.5; // Guaranteed weak hit instead of miss
   }
 
   // Track consecutive low rolls
   if (roll <= 2) {
-    pityCounter++;
+    if (pity) pity.counter++; else globalPityCounter++;
   } else {
-    pityCounter = 0;
+    if (pity) pity.counter = 0; else globalPityCounter = 0;
   }
 
   switch (roll) {
     case 1: return 0;
-    case 2: return 0.25; // Glancing blow (was 0% miss)
+    case 2: return 0.25;
     case 3: return 0.5;
     case 4: return 1;
     case 5: return 1.5;
@@ -51,7 +63,7 @@ export const getDicePercentage = (roll: number): number => {
 };
 
 export const isMiss = (roll: number): boolean => {
-  return roll === 1; // Only roll 1 is a true miss now (counterattack)
+  return roll === 1;
 };
 
 export const isCounterAttack = (roll: number): boolean => {
@@ -92,9 +104,10 @@ export const getDiceDescription = (roll: number): DiceDescription => {
 export const calculateDiceDamage = (
   roll: number,
   attackerPower: number,
-  defenderDefense: number = 0
+  defenderDefense: number = 0,
+  pity?: PityTracker
 ): number => {
-  const multiplier = getDiceMultiplier(roll);
+  const multiplier = getDiceMultiplier(roll, pity);
   if (multiplier === 0) return 0;
   const rawDamage = Math.floor(attackerPower * multiplier);
   return Math.max(1, rawDamage - defenderDefense);

@@ -61,9 +61,9 @@ const calculateDamageByRoll = (
       description = 'Критический промах! Противник контратакует';
       break;
     case 2:
-      damagePercent = 0;
-      isMiss = true;
-      description = 'Промах!';
+      damagePercent = 25;
+      isMiss = false;
+      description = 'Скользящий удар (25% урона)';
       break;
     case 3:
       damagePercent = 50;

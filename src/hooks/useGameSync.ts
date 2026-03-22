@@ -159,15 +159,14 @@ export const useGameSync = () => {
       
       // Синхронизируем только UI-состояние (без серверных данных)
       // NOTE: selectedTeam removed — dungeons use player_teams table exclusively
+      // 🔒 SECURITY: balance removed from sync — must only change via server RPCs
       const snapshot = {
-        balance: state.balance,
         battleState: state.battleState,
         accountLevel: state.accountLevel,
         accountExperience: state.accountExperience,
       };
 
       const serverSnapshot = {
-        balance: gameData?.balance,
         battleState: gameData?.battleState,
         accountLevel: gameData?.accountLevel,
         accountExperience: gameData?.accountExperience,

@@ -257,6 +257,34 @@ serve(async (req) => {
       .neq('wallet_address', adminWallet);
     if (nftCardsError) throw nftCardsError;
 
+    // Clear reward claims (idempotency keys)
+    const { error: rewardClaimsError } = await supabase
+      .from('reward_claims')
+      .delete()
+      .not('id', 'is', null);
+    if (rewardClaimsError) console.warn('⚠️ reward_claims cleanup failed:', rewardClaimsError);
+
+    // Clear stale shop sessions
+    const { error: shopSessionsError } = await supabase
+      .from('shop_sessions')
+      .delete()
+      .not('id', 'is', null);
+    if (shopSessionsError) console.warn('⚠️ shop_sessions cleanup failed:', shopSessionsError);
+
+    // Clear claim nonces
+    const { error: claimNoncesError } = await supabase
+      .from('claim_nonces')
+      .delete()
+      .not('id', 'is', null);
+    if (claimNoncesError) console.warn('⚠️ claim_nonces cleanup failed:', claimNoncesError);
+
+    // Clear mGT claims history
+    const { error: mgtClaimsError } = await supabase
+      .from('mgt_claims')
+      .delete()
+      .neq('wallet_address', adminWallet);
+    if (mgtClaimsError) console.warn('⚠️ mgt_claims cleanup failed:', mgtClaimsError);
+
     console.log('✅ Game wipe completed successfully');
 
     return new Response(JSON.stringify({ 

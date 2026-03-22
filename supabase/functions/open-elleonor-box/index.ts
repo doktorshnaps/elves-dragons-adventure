@@ -9,7 +9,7 @@ const corsHeaders = {
 
 // 🔒 Input validation schema
 const OpenBoxSchema = z.object({
-  wallet_address: z.string().min(3).max(100),
+  wallet_address: z.string().min(3).max(100), // now set server-side from JWT
   box_instance_id: z.string().optional(),
   count: z.number().int().min(1).max(10).default(1),
 });
