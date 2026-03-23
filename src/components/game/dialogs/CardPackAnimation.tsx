@@ -128,19 +128,24 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setShowWinEffect(true);
-      setTimeout(() => {
-        onAnimationComplete();
-      }, 1200);
+      // Don't auto-complete — wait for user to click button
     }, animationDuration * 1000);
     return () => clearTimeout(timer);
-  }, [onAnimationComplete, animationDuration, isAnimating]);
+  }, [animationDuration, isAnimating]);
 
   const handleSkip = () => {
     setIsAnimating(false);
     setShowWinEffect(true);
-    setTimeout(() => {
+  };
+
+  const handleCollect = () => {
+    if (onNextCard && currentIndex < totalCards - 1) {
+      onNextCard();
+    } else if (onClose) {
+      onClose();
+    } else {
       onAnimationComplete();
-    }, 800);
+    }
   };
 
   // Generate particles for win effect
