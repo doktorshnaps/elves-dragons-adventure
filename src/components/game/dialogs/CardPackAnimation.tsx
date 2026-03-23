@@ -81,7 +81,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
     for (let i = 0; i < 20; i++) {
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-      const cardRarity = getCardRarityByName(randomCard.name, randomCard.type);
+      const cardRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
       const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
       dummyCards.push({
         id: `dummy-${i}`,
@@ -91,7 +91,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
         defense: stats.defense,
         health: stats.health,
         magic: stats.magic,
-        rarity: randomRarity as any,
+        rarity: cardRarity,
         faction: (randomCard.faction || 'Каледор') as any,
         image: availableImages[randomCard.name],
       });
