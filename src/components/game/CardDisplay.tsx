@@ -73,9 +73,15 @@ export const CardDisplay = ({
     console.warn(`⚠️ Card stats not found in card_data for ${card.name}, recalculating...`);
     return calculateCardStats(card.name, card.rarity, card.type);
   }, [card.name, card.rarity, card.type, card.power, card.defense, card.health, card.magic]);
+  const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+  const rarityStyle = getRarityStyle(displayRarity);
+  const rarityBorder = getRarityBorderStyle(displayRarity);
+
   return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
-        p-0.5 bg-black/50 border-2 border-white backdrop-blur-sm transition-all duration-300 overflow-hidden 
-        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}>
+        p-0.5 backdrop-blur-sm transition-all duration-300 overflow-hidden 
+        ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} 
+        ${rarityStyle.shimmer ? (displayRarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''} ${className}`}
+    style={rarityBorder}>
       <div className="flex flex-col h-full">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} card={card} />
