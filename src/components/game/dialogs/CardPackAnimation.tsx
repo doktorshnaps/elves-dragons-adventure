@@ -321,8 +321,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                       <WinParticle key={pi} delay={p.delay} x={p.x} y={p.y} />
                     ))}
 
-                    <Card
-                      className={`w-36 h-56 p-2 relative z-10 transition-all duration-300 ${
+                    <div
+                      className={`w-36 h-56 p-2 relative z-10 rounded-lg transition-all duration-300 ${
                         isWinRevealed ? 'border-2' : 'border'
                       } ${getRarityStyle(card.rarity).shimmer ? (card.rarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''}`}
                       style={getRarityBorderStyle(card.rarity, isWinRevealed)}
