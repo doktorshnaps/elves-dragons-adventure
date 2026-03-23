@@ -13,6 +13,10 @@ interface CardPackAnimationProps {
   onAnimationComplete: () => void;
   onSkipAll?: () => void;
   showSkipAll?: boolean;
+  onNextCard?: () => void;
+  onClose?: () => void;
+  currentIndex?: number;
+  totalCards?: number;
 }
 
 // Particle component for winning effect
