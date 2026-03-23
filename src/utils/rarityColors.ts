@@ -73,6 +73,51 @@ export function getRarityStyle(rarity: number): RarityStyle {
   return rarityStyles[Math.min(Math.max(rarity, 1), 9)] || rarityStyles[1];
 }
 
+// Map card name/class to correct rarity number
+const heroClassToRarity: Record<string, number> = {
+  'Рекрут': 1,
+  'Страж': 2,
+  'Ветеран': 3,
+  'Чародей': 4,
+  'Мастер Целитель': 5,
+  'Защитник': 6,
+  'Ветеран Защитник': 7,
+  'Стратег': 8,
+  'Верховный Стратег': 9,
+};
+
+const dragonClassPrefixes: [string, number][] = [
+  ['Титан', 9],
+  ['Империал', 8],
+  ['Этернал', 7],
+  ['Мифический', 6],
+  ['Легендарный', 5],
+  ['Эпический', 4],
+  ['Редкий', 3],
+  ['Необычный', 2],
+  ['Обычный', 1],
+];
+
+export function getCardRarityByName(name: string, type?: string): number {
+  if (!name) return 1;
+  
+  // Check hero class names (exact or starts with)
+  for (const [className, rarity] of Object.entries(heroClassToRarity)) {
+    if (name === className || name.startsWith(className + ' ')) {
+      return rarity;
+    }
+  }
+  
+  // Check dragon class prefixes
+  for (const [prefix, rarity] of dragonClassPrefixes) {
+    if (name.startsWith(prefix)) {
+      return rarity;
+    }
+  }
+  
+  return 1;
+}
+
 export function getRarityBorderStyle(rarity: number, isWinRevealed: boolean = false) {
   const style = getRarityStyle(rarity);
   return {
