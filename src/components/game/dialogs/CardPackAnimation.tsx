@@ -414,17 +414,14 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
         {/* Progress & buttons */}
         <div className="mt-4 text-center relative z-10 w-full max-w-md">
-          <motion.div
-            className="text-lg font-bold mb-3"
-            style={{ color: 'hsl(291, 88%, 68%)' }}
-            animate={showWinEffect ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 1, repeat: Infinity }}
-          >
-            {isAnimating ? 'Открываем пак...' : '🎉 Поздравляем!'}
-          </motion.div>
-
-          {isAnimating && (
+          {isAnimating ? (
             <div className="space-y-4">
+              <motion.div
+                className="text-lg font-bold mb-1"
+                style={{ color: 'hsl(291, 88%, 68%)' }}
+              >
+                Открываем пак...
+              </motion.div>
               {/* Progress bar */}
               <div
                 className="w-full rounded-full h-1.5 overflow-hidden"
@@ -441,7 +438,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                 />
               </div>
 
-              {/* Buttons */}
+              {/* Skip buttons */}
               <div className="flex gap-3 justify-center">
                 <Button
                   onClick={handleSkip}
@@ -471,7 +468,47 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                 )}
               </div>
             </div>
-          )}
+          ) : showWinEffect ? (
+            <motion.div
+              className="space-y-3"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              {/* Card info */}
+              <div className="text-center">
+                <h3 className="text-lg font-bold" style={{ color: 'hsl(291, 88%, 68%)' }}>
+                  {winningCard.name}
+                </h3>
+                <p className="text-sm" style={{ color: 'hsl(252, 85%, 76%, 0.7)' }}>
+                  {winningCard.type === 'character' ? 'Герой' : 'Дракон'} • {winningCard.faction || 'Без фракции'}
+                </p>
+                <div className="flex items-center justify-center gap-1 mt-1">
+                  {Array.from({ length: winningCard.rarity }, (_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+              </div>
+
+              {/* Collect button */}
+              <Button
+                onClick={handleCollect}
+                className="px-8 py-2 text-white font-bold transition-all hover:scale-105"
+                style={{
+                  background: `linear-gradient(135deg, hsl(252, 85%, 50%), hsl(291, 88%, 50%))`,
+                  boxShadow: `0 0 20px hsl(291, 88%, 68%, 0.3)`,
+                }}
+              >
+                {currentIndex < totalCards - 1 ? 'Следующая карта →' : 'Добавить в коллекцию'}
+              </Button>
+
+              {totalCards > 1 && (
+                <p className="text-xs" style={{ color: 'hsl(252, 85%, 76%, 0.5)' }}>
+                  Карта {currentIndex + 1} из {totalCards}
+                </p>
+              )}
+            </motion.div>
+          ) : null}
         </div>
       </div>
     </div>
