@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cardDatabase } from "@/data/cardDatabase";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { resolveCardImageSync } from "@/utils/cardImageResolver";
+import { getRarityStyle, getRarityBorderStyle } from "@/utils/rarityColors";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
