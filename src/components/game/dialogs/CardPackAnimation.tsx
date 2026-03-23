@@ -376,34 +376,35 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
             </motion.div>
           </div>
 
-          {/* Win banner */}
-          <AnimatePresence>
-            {showWinEffect && (
-              <motion.div
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30"
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <div
-                  className="px-6 py-2 rounded-full text-sm font-bold tracking-wider"
-                  style={{
-                    background: `linear-gradient(90deg, hsl(252, 85%, 40%, 0.8), hsl(291, 88%, 40%, 0.8))`,
-                    color: 'hsl(45, 100%, 80%)',
-                    boxShadow: `0 0 20px hsl(291, 88%, 68%, 0.4)`,
-                    border: `1px solid hsl(45, 100%, 60%, 0.5)`,
-                  }}
-                >
-                  ✨ ВАША ДОБЫЧА! ✨
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
+        {/* Win banner - outside the overflow container */}
+        <AnimatePresence>
+          {showWinEffect && (
+            <motion.div
+              className="relative z-30 mt-4"
+              initial={{ opacity: 0, y: 10, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <div
+                className="px-8 py-2.5 rounded-full text-sm font-bold tracking-wider whitespace-nowrap"
+                style={{
+                  background: `linear-gradient(90deg, hsl(252, 85%, 40%, 0.9), hsl(291, 88%, 40%, 0.9))`,
+                  color: 'hsl(45, 100%, 80%)',
+                  boxShadow: `0 0 20px hsl(291, 88%, 68%, 0.4)`,
+                  border: `1px solid hsl(45, 100%, 60%, 0.5)`,
+                }}
+              >
+                ✨ ВАША ДОБЫЧА! ✨
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Progress & buttons */}
-        <div className="mt-6 text-center relative z-10 w-full max-w-md">
+        <div className="mt-4 text-center relative z-10 w-full max-w-md">
           <motion.div
             className="text-lg font-bold mb-3"
             style={{ color: 'hsl(291, 88%, 68%)' }}
