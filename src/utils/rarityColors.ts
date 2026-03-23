@@ -99,8 +99,8 @@ const dragonClassPrefixes: [string, number][] = [
   ['Обычный', 1],
 ];
 
-export function getCardRarityByName(name: string, type?: string): number {
-  if (!name) return 1;
+export function getCardRarityByName(name: string, type?: string, fallbackRarity: number = 1): number {
+  if (!name) return Math.min(Math.max(fallbackRarity, 1), 9);
   
   // Check hero class names (longest first to avoid partial matches)
   for (const [className, rarity] of heroClassToRarity) {
@@ -116,15 +116,15 @@ export function getCardRarityByName(name: string, type?: string): number {
     }
   }
   
-  return 1;
+  return Math.min(Math.max(fallbackRarity, 1), 9);
 }
 
 export function getRarityBorderStyle(rarity: number, isWinRevealed: boolean = false) {
   const style = getRarityStyle(rarity);
   return {
-    borderColor: isWinRevealed ? 'hsl(45, 100%, 60%)' : style.borderColor,
+    borderColor: style.borderColor,
     boxShadow: isWinRevealed
-      ? `0 0 20px hsl(45, 100%, 50%, 0.5), 0 0 40px ${style.glowColor}, inset 0 0 15px ${style.glowColor}`
+      ? `0 0 24px ${style.glowColor}, 0 0 48px ${style.glowColor}, 0 0 12px hsl(0, 0%, 100%, 0.22), inset 0 0 16px ${style.glowColor}`
       : `0 0 16px ${style.glowColor}, 0 0 6px ${style.glowColor}, inset 0 0 10px ${style.glowColor}`,
     background: style.bgGradient,
     borderWidth: rarity >= 5 ? '2px' : '1.5px',
