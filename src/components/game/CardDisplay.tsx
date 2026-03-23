@@ -129,7 +129,7 @@ export const CardDisplay = ({
               </div>}
           </div>
 
-          <div className="mt-auto shrink-0 pt-0.5">
+          <div className="shrink-0 pt-0.5">
             <CardActions card={card} showSellButton={showSellButton} onSell={onSell} isSelected={isSelected} onUpgrade={onUpgrade} />
           </div>
         </div>
