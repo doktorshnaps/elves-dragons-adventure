@@ -43,7 +43,7 @@ const WinParticle = ({ delay, x, y }: { delay: number; x: number; y: number }) =
   />
 );
 
-export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll, showSkipAll }: CardPackAnimationProps) => {
+export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll, showSkipAll, onNextCard, onClose, currentIndex = 0, totalCards = 1 }: CardPackAnimationProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
   const [showWinEffect, setShowWinEffect] = useState(false);
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
