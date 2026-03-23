@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useMemo } from "react";
+import { getRarityBorderStyle, getRarityStyle, getCardRarityByName } from "@/utils/rarityColors";
 
 interface TeamCardDisplayProps {
   card: any;
@@ -9,12 +10,10 @@ interface TeamCardDisplayProps {
 }
 
 export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayProps) => {
-  // Используем сохраненные характеристики из card_data, пересчет только как fallback
   const stats = useMemo(() => {
-    // КРИТИЧНО: характеристики ВСЕГДА должны быть в объекте карты из card_instances
     if (card.power === undefined || card.defense === undefined || 
         card.health === undefined || card.magic === undefined) {
-      console.error(`❌ [TeamCardDisplay] Card stats missing for ${card.name}! This should never happen - card data must come from card_instances context.`);
+      console.error(`❌ [TeamCardDisplay] Card stats missing for ${card.name}!`);
     }
     
     return {
@@ -24,21 +23,25 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
       magic: card.magic ?? 0
     };
   }, [card.power, card.defense, card.health, card.magic, card.name]);
+
+  const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+  const rarityStyle = getRarityStyle(displayRarity);
+  const rarityBorder = getRarityBorderStyle(displayRarity);
   
   return (
     <Card 
       className={`cursor-pointer transition-all hover:scale-105 ${
         isSelected ? 'ring-2 ring-game-accent' : ''
-      } border-game-accent`}
+      } ${rarityStyle.shimmer ? (displayRarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''}`}
       onClick={onClick}
+      style={rarityBorder}
     >
       <CardContent className="p-3">
         <div className="text-center">
-          <div className="font-bold text-game-accent mb-1">{card.name}</div>
+          <div className="font-bold text-white mb-1">{card.name}</div>
           
-          {/* Здоровье */}
           <div className="mb-2">
-            <div className="text-xs text-game-text mb-1">
+            <div className="text-xs text-white/70 mb-1">
               Здоровье: {card.currentHealth || stats.health}/{stats.health}
             </div>
             <Progress 
@@ -47,7 +50,6 @@ export const TeamCardDisplay = ({ card, onClick, isSelected }: TeamCardDisplayPr
             />
           </div>
 
-          {/* Статистики */}
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-red-400">
               <div>⚔️</div>
