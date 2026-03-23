@@ -77,18 +77,18 @@ export const CardDisplay = ({
   const rarityStyle = getRarityStyle(displayRarity);
   const rarityBorder = getRarityBorderStyle(displayRarity);
 
-  return <Card onClick={onClick} className={`mx-auto w-[90px] h-[180px] sm:w-[120px] sm:h-[240px] md:w-[130px] md:h-[260px] lg:w-[140px] lg:h-[280px]
+  return <Card onClick={onClick} className={`mx-auto w-[90px] sm:w-[120px] md:w-[130px] lg:w-[140px]
         p-0.5 backdrop-blur-sm transition-all duration-300 overflow-hidden 
         ${!isActive && card.type === 'pet' ? 'opacity-50' : ''} ${onClick ? 'cursor-pointer' : ''} 
         ${rarityStyle.shimmer ? (displayRarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''} ${className}`}
     style={rarityBorder}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col">
         <div className="w-full h-[75px] sm:h-[100px] md:h-[110px] lg:h-[120px] flex-shrink-0">
           <CardImage image={card.image} name={card.name} card={card} />
         </div>
         
-        <div className="flex flex-col flex-grow justify-between gap-0 p-0.5 h-[105px] sm:h-[140px] md:h-[150px] lg:h-[160px] min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-0 overflow-hidden flex-1 min-h-0">
+        <div className="flex flex-col gap-0 p-0.5 overflow-hidden">
+          <div className="flex flex-col gap-0 overflow-hidden min-h-0">
             <CardHeader name={translateCardName(language, card.name)} rarity={card.rarity} elementEmoji={elementEmoji} />
 
             <div className={`text-white leading-none truncate ${isMobile ? 'text-[6px]' : 'text-[10px]'}`}>
@@ -129,7 +129,7 @@ export const CardDisplay = ({
               </div>}
           </div>
 
-          <div className="mt-auto shrink-0 pt-0.5">
+          <div className="shrink-0 pt-0.5">
             <CardActions card={card} showSellButton={showSellButton} onSell={onSell} isSelected={isSelected} onUpgrade={onUpgrade} />
           </div>
         </div>
