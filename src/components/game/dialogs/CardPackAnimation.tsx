@@ -290,6 +290,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               {allCards.map((card, index) => {
                 const isWinner = index === winningCardIndex;
                 const isWinRevealed = isWinner && showWinEffect;
+                const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+                const rarityStyle = getRarityStyle(displayRarity);
 
                 return (
                   <motion.div
@@ -310,8 +312,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                         animate={{ opacity: [0, 0.8, 0.5] }}
                         transition={{ duration: 0.8 }}
                         style={{
-                          background: `radial-gradient(ellipse, hsl(45, 100%, 60%, 0.4) 0%, hsl(291, 88%, 68%, 0.2) 50%, transparent 70%)`,
-                          boxShadow: `0 0 30px hsl(45, 100%, 50%, 0.5), 0 0 60px hsl(291, 88%, 68%, 0.3)`,
+                          background: `radial-gradient(ellipse, ${rarityStyle.glowColor} 0%, hsl(291, 88%, 68%, 0.18) 55%, transparent 75%)`,
+                          boxShadow: `0 0 30px ${rarityStyle.glowColor}, 0 0 60px hsl(291, 88%, 68%, 0.25)`,
                         }}
                       />
                     )}
@@ -324,8 +326,8 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                     <div
                       className={`w-36 h-56 p-2 relative z-10 rounded-lg transition-all duration-300 ${
                         isWinRevealed ? 'border-2' : 'border'
-                      } ${getRarityStyle(card.rarity).shimmer ? (card.rarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''}`}
-                      style={getRarityBorderStyle(card.rarity, isWinRevealed)}
+                      } ${rarityStyle.shimmer ? (displayRarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''}`}
+                      style={getRarityBorderStyle(displayRarity, isWinRevealed)}
                     >
                       <div className="flex flex-col h-full justify-between text-white">
                         {/* Card Image */}
@@ -349,7 +351,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
                         <div className="space-y-1">
                           <div className="flex items-center justify-center gap-0.5">
-                            {Array.from({ length: card.rarity }, (_, i) => (
+                            {Array.from({ length: displayRarity }, (_, i) => (
                               <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                             ))}
                           </div>
