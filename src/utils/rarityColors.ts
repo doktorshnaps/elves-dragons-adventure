@@ -74,17 +74,18 @@ export function getRarityStyle(rarity: number): RarityStyle {
 }
 
 // Map card name/class to correct rarity number
-const heroClassToRarity: Record<string, number> = {
-  'Рекрут': 1,
-  'Страж': 2,
-  'Ветеран': 3,
-  'Чародей': 4,
-  'Мастер Целитель': 5,
-  'Защитник': 6,
-  'Ветеран Защитник': 7,
-  'Стратег': 8,
-  'Верховный Стратег': 9,
-};
+// Sorted longest-first to avoid "Ветеран" matching before "Ветеран Защитник"
+const heroClassToRarity: [string, number][] = [
+  ['Верховный Стратег', 9],
+  ['Ветеран Защитник', 7],
+  ['Мастер Целитель', 5],
+  ['Стратег', 8],
+  ['Защитник', 6],
+  ['Чародей', 4],
+  ['Ветеран', 3],
+  ['Страж', 2],
+  ['Рекрут', 1],
+];
 
 const dragonClassPrefixes: [string, number][] = [
   ['Титан', 9],
@@ -101,14 +102,14 @@ const dragonClassPrefixes: [string, number][] = [
 export function getCardRarityByName(name: string, type?: string): number {
   if (!name) return 1;
   
-  // Check hero class names (exact or starts with)
-  for (const [className, rarity] of Object.entries(heroClassToRarity)) {
+  // Check hero class names (longest first to avoid partial matches)
+  for (const [className, rarity] of heroClassToRarity) {
     if (name === className || name.startsWith(className + ' ')) {
       return rarity;
     }
   }
   
-  // Check dragon class prefixes
+  // Check dragon class prefixes (longest first)
   for (const [prefix, rarity] of dragonClassPrefixes) {
     if (name.startsWith(prefix)) {
       return rarity;
