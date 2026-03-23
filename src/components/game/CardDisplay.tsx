@@ -1,5 +1,6 @@
 import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
+import { getRarityBorderStyle, getRarityStyle, getCardRarityByName } from "@/utils/rarityColors";
 import { Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLanguage } from "@/hooks/useLanguage";
