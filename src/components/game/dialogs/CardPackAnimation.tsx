@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cardDatabase } from "@/data/cardDatabase";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { resolveCardImageSync } from "@/utils/cardImageResolver";
+import { getRarityStyle, getRarityBorderStyle } from "@/utils/rarityColors";
 
 interface CardPackAnimationProps {
   winningCard: CardType;
@@ -321,19 +322,9 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
                     <Card
                       className={`w-36 h-56 p-2 relative z-10 transition-all duration-300 ${
-                        isWinRevealed
-                          ? 'border-2'
-                          : 'border'
-                      }`}
-                      style={{
-                        background: `linear-gradient(135deg, hsl(252, 85%, 30%) 0%, hsl(259, 32%, 25%) 100%)`,
-                        borderColor: isWinRevealed
-                          ? 'hsl(45, 100%, 60%)'
-                          : 'hsl(252, 85%, 40%, 0.5)',
-                        boxShadow: isWinRevealed
-                          ? `0 0 20px hsl(45, 100%, 50%, 0.5), 0 0 40px hsl(291, 88%, 68%, 0.3)`
-                          : `0 2px 8px hsl(0, 0%, 0%, 0.3)`,
-                      }}
+                        isWinRevealed ? 'border-2' : 'border'
+                      } ${getRarityStyle(card.rarity).shimmer ? (card.rarity === 9 ? 'rarity-shimmer rarity-diamond' : 'rarity-shimmer') : ''}`}
+                      style={getRarityBorderStyle(card.rarity, isWinRevealed)}
                     >
                       <div className="flex flex-col h-full justify-between text-white">
                         {/* Card Image */}

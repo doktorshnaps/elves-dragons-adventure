@@ -248,3 +248,49 @@ body.wallet-modal-open iframe {
   pointer-events: auto !important;
   z-index: 2147483647 !important;
 }
+
+/* Rarity shimmer effect for rare cards (rarity 7-9) */
+@keyframes rarityShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.rarity-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.rarity-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    hsla(0, 0%, 100%, 0.15) 45%,
+    hsla(0, 0%, 100%, 0.25) 50%,
+    hsla(0, 0%, 100%, 0.15) 55%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: rarityShimmer 2.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+/* Diamond shimmer for Titan/Верховный Стратег (rarity 9) */
+.rarity-diamond::after {
+  background: linear-gradient(
+    105deg,
+    transparent 25%,
+    hsla(200, 80%, 80%, 0.15) 38%,
+    hsla(280, 80%, 80%, 0.2) 44%,
+    hsla(0, 0%, 100%, 0.35) 50%,
+    hsla(180, 80%, 80%, 0.2) 56%,
+    hsla(320, 80%, 80%, 0.15) 62%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: rarityShimmer 2s ease-in-out infinite;
+}
