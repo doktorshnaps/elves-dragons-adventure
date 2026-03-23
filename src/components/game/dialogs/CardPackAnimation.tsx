@@ -370,7 +370,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                           </div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 );
               })}
