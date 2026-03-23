@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Card as CardType } from "@/types/cards";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star, SkipForward } from "lucide-react";
-import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { Star, SkipForward, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cardDatabase } from "@/data/cardDatabase";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { resolveCardImageSync } from "@/utils/cardImageResolver";
@@ -16,14 +15,39 @@ interface CardPackAnimationProps {
   showSkipAll?: boolean;
 }
 
+// Particle component for winning effect
+const WinParticle = ({ delay, x, y }: { delay: number; x: number; y: number }) => (
+  <motion.div
+    className="absolute w-2 h-2 rounded-full"
+    style={{
+      background: `radial-gradient(circle, hsl(291, 88%, 68%), hsl(252, 85%, 76%))`,
+      left: '50%',
+      top: '50%',
+    }}
+    initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+    animate={{
+      opacity: [0, 1, 1, 0],
+      scale: [0, 1.5, 1, 0],
+      x: [0, x * 0.5, x],
+      y: [0, y * 0.5, y],
+    }}
+    transition={{
+      duration: 1.5,
+      delay,
+      ease: "easeOut",
+    }}
+  />
+);
+
 export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll, showSkipAll }: CardPackAnimationProps) => {
   const [isAnimating, setIsAnimating] = useState(true);
+  const [showWinEffect, setShowWinEffect] = useState(false);
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationDuration = 10; // seconds
-  
-  // Local database image map as immediate fallback
+  const animationDuration = 6; // shorter duration
+
+  // Local database image map
   const dbImageMap = useMemo(() => {
     const map: {[key: string]: string} = {};
     cardDatabase.forEach((c: any) => {
@@ -32,43 +56,27 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     return map;
   }, []);
 
-  // Seed available images from local DB first and preload them
   useEffect(() => {
     setAvailableImages(dbImageMap);
-    
-    // Preload the first few images for better performance
     const imagesToPreload = Object.values(dbImageMap).slice(0, 10);
     imagesToPreload.forEach(src => {
       const img = new Image();
       img.src = src;
     });
   }, [dbImageMap]);
-  
+
   const [targetX, setTargetX] = useState<number>(0);
   const [xStart, setXStart] = useState<number>(0);
-  
-  // Remove this useEffect that was overriding the images from cardDatabase
-  // The images are already loaded from dbImageMap in the previous useEffect
-  
-  // Generate dummy cards for animation using actual card data
-  const generateDummyCards = (): CardType[] => {
+
+  const generateDummyCards = useCallback((): CardType[] => {
     const dummyCards: CardType[] = [];
-    
     if (Object.keys(availableImages).length === 0) return [];
-    
-    // Get all available cards from database
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
-    
     if (allCards.length === 0) return [];
-    
+
     for (let i = 0; i < 20; i++) {
-      // Randomly select a card from database
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-      
-      // All cards now have rarity 1
       const stats = calculateCardStats(randomCard.name, 1, randomCard.type);
-      
-      // Use actual card data with proper structure
       dummyCards.push({
         id: `dummy-${i}`,
         name: randomCard.name,
@@ -77,27 +85,25 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
         defense: stats.defense,
         health: stats.health,
         magic: stats.magic,
-        rarity: 1, // All cards are now 1 star
+        rarity: 1,
         faction: (randomCard.faction || 'Каледор') as any,
         image: availableImages[randomCard.name],
       });
     }
-    
     return dummyCards;
-  };
+  }, [availableImages]);
 
-  // Generate cards only when images are loaded
-  const dummyCards = imagesReady ? generateDummyCards() : [];
-  
-  // Simplified positioning - place winning card at fixed position in array
-  const winningCardIndex = 10; // Adjusted for smaller array (was 20)
-  const allCards = dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [];
+  const dummyCards = useMemo(() => imagesReady ? generateDummyCards() : [], [imagesReady, generateDummyCards]);
 
-  // Simple calculation for card positioning
-  const cardWidth = 128; // w-32
-  const cardGap = 16; // gap-4
-  
-  // Measure container width and compute exact targetX in pixels
+  const winningCardIndex = 10;
+  const allCards = useMemo(
+    () => dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [],
+    [dummyCards, winningCard]
+  );
+
+  const cardWidth = 144; // w-36
+  const cardGap = 16;
+
   useEffect(() => {
     const measure = () => {
       const el = containerRef.current;
@@ -106,168 +112,348 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
       const centerX = rect.width / 2;
       const winningCenter = winningCardIndex * (cardWidth + cardGap) + cardWidth / 2;
       setTargetX(centerX - winningCenter);
-      setXStart(rect.width);
+      setXStart(rect.width + 200);
     };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
-  }, [containerRef, winningCardIndex]);
+  }, []);
 
   useEffect(() => {
     if (!isAnimating) return;
-    
     const timer = setTimeout(() => {
       setIsAnimating(false);
+      setShowWinEffect(true);
       setTimeout(() => {
         onAnimationComplete();
-      }, 300);
+      }, 1200);
     }, animationDuration * 1000);
-
     return () => clearTimeout(timer);
   }, [onAnimationComplete, animationDuration, isAnimating]);
 
   const handleSkip = () => {
     setIsAnimating(false);
+    setShowWinEffect(true);
     setTimeout(() => {
       onAnimationComplete();
-    }, 300);
+    }, 800);
   };
 
-  const getRarityColor = (rarity: number) => {
-    // All cards are now 1 star, use a consistent gradient
-    return 'from-purple-500 to-blue-600';
-  };
+  // Generate particles for win effect
+  const particles = useMemo(() => {
+    return Array.from({ length: 16 }, (_, i) => {
+      const angle = (i / 16) * Math.PI * 2;
+      return {
+        delay: Math.random() * 0.3,
+        x: Math.cos(angle) * (80 + Math.random() * 60),
+        y: Math.sin(angle) * (80 + Math.random() * 60),
+      };
+    });
+  }, []);
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center">
-      <div className="w-full max-w-6xl mx-4 flex flex-col items-center justify-center">
-        {/* Animation container */}
-        <div className="relative h-80 w-full overflow-hidden rounded-lg bg-game-surface border-2 border-game-accent">
-          {/* Indicator line */}
-          <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-red-500 z-10 transform -translate-x-0.5">
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-red-500"></div>
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden">
+      {/* Animated gradient background */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at center, 
+            hsl(252, 85%, 20%) 0%, 
+            hsl(220, 26%, 10%) 50%, 
+            hsl(220, 26%, 6%) 100%)`,
+        }}
+        animate={{
+          background: isAnimating ? [
+            `radial-gradient(ellipse at center, hsl(252, 85%, 20%) 0%, hsl(220, 26%, 10%) 50%, hsl(220, 26%, 6%) 100%)`,
+            `radial-gradient(ellipse at center, hsl(291, 88%, 25%) 0%, hsl(220, 26%, 12%) 50%, hsl(220, 26%, 6%) 100%)`,
+            `radial-gradient(ellipse at center, hsl(252, 85%, 20%) 0%, hsl(220, 26%, 10%) 50%, hsl(220, 26%, 6%) 100%)`,
+          ] : undefined,
+        }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Ambient glow orbs */}
+      <motion.div
+        className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl pointer-events-none"
+        style={{ background: 'hsl(291, 88%, 68%)' }}
+        animate={{
+          x: [-50, 50, -50],
+          y: [-30, 30, -30],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <div className="relative w-full max-w-6xl mx-4 flex flex-col items-center justify-center">
+        {/* Title */}
+        <motion.h2
+          className="text-2xl font-bold mb-6 tracking-wider"
+          style={{ color: 'hsl(291, 88%, 68%)' }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          ✨ ОТКРЫТИЕ КОЛОДЫ ✨
+        </motion.h2>
+
+        {/* Main animation container */}
+        <div className="relative h-80 w-full overflow-hidden rounded-2xl border-2"
+          style={{
+            borderColor: 'hsl(252, 85%, 40%)',
+            background: `linear-gradient(180deg, 
+              hsl(220, 26%, 12%) 0%, 
+              hsl(295, 9%, 18%) 50%, 
+              hsl(220, 26%, 12%) 100%)`,
+            boxShadow: `0 0 40px hsl(252, 85%, 40%, 0.3), inset 0 0 60px hsl(252, 85%, 20%, 0.2)`,
+          }}
+        >
+          {/* Top indicator triangle */}
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20">
+            <motion.div
+              animate={{ y: [0, 4, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ChevronDown
+                className="w-8 h-8 drop-shadow-lg"
+                style={{ color: 'hsl(291, 88%, 68%)' }}
+              />
+            </motion.div>
           </div>
-          
+
+          {/* Bottom indicator triangle */}
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20">
+            <motion.div
+              animate={{ y: [0, -4, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ChevronUp
+                className="w-8 h-8 drop-shadow-lg"
+                style={{ color: 'hsl(291, 88%, 68%)' }}
+              />
+            </motion.div>
+          </div>
+
+          {/* Center selection glow line */}
+          <div
+            className="absolute top-0 bottom-0 left-1/2 w-[3px] z-10 transform -translate-x-[1.5px]"
+            style={{
+              background: `linear-gradient(180deg, transparent 0%, hsl(291, 88%, 68%) 30%, hsl(291, 88%, 68%) 70%, transparent 100%)`,
+              boxShadow: `0 0 12px hsl(291, 88%, 68%, 0.6), 0 0 24px hsl(291, 88%, 68%, 0.3)`,
+            }}
+          />
+
+          {/* Left gradient mask */}
+          <div
+            className="absolute top-0 bottom-0 left-0 w-32 z-10 pointer-events-none"
+            style={{
+              background: `linear-gradient(90deg, hsl(220, 26%, 12%) 0%, transparent 100%)`,
+            }}
+          />
+
+          {/* Right gradient mask */}
+          <div
+            className="absolute top-0 bottom-0 right-0 w-32 z-10 pointer-events-none"
+            style={{
+              background: `linear-gradient(270deg, hsl(220, 26%, 12%) 0%, transparent 100%)`,
+            }}
+          />
+
           {/* Cards container */}
-          <div 
+          <div
             ref={containerRef}
-            className="absolute top-1/2 transform -translate-y-1/2 h-60 flex items-center"
+            className="absolute top-1/2 transform -translate-y-1/2 h-64 flex items-center"
             style={{ left: 0, right: 0 }}
           >
             <motion.div
               className="flex gap-4"
               initial={{ x: xStart }}
-              animate={{ 
-                x: isAnimating ? [xStart, targetX - 600, targetX] : targetX
+              animate={{
+                x: isAnimating ? [xStart, targetX - 400, targetX] : targetX
               }}
               transition={{
                 duration: animationDuration,
-                ease: ['linear', 'easeOut'],
-                times: [0, 0.6, 1]
+                ease: [0.15, 0.6, 0.25, 1],
+                times: [0, 0.7, 1],
               }}
             >
-              {allCards.map((card, index) => (
-                <motion.div
-                  key={`${card.id}-${index}`}
-                  className="flex-shrink-0"
-                  animate={{
-                    scale: index === winningCardIndex && !isAnimating ? 1.1 : 1,
-                  }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <Card className={`w-32 h-52 p-2 bg-gradient-to-br ${getRarityColor(card.rarity)} border-2 ${
-                    index === winningCardIndex && !isAnimating ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-gray-400'
-                  }`}>
-                    <div className="flex flex-col h-full justify-between text-white">
-                      {/* Card Image */}
-                      <div className="w-full h-16 mb-1 overflow-hidden rounded">
-                        <img 
-                          src={resolveCardImageSync(card) ?? availableImages[card.name] ?? '/placeholder.svg'} 
-                          alt={card.name}
-                          className="w-full h-full object-cover"
-                          loading={index <= 15 ? "eager" : "lazy"} // Load first 15 cards eagerly
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder.svg';
-                          }}
-                        />
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-bold truncate">{card.name}</h3>
-                        <p className="text-xs opacity-80">{card.type === 'character' ? 'Герой' : 'Питомец'}</p>
-                        <p className="text-xs opacity-70">{card.faction}</p>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-center gap-1">
-                          {Array.from({ length: card.rarity }, (_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          ))}
+              {allCards.map((card, index) => {
+                const isWinner = index === winningCardIndex;
+                const isWinRevealed = isWinner && showWinEffect;
+
+                return (
+                  <motion.div
+                    key={`${card.id}-${index}`}
+                    className="flex-shrink-0 relative"
+                    animate={{
+                      scale: isWinRevealed ? 1.2 : (isWinner && !isAnimating ? 1.05 : (isAnimating ? 1 : 0.85)),
+                      opacity: isWinRevealed ? 1 : (isWinner && !isAnimating ? 1 : (isAnimating ? 1 : 0.4)),
+                      filter: isWinRevealed ? 'brightness(1.2)' : (isWinner && !isAnimating ? 'brightness(1)' : (isAnimating ? 'brightness(1)' : 'brightness(0.5)')),
+                    }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  >
+                    {/* Win glow behind card */}
+                    {isWinRevealed && (
+                      <motion.div
+                        className="absolute -inset-3 rounded-xl pointer-events-none z-0"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 0.8, 0.5] }}
+                        transition={{ duration: 0.8 }}
+                        style={{
+                          background: `radial-gradient(ellipse, hsl(45, 100%, 60%, 0.4) 0%, hsl(291, 88%, 68%, 0.2) 50%, transparent 70%)`,
+                          boxShadow: `0 0 30px hsl(45, 100%, 50%, 0.5), 0 0 60px hsl(291, 88%, 68%, 0.3)`,
+                        }}
+                      />
+                    )}
+
+                    {/* Particles on win */}
+                    {isWinRevealed && particles.map((p, pi) => (
+                      <WinParticle key={pi} delay={p.delay} x={p.x} y={p.y} />
+                    ))}
+
+                    <Card
+                      className={`w-36 h-56 p-2 relative z-10 transition-all duration-300 ${
+                        isWinRevealed
+                          ? 'border-2'
+                          : 'border'
+                      }`}
+                      style={{
+                        background: `linear-gradient(135deg, hsl(252, 85%, 30%) 0%, hsl(259, 32%, 25%) 100%)`,
+                        borderColor: isWinRevealed
+                          ? 'hsl(45, 100%, 60%)'
+                          : 'hsl(252, 85%, 40%, 0.5)',
+                        boxShadow: isWinRevealed
+                          ? `0 0 20px hsl(45, 100%, 50%, 0.5), 0 0 40px hsl(291, 88%, 68%, 0.3)`
+                          : `0 2px 8px hsl(0, 0%, 0%, 0.3)`,
+                      }}
+                    >
+                      <div className="flex flex-col h-full justify-between text-white">
+                        {/* Card Image */}
+                        <div className="w-full h-20 mb-1 overflow-hidden rounded-md">
+                          <img
+                            src={resolveCardImageSync(card) ?? availableImages[card.name] ?? '/placeholder.svg'}
+                            alt={card.name}
+                            className="w-full h-full object-cover"
+                            loading={index <= 15 ? "eager" : "lazy"}
+                            onError={(e) => { e.currentTarget.src = '/placeholder.svg'; }}
+                          />
                         </div>
-                        
-                        <div className="grid grid-cols-3 gap-1 text-xs">
-                          <div className="text-center">
-                            <div className="font-bold">{card.power}</div>
-                            <div className="text-red-300">Сила</div>
+
+                        <div>
+                          <h3 className="text-sm font-bold truncate">{card.name}</h3>
+                          <p className="text-xs opacity-70">
+                            {card.type === 'character' ? 'Герой' : 'Питомец'}
+                          </p>
+                          <p className="text-xs opacity-50">{card.faction}</p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-center gap-0.5">
+                            {Array.from({ length: card.rarity }, (_, i) => (
+                              <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            ))}
                           </div>
-                          <div className="text-center">
-                            <div className="font-bold">{card.defense}</div>
-                            <div className="text-blue-300">Защита</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="font-bold">{card.health}</div>
-                            <div className="text-green-300">HP</div>
+
+                          <div className="grid grid-cols-3 gap-1 text-xs">
+                            <div className="text-center">
+                              <div className="font-bold">{card.power}</div>
+                              <div style={{ color: 'hsl(0, 80%, 70%)' }}>⚔</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-bold">{card.defense}</div>
+                              <div style={{ color: 'hsl(210, 80%, 70%)' }}>🛡</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-bold">{card.health}</div>
+                              <div style={{ color: 'hsl(120, 60%, 60%)' }}>♥</div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+                    </Card>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
-          
-          {/* Glow effect for winning position */}
-          {!isAnimating && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-60 bg-yellow-400/20 rounded-lg pointer-events-none"
-            />
-          )}
+
+          {/* Win banner */}
+          <AnimatePresence>
+            {showWinEffect && (
+              <motion.div
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30"
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div
+                  className="px-6 py-2 rounded-full text-sm font-bold tracking-wider"
+                  style={{
+                    background: `linear-gradient(90deg, hsl(252, 85%, 40%, 0.8), hsl(291, 88%, 40%, 0.8))`,
+                    color: 'hsl(45, 100%, 80%)',
+                    boxShadow: `0 0 20px hsl(291, 88%, 68%, 0.4)`,
+                    border: `1px solid hsl(45, 100%, 60%, 0.5)`,
+                  }}
+                >
+                  ✨ ВАША ДОБЫЧА! ✨
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        
-        {/* Progress indicator and skip button */}
-        <div className="mt-4 text-center">
-          <div className="text-game-accent text-lg font-bold">
-            {isAnimating ? 'Открываем пак...' : 'Поздравляем!'}
-          </div>
-          {isAnimating ? (
-            <div className="space-y-3">
-              <div className="w-full bg-game-surface rounded-full h-2 mt-2">
+
+        {/* Progress & buttons */}
+        <div className="mt-6 text-center relative z-10 w-full max-w-md">
+          <motion.div
+            className="text-lg font-bold mb-3"
+            style={{ color: 'hsl(291, 88%, 68%)' }}
+            animate={showWinEffect ? { scale: [1, 1.05, 1] } : {}}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            {isAnimating ? 'Открываем пак...' : '🎉 Поздравляем!'}
+          </motion.div>
+
+          {isAnimating && (
+            <div className="space-y-4">
+              {/* Progress bar */}
+              <div
+                className="w-full rounded-full h-1.5 overflow-hidden"
+                style={{ background: 'hsl(295, 9%, 25%)' }}
+              >
                 <motion.div
-                  className="bg-gradient-to-r from-game-primary to-game-accent h-2 rounded-full"
+                  className="h-full rounded-full"
+                  style={{
+                    background: `linear-gradient(90deg, hsl(252, 85%, 76%), hsl(291, 88%, 68%))`,
+                  }}
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
                   transition={{ duration: animationDuration, ease: "linear" }}
                 />
               </div>
-              <div className="flex gap-2 justify-center">
+
+              {/* Buttons */}
+              <div className="flex gap-3 justify-center">
                 <Button
                   onClick={handleSkip}
                   variant="outline"
                   size="sm"
-                  className="bg-game-surface/50 border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-colors"
+                  className="border-game-accent text-game-accent hover:bg-game-accent hover:text-game-background transition-colors backdrop-blur-sm"
+                  style={{
+                    background: 'hsl(295, 9%, 25%, 0.5)',
+                    borderColor: 'hsl(291, 88%, 68%, 0.6)',
+                  }}
                 >
                   <SkipForward className="w-4 h-4 mr-2" />
-                  Пропустить анимацию
+                  Пропустить
                 </Button>
                 {showSkipAll && onSkipAll && (
                   <Button
                     onClick={onSkipAll}
-                    variant="default"
                     size="sm"
-                    className="bg-game-primary hover:bg-game-primary/80 text-white transition-colors"
+                    style={{
+                      background: `linear-gradient(135deg, hsl(252, 85%, 50%), hsl(291, 88%, 50%))`,
+                    }}
+                    className="text-white hover:opacity-90 transition-opacity"
                   >
                     <SkipForward className="w-4 h-4 mr-2" />
                     Пропустить все
@@ -275,7 +461,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                 )}
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
