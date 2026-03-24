@@ -50,7 +50,11 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationDuration = 5;
+  const ANIM_TOTAL = 8.0;
+  const ANIM_SPIN_PHASE = 6.5;
+  const ANIM_SLOWDOWN_PHASE = 1.5;
+  const FAST_OPEN_DURATION = 1.2;
+  const [skipped, setSkipped] = useState(false);
 
   // Local database image map
   const dbImageMap = useMemo(() => {
@@ -130,12 +134,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setShowWinEffect(true);
-      // Don't auto-complete — wait for user to click button
-    }, animationDuration * 1000);
+    }, ANIM_TOTAL * 1000);
     return () => clearTimeout(timer);
-  }, [animationDuration, isAnimating]);
+  }, [ANIM_TOTAL, isAnimating]);
 
   const handleSkip = () => {
+    setSkipped(true);
     setIsAnimating(false);
     setShowWinEffect(true);
   };
@@ -279,9 +283,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               className="flex gap-4"
               initial={{ x: xStart }}
               animate={{ x: targetX }}
-              transition={{
-                duration: animationDuration,
-                ease: [0.05, 0.35, 0.15, 1],
+              transition={skipped ? {
+                duration: FAST_OPEN_DURATION,
+                ease: "easeOut",
+              } : {
+                duration: ANIM_TOTAL,
+                ease: [0.0, 0.0, ANIM_SLOWDOWN_PHASE / ANIM_TOTAL, 1],
               }}
             >
               {allCards.map((card, index) => {
@@ -425,7 +432,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                   }}
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
-                  transition={{ duration: animationDuration, ease: "linear" }}
+                  transition={{ duration: ANIM_TOTAL, ease: "linear" }}
                 />
               </div>
 
