@@ -292,6 +292,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                 ease: ["linear", "easeOut"],
               }}
             >
+              {allCards.map((card, index) => {
                 const isWinner = index === winningCardIndex;
                 const isWinRevealed = isWinner && showWinEffect;
                 const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
