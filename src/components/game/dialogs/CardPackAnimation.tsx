@@ -50,7 +50,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationDuration = 6; // shorter duration
+  const animationDuration = 5;
 
   // Local database image map
   const dbImageMap = useMemo(() => {
@@ -281,7 +281,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               animate={{ x: targetX }}
               transition={{
                 duration: animationDuration,
-                ease: [0.12, 0.8, 0.2, 1],
+                ease: [0.05, 0.35, 0.15, 1],
               }}
             >
               {allCards.map((card, index) => {
