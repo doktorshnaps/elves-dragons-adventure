@@ -105,7 +105,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
   const dummyCards = useMemo(() => imagesReady ? generateDummyCards() : [], [imagesReady, generateDummyCards]);
 
-  const winningCardIndex = 10;
+  const winningCardIndex = 65;
   const allCards = useMemo(
     () => dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [],
     [dummyCards, winningCard]
