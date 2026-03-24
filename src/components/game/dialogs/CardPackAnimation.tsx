@@ -83,7 +83,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
     if (allCards.length === 0) return [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 80; i++) {
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       const cardRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
       const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
@@ -105,7 +105,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
   const dummyCards = useMemo(() => imagesReady ? generateDummyCards() : [], [imagesReady, generateDummyCards]);
 
-  const winningCardIndex = 10;
+  const winningCardIndex = 65;
   const allCards = useMemo(
     () => dummyCards.length > 0 ? [...dummyCards.slice(0, winningCardIndex), winningCard, ...dummyCards.slice(winningCardIndex)] : [],
     [dummyCards, winningCard]
@@ -282,14 +282,13 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
             <motion.div
               className="flex gap-4"
               initial={{ x: xStart }}
-              animate={{ x: skipped ? targetX : [xStart, targetX + (targetX - xStart) * 0.05, targetX] }}
+              animate={{ x: targetX }}
               transition={skipped ? {
                 duration: FAST_OPEN_DURATION,
                 ease: "easeOut",
               } : {
                 duration: ANIM_TOTAL,
-                times: [0, ANIM_SPIN_PHASE / ANIM_TOTAL, 1],
-                ease: ["linear", "easeOut"],
+                ease: [0.25, 1, 0.25, 1],
               }}
             >
               {allCards.map((card, index) => {
