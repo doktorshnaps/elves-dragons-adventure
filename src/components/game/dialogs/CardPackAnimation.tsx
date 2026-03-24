@@ -134,12 +134,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const timer = setTimeout(() => {
       setIsAnimating(false);
       setShowWinEffect(true);
-      // Don't auto-complete — wait for user to click button
-    }, animationDuration * 1000);
+    }, ANIM_TOTAL * 1000);
     return () => clearTimeout(timer);
-  }, [animationDuration, isAnimating]);
+  }, [ANIM_TOTAL, isAnimating]);
 
   const handleSkip = () => {
+    setSkipped(true);
     setIsAnimating(false);
     setShowWinEffect(true);
   };
