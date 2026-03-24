@@ -50,7 +50,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
   const [availableImages, setAvailableImages] = useState<{[key: string]: string}>({});
   const imagesReady = Object.keys(availableImages).length > 0;
   const containerRef = useRef<HTMLDivElement>(null);
-  const animationDuration = 6; // shorter duration
+  const animationDuration = 5;
 
   // Local database image map
   const dbImageMap = useMemo(() => {
