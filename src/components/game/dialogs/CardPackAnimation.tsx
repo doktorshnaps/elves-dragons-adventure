@@ -278,13 +278,10 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
             <motion.div
               className="flex gap-4"
               initial={{ x: xStart }}
-              animate={{
-                x: isAnimating ? [xStart, targetX - 400, targetX] : targetX
-              }}
+              animate={{ x: targetX }}
               transition={{
                 duration: animationDuration,
-                ease: [0.15, 0.6, 0.25, 1],
-                times: [0, 0.7, 1],
+                ease: [0.12, 0.8, 0.2, 1],
               }}
             >
               {allCards.map((card, index) => {
