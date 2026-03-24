@@ -83,7 +83,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
     if (allCards.length === 0) return [];
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 80; i++) {
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
       const cardRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
       const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
