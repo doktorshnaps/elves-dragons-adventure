@@ -432,7 +432,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                   }}
                   initial={{ width: '0%' }}
                   animate={{ width: '100%' }}
-                  transition={{ duration: animationDuration, ease: "linear" }}
+                  transition={{ duration: ANIM_TOTAL, ease: "linear" }}
                 />
               </div>
 
