@@ -288,7 +288,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
                 ease: "easeOut",
               } : {
                 duration: ANIM_TOTAL,
-                ease: [0.0, 0.0, ANIM_SLOWDOWN_PHASE / ANIM_TOTAL, 1],
+                ease: [0.2, 0.9, 0.1, 1],
               }}
             >
               {allCards.map((card, index) => {
