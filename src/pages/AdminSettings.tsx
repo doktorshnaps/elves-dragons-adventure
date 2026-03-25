@@ -189,6 +189,10 @@ const AdminSettingsContent = () => {
               <TabsContent value="pvp-seasons" className="space-y-4">
                 <PvPSeasonAdmin />
               </TabsContent>
+
+              <TabsContent value="exchanges" className="space-y-4">
+                <ItemExchangeAdmin />
+              </TabsContent>
             </>
           )}
 
