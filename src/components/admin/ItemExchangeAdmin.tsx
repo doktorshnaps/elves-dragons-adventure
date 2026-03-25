@@ -69,34 +69,33 @@ export const ItemExchangeAdmin = () => {
   }, []);
 
   const loadAll = async () => {
+    if (!accountId) return;
     setLoading(true);
     const [tRes, iRes, sRes] = await Promise.all([
-      supabase.from("item_exchange_templates").select("*").order("title_ru"),
+      supabase.rpc("admin_get_item_exchange_templates", { p_admin_wallet_address: accountId }),
       supabase.from("item_templates").select("id, name, rarity, type, image_url").order("id"),
-      supabase.from("item_exchange_settings").select("*").limit(1).single(),
+      supabase.rpc("admin_get_item_exchange_settings", { p_admin_wallet_address: accountId }),
     ]);
 
     if (tRes.data) setTemplates(tRes.data as unknown as ExchangeTemplate[]);
     if (iRes.data) setItemTemplates(iRes.data as ItemTemplate[]);
     if (sRes.data) {
-      const s = sRes.data as unknown as ExchangeSettings;
-      setSettings(s);
-      setSettingsForm({ min: s.min_quests_per_day, max: s.max_quests_per_day });
+      const rows = sRes.data as unknown as ExchangeSettings[];
+      if (Array.isArray(rows) && rows.length > 0) {
+        setSettings(rows[0]);
+        setSettingsForm({ min: rows[0].min_quests_per_day, max: rows[0].max_quests_per_day });
+      }
     }
     setLoading(false);
   };
 
   const saveSettings = async () => {
-    if (!settings) return;
-    const { error } = await supabase
-      .from("item_exchange_settings")
-      .update({
-        min_quests_per_day: settingsForm.min,
-        max_quests_per_day: settingsForm.max,
-        updated_at: new Date().toISOString(),
-        updated_by_wallet: accountId,
-      })
-      .eq("id", settings.id);
+    if (!accountId) return;
+    const { error } = await supabase.rpc("admin_update_item_exchange_settings", {
+      p_admin_wallet_address: accountId,
+      p_min_quests_per_day: settingsForm.min,
+      p_max_quests_per_day: settingsForm.max,
+    });
 
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
@@ -131,27 +130,23 @@ export const ItemExchangeAdmin = () => {
   };
 
   const saveTemplate = async () => {
-    const payload = {
-      title_ru: form.title_ru,
-      title_en: form.title_en,
-      description_ru: form.description_ru,
-      description_en: form.description_en,
-      icon: form.icon,
-      required_items: form.required_items.filter(i => i.template_id > 0),
-      reward_items: form.reward_items.filter(i => i.template_id > 0),
-      reward_ell: form.reward_ell,
-      weight: form.weight,
-      min_level: form.min_level,
-      is_active: form.is_active,
-      updated_at: new Date().toISOString(),
-    };
+    if (!accountId) return;
 
-    let error;
-    if (editingId) {
-      ({ error } = await supabase.from("item_exchange_templates").update(payload).eq("id", editingId));
-    } else {
-      ({ error } = await supabase.from("item_exchange_templates").insert(payload));
-    }
+    const { data, error } = await supabase.rpc("admin_upsert_item_exchange_template", {
+      p_admin_wallet_address: accountId,
+      p_id: editingId || null,
+      p_title_ru: form.title_ru,
+      p_title_en: form.title_en,
+      p_description_ru: form.description_ru,
+      p_description_en: form.description_en,
+      p_icon: form.icon,
+      p_required_items: form.required_items.filter(i => i.template_id > 0),
+      p_reward_items: form.reward_items.filter(i => i.template_id > 0),
+      p_reward_ell: form.reward_ell,
+      p_weight: form.weight,
+      p_min_level: form.min_level,
+      p_is_active: form.is_active,
+    });
 
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
@@ -163,8 +158,11 @@ export const ItemExchangeAdmin = () => {
   };
 
   const deleteTemplate = async (id: string) => {
-    if (!confirm("Удалить шаблон?")) return;
-    const { error } = await supabase.from("item_exchange_templates").delete().eq("id", id);
+    if (!accountId || !confirm("Удалить шаблон?")) return;
+    const { error } = await supabase.rpc("admin_delete_item_exchange_template", {
+      p_admin_wallet_address: accountId,
+      p_id: id,
+    });
     if (error) {
       toast({ title: "Ошибка", description: error.message, variant: "destructive" });
     } else {
