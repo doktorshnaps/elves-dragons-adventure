@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ReferralTab } from "@/components/game/ReferralTab";
 import { SocialQuests } from "@/components/game/SocialQuests";
 import { DailyQuests } from "@/components/game/DailyQuests";
+import { ItemExchangeQuests } from "@/components/game/ItemExchangeQuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { usePageMeta } from "@/hooks/usePageTitle";
