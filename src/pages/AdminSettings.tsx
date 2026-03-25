@@ -27,6 +27,7 @@ import { PlayerManagement } from "@/components/admin/PlayerManagement";
 import { GameMetrics } from "@/components/admin/GameMetrics";
 import { MgtExchangeAdmin } from "@/components/admin/MgtExchangeAdmin";
 import { PvPSeasonAdmin } from "@/components/admin/PvPSeasonAdmin";
+import { ItemExchangeAdmin } from "@/components/admin/ItemExchangeAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
