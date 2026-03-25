@@ -3222,6 +3222,10 @@ export type Database = {
         Args: { p_admin_wallet_address?: string; p_drop_id: string }
         Returns: boolean
       }
+      admin_delete_item_exchange_template: {
+        Args: { p_admin_wallet_address: string; p_id: string }
+        Returns: boolean
+      }
       admin_delete_item_template: {
         Args: { p_item_id: number }
         Returns: boolean
@@ -3257,6 +3261,35 @@ export type Database = {
           created_at: string
           user_id: string
           wallet_address: string
+        }[]
+      }
+      admin_get_item_exchange_settings: {
+        Args: { p_admin_wallet_address: string }
+        Returns: {
+          id: string
+          max_quests_per_day: number
+          min_quests_per_day: number
+          updated_at: string
+          updated_by_wallet: string
+        }[]
+      }
+      admin_get_item_exchange_templates: {
+        Args: { p_admin_wallet_address: string }
+        Returns: {
+          created_at: string
+          description_en: string
+          description_ru: string
+          icon: string
+          id: string
+          is_active: boolean
+          min_level: number
+          required_items: Json
+          reward_ell: number
+          reward_items: Json
+          title_en: string
+          title_ru: string
+          updated_at: string
+          weight: number
         }[]
       }
       admin_get_mgt_exchange_requests: {
@@ -3748,6 +3781,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_update_item_exchange_settings: {
+        Args: {
+          p_admin_wallet_address: string
+          p_max_quests_per_day: number
+          p_min_quests_per_day: number
+        }
+        Returns: boolean
+      }
       admin_update_item_template:
         | {
             Args: {
@@ -3838,6 +3879,24 @@ export type Database = {
           p_refresh_interval_hours: number
         }
         Returns: boolean
+      }
+      admin_upsert_item_exchange_template: {
+        Args: {
+          p_admin_wallet_address: string
+          p_description_en: string
+          p_description_ru: string
+          p_icon: string
+          p_id: string
+          p_is_active: boolean
+          p_min_level: number
+          p_required_items: Json
+          p_reward_ell: number
+          p_reward_items: Json
+          p_title_en: string
+          p_title_ru: string
+          p_weight: number
+        }
+        Returns: string
       }
       admin_upsert_quest: {
         Args: {
