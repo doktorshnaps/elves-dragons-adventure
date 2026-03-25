@@ -57,7 +57,7 @@ export const ItemExchangeQuests = () => {
     const [exRes, itemRes, ownedRes] = await Promise.all([
       supabase.rpc("get_user_item_exchanges", { p_wallet_address: accountId }),
       supabase.from("item_templates").select("id, name, rarity, image_url"),
-      supabase.from("item_instances").select("template_id"),
+      supabase.rpc("get_item_instances_by_wallet", { p_wallet_address: accountId }),
     ]);
 
     if (exRes.data) setExchanges(exRes.data as unknown as ItemExchange[]);
