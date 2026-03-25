@@ -1424,6 +1424,81 @@ export type Database = {
         }
         Relationships: []
       }
+      item_exchange_settings: {
+        Row: {
+          id: string
+          max_quests_per_day: number
+          min_quests_per_day: number
+          updated_at: string
+          updated_by_wallet: string | null
+        }
+        Insert: {
+          id?: string
+          max_quests_per_day?: number
+          min_quests_per_day?: number
+          updated_at?: string
+          updated_by_wallet?: string | null
+        }
+        Update: {
+          id?: string
+          max_quests_per_day?: number
+          min_quests_per_day?: number
+          updated_at?: string
+          updated_by_wallet?: string | null
+        }
+        Relationships: []
+      }
+      item_exchange_templates: {
+        Row: {
+          created_at: string
+          description_en: string
+          description_ru: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          min_level: number
+          required_items: Json
+          reward_ell: number
+          reward_items: Json
+          title_en: string
+          title_ru: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string
+          description_ru?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          min_level?: number
+          required_items?: Json
+          reward_ell?: number
+          reward_items?: Json
+          title_en: string
+          title_ru: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          description_en?: string
+          description_ru?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          min_level?: number
+          required_items?: Json
+          reward_ell?: number
+          reward_items?: Json
+          title_en?: string
+          title_ru?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       item_instances: {
         Row: {
           created_at: string
@@ -2711,6 +2786,47 @@ export type Database = {
             columns: ["quest_template_id"]
             isOneToOne: false
             referencedRelation: "daily_quest_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_item_exchanges: {
+        Row: {
+          assigned_date: string
+          created_at: string
+          id: string
+          is_claimed: boolean
+          is_completed: boolean
+          template_id: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          assigned_date?: string
+          created_at?: string
+          id?: string
+          is_claimed?: boolean
+          is_completed?: boolean
+          template_id: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          assigned_date?: string
+          created_at?: string
+          id?: string
+          is_claimed?: boolean
+          is_completed?: boolean
+          template_id?: string
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_item_exchanges_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "item_exchange_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -4458,6 +4574,24 @@ export type Database = {
           title_ru: string
         }[]
       }
+      get_user_item_exchanges: {
+        Args: { p_wallet_address: string }
+        Returns: {
+          assigned_date: string
+          description_en: string
+          description_ru: string
+          exchange_id: string
+          icon: string
+          is_claimed: boolean
+          is_completed: boolean
+          required_items: Json
+          reward_ell: number
+          reward_items: Json
+          template_id: string
+          title_en: string
+          title_ru: string
+        }[]
+      }
       get_user_quest_progress: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -4692,6 +4826,10 @@ export type Database = {
       }
       stop_repair_without_recovery_v2: {
         Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
+      submit_item_exchange: {
+        Args: { p_exchange_id: string; p_wallet_address: string }
         Returns: Json
       }
       submit_mgt_exchange_request: {

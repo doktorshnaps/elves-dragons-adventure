@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ReferralTab } from "@/components/game/ReferralTab";
 import { SocialQuests } from "@/components/game/SocialQuests";
 import { DailyQuests } from "@/components/game/DailyQuests";
+import { ItemExchangeQuests } from "@/components/game/ItemExchangeQuests";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { usePageMeta } from "@/hooks/usePageTitle";
@@ -42,12 +43,18 @@ export const QuestPage = () => {
         <h1 className="text-2xl text-white mb-6">{t(language, 'quest.title')}</h1>
         
         <Tabs defaultValue="daily" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className="grid w-full grid-cols-4 bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl" style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             <TabsTrigger 
               value="daily" 
               className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
             >
               {language === 'ru' ? 'Задания' : 'Quests'}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="exchanges" 
+              className="text-white data-[state=active]:bg-white/20 data-[state=active]:text-white rounded-3xl"
+            >
+              {language === 'ru' ? 'Заказы' : 'Orders'}
             </TabsTrigger>
             <TabsTrigger 
               value="social" 
@@ -65,6 +72,10 @@ export const QuestPage = () => {
           
           <TabsContent value="daily" className="mt-6">
             <DailyQuests />
+          </TabsContent>
+
+          <TabsContent value="exchanges" className="mt-6">
+            <ItemExchangeQuests />
           </TabsContent>
           
           <TabsContent value="social" className="mt-6">

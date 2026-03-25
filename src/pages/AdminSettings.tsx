@@ -27,6 +27,7 @@ import { PlayerManagement } from "@/components/admin/PlayerManagement";
 import { GameMetrics } from "@/components/admin/GameMetrics";
 import { MgtExchangeAdmin } from "@/components/admin/MgtExchangeAdmin";
 import { PvPSeasonAdmin } from "@/components/admin/PvPSeasonAdmin";
+import { ItemExchangeAdmin } from "@/components/admin/ItemExchangeAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
@@ -96,7 +97,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "metrics" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-16' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-17' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="metrics" className="text-white data-[state=active]:bg-white/20 rounded-3xl">📊 Метрики</TabsTrigger>
@@ -115,6 +116,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="players" className="text-white data-[state=active]:bg-white/20 rounded-3xl">Игроки</TabsTrigger>
                 <TabsTrigger value="mgt-exchange" className="text-white data-[state=active]:bg-white/20 rounded-3xl">💰 mGT</TabsTrigger>
                 <TabsTrigger value="pvp-seasons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">⚔️ PvP Сезоны</TabsTrigger>
+                <TabsTrigger value="exchanges" className="text-white data-[state=active]:bg-white/20 rounded-3xl">🔄 Обмен</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
@@ -186,6 +188,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="pvp-seasons" className="space-y-4">
                 <PvPSeasonAdmin />
+              </TabsContent>
+
+              <TabsContent value="exchanges" className="space-y-4">
+                <ItemExchangeAdmin />
               </TabsContent>
             </>
           )}
