@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameData } from "@/hooks/useGameData";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Gift, CheckCircle2, ArrowRight, Package } from "lucide-react";
+import { Gift, CheckCircle2, ArrowRight, Package, Clock } from "lucide-react";
 
 interface ItemExchange {
   exchange_id: string;
@@ -45,6 +45,28 @@ export const ItemExchangeQuests = () => {
   const [ownedCounts, setOwnedCounts] = useState<OwnedCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState("");
+
+  // Timer until 00:00 MSK (UTC+3)
+  useEffect(() => {
+    const calcTimeLeft = () => {
+      const now = new Date();
+      // Next midnight MSK = next midnight UTC+3
+      const mskOffset = 3 * 60 * 60 * 1000;
+      const nowMsk = new Date(now.getTime() + mskOffset);
+      const tomorrowMsk = new Date(nowMsk);
+      tomorrowMsk.setUTCHours(0, 0, 0, 0);
+      tomorrowMsk.setUTCDate(tomorrowMsk.getUTCDate() + 1);
+      const diff = tomorrowMsk.getTime() - nowMsk.getTime();
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    };
+    setTimeLeft(calcTimeLeft());
+    const interval = setInterval(() => setTimeLeft(calcTimeLeft()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (accountId) loadData();
@@ -161,11 +183,17 @@ export const ItemExchangeQuests = () => {
   return (
     <div className="space-y-4">
       <div className="p-6 bg-transparent backdrop-blur-sm rounded-2xl border-2 border-black">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
           <Package className="w-5 h-5 text-black" />
           <h2 className="text-xl font-bold text-black">
             {language === "ru" ? "Ежедневные заказы" : "Daily Orders"}
           </h2>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-black/70">
+            <Clock className="w-4 h-4" />
+            <span>{language === "ru" ? "Обновление:" : "Reset:"} {timeLeft}</span>
+          </div>
         </div>
 
         {exchanges.length === 0 ? (
