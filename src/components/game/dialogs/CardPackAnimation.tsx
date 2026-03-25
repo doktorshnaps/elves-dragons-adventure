@@ -420,21 +420,6 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               >
                 Открываем пак...
               </motion.div>
-              {/* Progress bar */}
-              <div
-                className="w-full rounded-full h-1.5 overflow-hidden"
-                style={{ background: 'hsl(295, 9%, 25%)' }}
-              >
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{
-                    background: `linear-gradient(90deg, hsl(252, 85%, 76%), hsl(291, 88%, 68%))`,
-                  }}
-                  initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: ANIM_TOTAL, ease: "linear" }}
-                />
-              </div>
 
               {/* Skip buttons */}
               <div className="flex gap-3 justify-center">
