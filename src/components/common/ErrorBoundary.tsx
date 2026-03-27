@@ -54,11 +54,11 @@ export class ErrorBoundary extends Component<Props, State> {
                 <Button 
                   variant="outline"
                   onClick={() => {
-                    // Очищаем состояние боя через Zustand
                     clearBattleFromZustand();
+                    this.setState({ hasError: false });
                   }}
                 >
-                  Сбросить бой
+                  Сбросить состояние
                 </Button>
                 <Button 
                   onClick={() => window.location.reload()}

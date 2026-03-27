@@ -124,7 +124,8 @@ export const useBuildingUpgrades = () => {
       if (needsUpdate) {
         setActiveUpgrades(updated);
         syncToCache(updated);
-        gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
+        gameState.actions.batchUpdate({ activeBuildingUpgrades: updated })
+          .catch(err => console.error('❌ [useBuildingUpgrades] Failed to sync upgrade status (interval):', err));
       }
     }, 1000);
 
