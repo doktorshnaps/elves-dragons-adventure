@@ -212,7 +212,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
         </motion.h2>
 
         {/* Main animation container */}
-        <div className="relative h-80 w-full overflow-hidden rounded-2xl border-2"
+        <div className="relative h-56 sm:h-80 w-full overflow-hidden rounded-2xl border-2"
           style={{
             borderColor: 'hsl(252, 85%, 40%)',
             background: `linear-gradient(180deg, 
