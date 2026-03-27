@@ -167,7 +167,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden py-4">
       {/* Animated gradient background */}
       <motion.div
         className="absolute inset-0"
