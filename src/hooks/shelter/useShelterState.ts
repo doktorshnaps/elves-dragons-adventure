@@ -715,21 +715,25 @@ export const useShelterState = () => {
         console.log(`✅ Completing ${completedCrafts.length} crafting tasks`);
         
         for (const craft of completedCrafts) {
-          const resultTemplate = getTemplate(String(craft.resultItemId));
-          if (resultTemplate) {
-            await addItemsToInstances(
-              Array(craft.resultQuantity || 1).fill({
-                template_id: craft.resultItemId,
-                item_id: resultTemplate.item_id,
-                name: resultTemplate.name,
-                type: resultTemplate.type
-              })
-            );
-            
-            toast({
-              title: t(language, 'shelter.craftingCompleted') || 'Крафт завершен',
-              description: `${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
-            });
+          try {
+            const resultTemplate = getTemplate(String(craft.resultItemId));
+            if (resultTemplate) {
+              await addItemsToInstances(
+                Array(craft.resultQuantity || 1).fill({
+                  template_id: craft.resultItemId,
+                  item_id: resultTemplate.item_id,
+                  name: resultTemplate.name,
+                  type: resultTemplate.type
+                })
+              );
+              
+              toast({
+                title: t(language, 'shelter.craftingCompleted') || 'Крафт завершен',
+                description: `${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
+              });
+            }
+          } catch (err) {
+            console.error('❌ [useShelterState] Failed to complete craft:', err);
           }
         }
         
