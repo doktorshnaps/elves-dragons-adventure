@@ -268,6 +268,7 @@ console.log('📦 [InventoryDisplay] allInventoryItems created:', {
         totalCards={totalCards}
         skipAnimations={skipAnimations}
         onSkipAll={skipAllAnimations}
+        allCards={cardQueue}
       />
       
       <CardPackQuantityModal
