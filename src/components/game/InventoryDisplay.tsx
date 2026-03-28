@@ -60,7 +60,8 @@ export const InventoryDisplay = ({
     selectedPackItem,
     handleQuantityConfirm,
     skipAnimations,
-    skipAllAnimations
+    skipAllAnimations,
+    cardQueue
   } = useInventoryLogic([]);  // inventory больше не используется
 
   // Elleonor Box opening hook
@@ -267,6 +268,7 @@ console.log('📦 [InventoryDisplay] allInventoryItems created:', {
         totalCards={totalCards}
         skipAnimations={skipAnimations}
         onSkipAll={skipAllAnimations}
+        allCards={cardQueue}
       />
       
       <CardPackQuantityModal
