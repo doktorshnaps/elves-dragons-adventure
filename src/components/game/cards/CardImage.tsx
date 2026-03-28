@@ -28,7 +28,7 @@ export const CardImage = ({
         width={240} 
         height={320} 
         priority={false} 
-        progressive={true} 
+        progressive={false} 
         className="w-full h-full object-cover border-none" 
       />
     </div>;

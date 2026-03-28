@@ -1,16 +1,26 @@
 // Image optimization utilities
 import { preloadImage } from './performance';
 
-// WebP detection and fallback
+// WebP detection and fallback — cached globally
+let webPResult: boolean | null = null;
+
+// Eagerly detect WebP on module load
+const _webPDetect = new Promise<boolean>((resolve) => {
+  const webP = new Image();
+  webP.onload = webP.onerror = () => {
+    webPResult = webP.height === 2;
+    resolve(webPResult);
+  };
+  webP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+});
+
 export const supportsWebP = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const webP = new Image();
-    webP.onload = webP.onerror = () => {
-      resolve(webP.height === 2);
-    };
-    webP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
-  });
+  if (webPResult !== null) return Promise.resolve(webPResult);
+  return _webPDetect;
 };
+
+/** Synchronous access — returns cached result or false if not yet resolved */
+export const getWebPSupport = (): boolean => webPResult ?? false;
 
 // Smart image format selection
 export const getOptimalImageSrc = (baseSrc: string, isWebPSupported: boolean): string => {

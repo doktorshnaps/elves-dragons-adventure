@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { 
-  supportsWebP, 
+  getWebPSupport, 
   getOptimalImageSrc, 
   getResponsiveImageSrc, 
   progressiveImageLoader 
@@ -37,41 +37,37 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [currentSrc, setCurrentSrc] = useState(placeholder || src);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [webPSupported, setWebPSupported] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Check WebP support
+  // Use cached WebP result synchronously
+  const webPSupported = getWebPSupport();
+
+  // Progressive loading — only when lowQualitySrc is actually provided
   useEffect(() => {
-    supportsWebP().then(setWebPSupported);
-  }, []);
-
-// Progressive loading
-useEffect(() => {
-  if (!progressive || !lowQualitySrc) {
-    // Если прогрессивная загрузка не используется или не задан lowQualitySrc,
-    // сразу показываем основное изображение
-    setCurrentSrc(src);
-    setIsLoaded(false);
-    setHasError(false);
-    return;
-  }
-
-  const loadProgressive = async () => {
-    try {
-      const result = await progressiveImageLoader.loadProgressive(
-        placeholder || src,
-        lowQualitySrc,
-        src
-      );
-      setCurrentSrc(result.current);
-      setIsLoaded(result.isLoaded);
-    } catch (error) {
-      setHasError(true);
-      console.warn('Progressive image loading failed:', error);
+    if (!progressive || !lowQualitySrc) {
+      setCurrentSrc(src);
+      setIsLoaded(false);
+      setHasError(false);
+      return;
     }
-  };
 
-  loadProgressive();
-}, [src, lowQualitySrc, placeholder, progressive]);
+    const loadProgressive = async () => {
+      try {
+        const result = await progressiveImageLoader.loadProgressive(
+          placeholder || src,
+          lowQualitySrc,
+          src
+        );
+        setCurrentSrc(result.current);
+        setIsLoaded(result.isLoaded);
+      } catch (error) {
+        setHasError(true);
+        console.warn('Progressive image loading failed:', error);
+      }
+    };
+
+    loadProgressive();
+  }, [src, lowQualitySrc, placeholder, progressive]);
 
   // Get optimal src
   const optimizedSrc = React.useMemo(() => {
@@ -79,12 +75,10 @@ useEffect(() => {
     
     let targetSrc = currentSrc;
     
-    // Apply WebP optimization
     if (webPSupported) {
       targetSrc = getOptimalImageSrc(targetSrc, true);
     }
     
-    // Apply responsive sizing
     if (responsive && width) {
       targetSrc = getResponsiveImageSrc(targetSrc, width);
     }
@@ -92,24 +86,32 @@ useEffect(() => {
     return targetSrc;
   }, [currentSrc, webPSupported, responsive, width, hasError, placeholder, src]);
 
-  const handleLoad = () => {
+  // Check if image is already cached on mount
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setIsLoaded(true);
+    }
+  }, [optimizedSrc]);
+
+  const handleLoad = useCallback(() => {
     setIsLoaded(true);
     setHasError(false);
-  };
+  }, []);
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     setHasError(true);
     if (placeholder && currentSrc !== placeholder) {
       setCurrentSrc(placeholder);
     }
-    // Call external onError callback if provided
     if (onErrorCallback) {
       onErrorCallback();
     }
-  };
+  }, [placeholder, currentSrc, onErrorCallback]);
 
   return (
     <img
+      ref={imgRef}
       src={optimizedSrc}
       alt={alt}
       width={width}
@@ -119,8 +121,8 @@ useEffect(() => {
       onLoad={handleLoad}
       onError={handleError}
       className={cn(
-        'transition-opacity duration-300',
         {
+          'transition-opacity duration-150': !isLoaded && !hasError,
           'opacity-0': !isLoaded && !hasError,
           'opacity-100': isLoaded || hasError,
         },
