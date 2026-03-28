@@ -173,6 +173,7 @@ const groupItems = (items: Item[]): GroupedItem[] => {
     selectedPackItem,
     handleQuantityConfirm,
     skipAnimations,
-    skipAllAnimations
+    skipAllAnimations,
+    cardQueue
   };
 };

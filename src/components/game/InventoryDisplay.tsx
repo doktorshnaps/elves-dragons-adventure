@@ -60,7 +60,8 @@ export const InventoryDisplay = ({
     selectedPackItem,
     handleQuantityConfirm,
     skipAnimations,
-    skipAllAnimations
+    skipAllAnimations,
+    cardQueue
   } = useInventoryLogic([]);  // inventory больше не используется
 
   // Elleonor Box opening hook
