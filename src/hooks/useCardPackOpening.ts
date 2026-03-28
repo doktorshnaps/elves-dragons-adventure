@@ -141,6 +141,7 @@ export const useCardPackOpening = () => {
     currentCardIndex,
     totalCards: cardQueue.length,
     skipAnimations,
-    skipAllAnimations
+    skipAllAnimations,
+    cardQueue
   };
 };

@@ -27,7 +27,8 @@ export const useInventoryLogic = (initialInventory: Item[]) => {
     currentCardIndex,
     totalCards,
     skipAnimations,
-    skipAllAnimations
+    skipAllAnimations,
+    cardQueue
   } = useCardPackOpening();
   const balance = gameData.balance;
   const mgtBalance = gameData.mgtBalance || 0;
