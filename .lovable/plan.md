@@ -1,51 +1,51 @@
 
 
-# Fix: Crash when entering shelter after building upgrade completes
+# Fix: Slow card image loading in Hero/Dragon deck dialogs
 
 ## Problem
-When a player starts a building upgrade, leaves the shelter, and returns after the upgrade timer expires, the app crashes with the generic ErrorBoundary ("Что-то пошло не так" / "Сбросить бой"). The error boundary text mentions "battle reset" even though the issue is in the shelter — confusing for users.
+When opening "Колода героев" or "Колода драконов", card images appear to load slowly — they fade in one by one with visible delay.
 
-## Root Cause Analysis
-Two issues identified:
+## Root Cause
+The `OptimizedImage` component has two performance bottlenecks:
 
-1. **Unhandled errors in `useBuildingUpgrades.ts`**: When the shelter loads with a completed upgrade, the `useEffect` (lines 75-95) detects `status !== 'ready'`, updates state, and calls `gameState.actions.batchUpdate()` **without `.catch()`**. If `batchUpdate` throws (e.g., wallet not yet connected, mutation in bad state), the unhandled rejection can cascade into a render crash. The same issue exists in the interval `useEffect` (lines 98-131).
+1. **WebP check on every mount**: Each card image calls `supportsWebP()` which creates a new `Image()` object and returns a Promise. With 20+ cards in a grid, that's 20+ unnecessary async operations on dialog open.
 
-2. **Crafting completion `useEffect` in `useShelterState.ts`** (lines 707-752): Similarly calls `addItemsToInstances` and `batchUpdate` without error handling, which can crash on mount.
+2. **Opacity animation masking instant loads**: Every image starts at `opacity-0` and transitions to `opacity-100` over 300ms after `onLoad`. Even when images are already cached by the browser, the fade-in animation makes them *appear* slow. Cards load sequentially in visual perception even though they may load near-instantly.
 
-3. **ErrorBoundary shows "Сбросить бой"** (reset battle) for all errors, even non-battle ones.
+3. **`progressive={true}` passed but unused**: CardImage passes `progressive={true}` but no `lowQualitySrc`, so the progressive code path just sets state redundantly without benefit.
 
 ## Plan
 
-### 1. Add error handling to `useBuildingUpgrades.ts`
-- Wrap `batchUpdate` calls in both `useEffect` blocks with `.catch()` to prevent unhandled rejections
-- Add defensive null checks before calling `gameState.actions.batchUpdate`
+### 1. Cache WebP support globally (one-time check)
+In `src/utils/imageOptimization.ts`: cache the result of `supportsWebP()` in a module-level variable so it resolves once and all subsequent calls return instantly.
 
-### 2. Add error handling to crafting completion in `useShelterState.ts`
-- Wrap `addItemsToInstances` calls in try-catch
-- Ensure the entire `checkCraftingCompletion` function has error handling
+### 2. Simplify OptimizedImage for cached images
+In `src/components/ui/optimized-image.tsx`:
+- Use the cached WebP result synchronously instead of `useEffect` + `useState`
+- Remove the `opacity-0 → opacity-100` transition for images that are in browser cache (detected via `img.complete` on mount)
+- Reduce `duration-300` to `duration-150` for images that do need the transition
 
-### 3. Update ErrorBoundary to be context-aware
-- Change "Сбросить бой" to "Перезагрузить страницу" or make the button text generic
-- Keep the battle reset functionality but with generic label since users see this in non-battle contexts
-
-### 4. Add defensive rendering in Shelter page
-- Wrap `ShelterUpgrades` rendering in error boundary or add null checks for critical data
+### 3. Remove unnecessary `progressive={true}` from CardImage
+In `src/components/game/cards/CardImage.tsx`: remove `progressive={true}` since no `lowQualitySrc` is provided — the progressive code path adds overhead without benefit.
 
 ## Technical Details
 
-**`src/hooks/useBuildingUpgrades.ts`** — lines 90-94 and 123-127:
+**`imageOptimization.ts`** — add cached WebP:
 ```ts
-// Before:
-gameState.actions.batchUpdate({ activeBuildingUpgrades: updated });
-
-// After:
-gameState.actions.batchUpdate({ activeBuildingUpgrades: updated })
-  .catch(err => console.error('Failed to sync upgrade status:', err));
+let webPResult: boolean | null = null;
+export const supportsWebP = async (): Promise<boolean> => {
+  if (webPResult !== null) return webPResult;
+  // ... existing check, then cache
+  webPResult = result;
+  return result;
+};
+export const getWebPSupport = () => webPResult; // sync access
 ```
 
-**`src/hooks/shelter/useShelterState.ts`** — lines 717-733:
-Wrap `addItemsToInstances` in try-catch inside the crafting completion loop.
+**`optimized-image.tsx`** — key changes:
+- Replace WebP `useEffect` with sync cached value
+- Start with `opacity-100` if image src matches browser cache (no fade needed)
+- Shorter transition duration
 
-**`src/components/common/ErrorBoundary.tsx`** — line 61:
-Change "Сбросить бой" to "Сбросить состояние" and make the description more generic.
+**`CardImage.tsx`** — remove `progressive={true}` prop
 
