@@ -2,7 +2,7 @@ import { Card as CardType } from '@/types/cards';
 import { getRarityBorderStyle, getRarityStyle, getCardRarityByName } from '@/utils/rarityColors';
 import { resolveCardImageSync } from '@/utils/cardImageResolver';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Swords, Plus, X } from 'lucide-react';
+import { Swords, Plus, X, Shield, Heart } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { translateCardName } from '@/utils/cardTranslations';
 import { calculateCardStats } from '@/utils/cardUtils';
