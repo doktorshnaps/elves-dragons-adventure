@@ -41,6 +41,15 @@ export const TeamSlotCard = ({
     return calculateCardStats(card.name, card.rarity, card.type);
   }, [pair]);
 
+  const dragonStats = useMemo(() => {
+    if (!pair?.dragon) return null;
+    const card = pair.dragon;
+    if (card.power !== undefined && card.defense !== undefined && card.health !== undefined) {
+      return { power: card.power, defense: card.defense, health: card.health, magic: card.magic ?? 0 };
+    }
+    return calculateCardStats(card.name, card.rarity, card.type);
+  }, [pair]);
+
   if (!pair) {
     // Empty slot
     return (
