@@ -2,7 +2,7 @@ import { Card as CardType } from '@/types/cards';
 import { getRarityBorderStyle, getRarityStyle, getCardRarityByName } from '@/utils/rarityColors';
 import { resolveCardImageSync } from '@/utils/cardImageResolver';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { Swords, Plus, X } from 'lucide-react';
+import { Swords, Plus, X, Shield, Heart } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { translateCardName } from '@/utils/cardTranslations';
 import { calculateCardStats } from '@/utils/cardUtils';
@@ -97,7 +97,7 @@ export const TeamSlotCard = ({
         />
         
         {/* Bottom gradient overlay for text */}
-        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
       </div>
 
       {/* Remove button */}
@@ -114,7 +114,7 @@ export const TeamSlotCard = ({
       )}
 
       {/* Dragon badge - bottom right corner */}
-      <div className="absolute bottom-12 right-1.5 z-10">
+      <div className="absolute bottom-[72px] sm:bottom-[80px] right-1.5 z-10">
         {dragon ? (
           <button
             type="button"
@@ -122,16 +122,16 @@ export const TeamSlotCard = ({
               e.stopPropagation();
               onDragonClick?.(index);
             }}
-            className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/60 
-              hover:border-white hover:scale-110 transition-all duration-200 shadow-lg shadow-black/50"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden border-2 border-white/60 
+              hover:border-white hover:scale-105 transition-all duration-200 shadow-lg shadow-black/50"
             title={dragon.name}
           >
             <OptimizedImage
               src={dragonImageUrl!}
               alt={dragon.name}
               placeholder="/placeholder.svg"
-              width={32}
-              height={32}
+              width={96}
+              height={96}
               priority={false}
               progressive={false}
               className="w-full h-full object-cover"
@@ -144,28 +144,40 @@ export const TeamSlotCard = ({
               e.stopPropagation();
               onDragonClick?.(index);
             }}
-            className="w-7 h-7 rounded-full border-2 border-dashed border-white/30 
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-white/30 
               flex items-center justify-center bg-black/40 
-              hover:border-white/60 hover:scale-110 transition-all duration-200"
+              hover:border-white/60 hover:scale-105 transition-all duration-200"
             title="Назначить дракона"
           >
-            <Plus className="w-3 h-3 text-white/50" />
+            <Plus className="w-6 h-6 text-white/50" />
           </button>
         )}
       </div>
 
-      {/* Hero name + power at bottom */}
-      <div
-        className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pointer-events-none"
-      >
+      {/* Hero name + stats at bottom */}
+      <div className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pointer-events-none">
         <div className="text-white font-bold text-[11px] sm:text-xs leading-tight truncate drop-shadow-lg">
           {translateCardName(language, hero.name)}
         </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Swords className="w-3 h-3 text-amber-400 flex-shrink-0" />
-          <span className="text-amber-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
-            {combatPower}
-          </span>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <div className="flex items-center gap-0.5">
+            <Swords className="w-3 h-3 text-amber-400 flex-shrink-0" />
+            <span className="text-amber-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {combatPower}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Shield className="w-3 h-3 text-sky-400 flex-shrink-0" />
+            <span className="text-sky-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {hero.currentDefense !== undefined ? `${hero.currentDefense}/${heroStats?.defense ?? 0}` : heroStats?.defense ?? 0}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Heart className="w-3 h-3 text-red-400 flex-shrink-0" />
+            <span className="text-red-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {hero.currentHealth !== undefined ? `${hero.currentHealth}/${heroStats?.health ?? 0}` : heroStats?.health ?? 0}
+            </span>
+          </div>
         </div>
       </div>
     </div>
