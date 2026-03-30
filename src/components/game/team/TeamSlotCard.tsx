@@ -154,18 +154,30 @@ export const TeamSlotCard = ({
         )}
       </div>
 
-      {/* Hero name + power at bottom */}
-      <div
-        className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pointer-events-none"
-      >
+      {/* Hero name + stats at bottom */}
+      <div className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pointer-events-none">
         <div className="text-white font-bold text-[11px] sm:text-xs leading-tight truncate drop-shadow-lg">
           {translateCardName(language, hero.name)}
         </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <Swords className="w-3 h-3 text-amber-400 flex-shrink-0" />
-          <span className="text-amber-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
-            {combatPower}
-          </span>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <div className="flex items-center gap-0.5">
+            <Swords className="w-3 h-3 text-amber-400 flex-shrink-0" />
+            <span className="text-amber-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {combatPower}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Shield className="w-3 h-3 text-sky-400 flex-shrink-0" />
+            <span className="text-sky-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {hero.currentDefense !== undefined ? `${hero.currentDefense}/${heroStats?.defense ?? 0}` : heroStats?.defense ?? 0}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Heart className="w-3 h-3 text-red-400 flex-shrink-0" />
+            <span className="text-red-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
+              {hero.currentHealth !== undefined ? `${hero.currentHealth}/${heroStats?.health ?? 0}` : heroStats?.health ?? 0}
+            </span>
+          </div>
         </div>
       </div>
     </div>
