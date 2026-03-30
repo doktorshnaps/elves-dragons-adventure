@@ -1,51 +1,65 @@
 
 
-# Fix: Slow card image loading in Hero/Dragon deck dialogs
+## Redesign: Team Selection Panel inspired by RPG Party View
 
-## Problem
-When opening "Колода героев" or "Колода драконов", card images appear to load slowly — they fade in one by one with visible delay.
+### What the reference image shows
+The uploaded screenshot shows a classic RPG team lobby: 5 character portraits displayed **side by side horizontally** with large character art, player names below, and a combat power stat. Clean, visually prominent character art is the focus, with minimal UI clutter.
 
-## Root Cause
-The `OptimizedImage` component has two performance bottlenecks:
+### Current state
+The `/team` page displays selected pairs in a grid of 5 slots, each containing small `CardDisplay` components (~90-140px wide) showing hero + dragon side by side with full stat blocks, health bars, rarity labels, faction info, etc. It's functional but information-dense and visually cluttered compared to the reference.
 
-1. **WebP check on every mount**: Each card image calls `supportsWebP()` which creates a new `Image()` object and returns a Promise. With 20+ cards in a grid, that's 20+ unnecessary async operations on dialog open.
+### Proposed redesign: "Party Lineup" view for the selected team section
 
-2. **Opacity animation masking instant loads**: Every image starts at `opacity-0` and transitions to `opacity-100` over 300ms after `onLoad`. Even when images are already cached by the browser, the fade-in animation makes them *appear* slow. Cards load sequentially in visual perception even though they may load near-instantly.
+Restyle the **"Выбранная команда" section** (lines 262-326 of `DeckSelection.tsx`) to resemble the reference while keeping our dark fantasy aesthetic:
 
-3. **`progressive={true}` passed but unused**: CardImage passes `progressive={true}` but no `lowQualitySrc`, so the progressive code path just sets state redundantly without benefit.
+1. **Horizontal hero lineup** -- Display 5 slots in a single horizontal row (already `lg:grid-cols-5`), but make each slot a **portrait-focused card**:
+   - Large character image taking ~70% of the card height
+   - Hero name prominently below the portrait
+   - Compact power indicator (single combined stat icon + number, like the reference's crossed-swords + value)
+   - Dragon shown as a **small badge/overlay** in the corner of the hero portrait (not a separate equal-sized card)
 
-## Plan
+2. **Slot design**:
+   - Empty slots: a translucent silhouette placeholder with "+" icon (instead of current dashed border box)
+   - Filled slots: character art fills the card, with a subtle gradient overlay at the bottom for the name/stats
+   - Rarity border glow preserved (existing `rarityBorder` system)
 
-### 1. Cache WebP support globally (one-time check)
-In `src/utils/imageOptimization.ts`: cache the result of `supportsWebP()` in a module-level variable so it resolves once and all subsequent calls return instantly.
+3. **Dragon indicator** (replaces current side-by-side layout):
+   - Small circular dragon avatar (~24-32px) positioned at bottom-right of the hero card
+   - If no dragon assigned, show a small "+" circle there
+   - Clicking the dragon badge opens the dragon deck dialog (existing flow)
 
-### 2. Simplify OptimizedImage for cached images
-In `src/components/ui/optimized-image.tsx`:
-- Use the cached WebP result synchronously instead of `useEffect` + `useState`
-- Remove the `opacity-0 → opacity-100` transition for images that are in browser cache (detected via `img.complete` on mount)
-- Reduce `duration-300` to `duration-150` for images that do need the transition
+4. **Stat display simplification**:
+   - Show only **one combined power number** (sum of power + magic, or just power) under the name
+   - Full stats remain visible on tap/click via the existing `CardPreviewModal`
 
-### 3. Remove unnecessary `progressive={true}` from CardImage
-In `src/components/game/cards/CardImage.tsx`: remove `progressive={true}` since no `lowQualitySrc` is provided — the progressive code path adds overhead without benefit.
+### Files to modify
 
-## Technical Details
+| File | Changes |
+|------|---------|
+| `src/components/game/team/DeckSelection.tsx` | Restyle the "Selected Pairs Display" section (lines 262-326). Replace the current grid-cols-2 hero/dragon layout per slot with a portrait-focused card. Dragon becomes a corner badge overlay. |
+| `src/components/game/cards/CardImage.tsx` | May need a variant prop for larger portrait display |
+| Possibly new: `src/components/game/team/TeamSlotCard.tsx` | Extract the new slot design into its own component for cleanliness |
 
-**`imageOptimization.ts`** — add cached WebP:
-```ts
-let webPResult: boolean | null = null;
-export const supportsWebP = async (): Promise<boolean> => {
-  if (webPResult !== null) return webPResult;
-  // ... existing check, then cache
-  webPResult = result;
-  return result;
-};
-export const getWebPSupport = () => webPResult; // sync access
+### What stays the same
+- All selection logic, pair management, dragon assignment flow
+- Deck dialogs (hero picker, dragon picker)
+- CardPreviewModal on click
+- Team stats section below
+- Dark fantasy color scheme, rarity borders, shimmer effects
+
+### Visual layout sketch
+
+```text
+┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│         │ │         │ │         │ │         │ │         │
+│  Hero   │ │  Hero   │ │  Hero   │ │   +     │ │   +     │
+│  Art    │ │  Art    │ │  Art    │ │  Empty  │ │  Empty  │
+│         │ │      🐉 │ │      🐉 │ │  Slot   │ │  Slot   │
+│─────────│ │─────────│ │─────────│ │         │ │         │
+│ Name    │ │ Name    │ │ Name    │ │         │ │         │
+│ ⚔ 1250  │ │ ⚔ 980   │ │ ⚔ 1100  │ │         │ │         │
+└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
 ```
 
-**`optimized-image.tsx`** — key changes:
-- Replace WebP `useEffect` with sync cached value
-- Start with `opacity-100` if image src matches browser cache (no fade needed)
-- Shorter transition duration
-
-**`CardImage.tsx`** — remove `progressive={true}` prop
+The dragon badge (🐉) is a small circular overlay; clicking it opens dragon selection. Clicking the hero opens preview. A small "X" or swipe gesture removes the pair.
 
