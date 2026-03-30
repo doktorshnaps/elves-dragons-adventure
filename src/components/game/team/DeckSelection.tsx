@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
+import { TeamSlotCard } from "./TeamSlotCard";
 import { NFTTransferModal } from "./NFTTransferModal";
 import { useToast } from "@/hooks/use-toast";
 import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
