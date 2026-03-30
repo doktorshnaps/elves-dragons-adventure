@@ -41,6 +41,15 @@ export const TeamSlotCard = ({
     return calculateCardStats(card.name, card.rarity, card.type);
   }, [pair]);
 
+  const dragonStats = useMemo(() => {
+    if (!pair?.dragon) return null;
+    const card = pair.dragon;
+    if (card.power !== undefined && card.defense !== undefined && card.health !== undefined) {
+      return { power: card.power, defense: card.defense, health: card.health, magic: card.magic ?? 0 };
+    }
+    return calculateCardStats(card.name, card.rarity, card.type);
+  }, [pair]);
+
   if (!pair) {
     // Empty slot
     return (
@@ -155,11 +164,12 @@ export const TeamSlotCard = ({
       </div>
 
       {/* Hero name + stats at bottom */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-2 pb-2 pointer-events-none">
+      <div className="absolute inset-x-0 bottom-0 z-10 px-2 pb-1.5 pointer-events-none">
         <div className="text-white font-bold text-[11px] sm:text-xs leading-tight truncate drop-shadow-lg">
           {translateCardName(language, hero.name)}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+        {/* Hero stats row */}
+        <div className="flex items-center gap-2 mt-0.5">
           <div className="flex items-center gap-0.5">
             <Swords className="w-3 h-3 text-amber-400 flex-shrink-0" />
             <span className="text-amber-400 font-semibold text-[10px] sm:text-[11px] drop-shadow-lg">
@@ -179,6 +189,30 @@ export const TeamSlotCard = ({
             </span>
           </div>
         </div>
+        {/* Dragon stats row (only if dragon assigned) */}
+        {dragon && dragonStats && (
+          <div className="flex items-center gap-2 mt-0.5 opacity-80">
+            <div className="flex items-center gap-0.5">
+              <span className="text-[9px] text-white/60">🐉</span>
+              <Swords className="w-2.5 h-2.5 text-amber-300 flex-shrink-0" />
+              <span className="text-amber-300 font-semibold text-[9px] sm:text-[10px] drop-shadow-lg">
+                {dragonStats.power + (dragonStats.magic ?? 0)}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Shield className="w-2.5 h-2.5 text-sky-300 flex-shrink-0" />
+              <span className="text-sky-300 font-semibold text-[9px] sm:text-[10px] drop-shadow-lg">
+                {dragon.currentDefense !== undefined ? `${dragon.currentDefense}/${dragonStats.defense}` : dragonStats.defense}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <Heart className="w-2.5 h-2.5 text-red-300 flex-shrink-0" />
+              <span className="text-red-300 font-semibold text-[9px] sm:text-[10px] drop-shadow-lg">
+                {dragon.currentHealth !== undefined ? `${dragon.currentHealth}/${dragonStats.health}` : dragonStats.health}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
