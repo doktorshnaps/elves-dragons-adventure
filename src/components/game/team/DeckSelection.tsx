@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CardDisplay } from "../CardDisplay";
 import { CardPreviewModal } from "../cards/CardPreviewModal";
+import { TeamSlotCard } from "./TeamSlotCard";
 import { NFTTransferModal } from "./NFTTransferModal";
 import { useToast } from "@/hooks/use-toast";
 import { useCardInstancesContext } from "@/providers/CardInstancesProvider";
@@ -259,69 +260,48 @@ export const DeckSelection = ({
     });
   }, [selectedPairs, localCards]);
   return <div className="h-full flex flex-col space-y-3">
-      {/* Selected Pairs Display */}
+      {/* Selected Pairs Display - RPG Party Lineup */}
       <section className="bg-black/50 backdrop-blur-sm p-2 sm:p-4 rounded-3xl border-2 border-white flex-shrink-0" style={{
       boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
     }} aria-label="Выбранная команда">
         <h1 className="text-sm sm:text-lg font-bold text-white mb-2 sm:mb-4">
           Выбранная команда ({syncedSelectedPairs.length}/5)
         </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
-          {Array.from({
-          length: 5
-        }, (_, index) => {
-          const pair = syncedSelectedPairs[index];
-          return <div key={index} className="relative overflow-hidden border-2 border-white rounded-3xl p-2 sm:p-3 min-h-[160px] sm:min-h-[200px] bg-black/40 hover:border-white/80 transition-all duration-300">
-                {pair ? <div className="space-y-2">
-                    <div className="text-xs sm:text-sm text-white font-medium">Пара {index + 1}</div>
-                    <div className="grid grid-cols-2 gap-2 items-start justify-items-center">
-                      <div className="space-y-1">
-                        <div className="text-xs text-white/80 font-medium">Герой</div>
-                        <CardDisplay card={pair.hero} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
-                    e.stopPropagation();
-                    setPreviewCard(pair.hero);
-                    setPreviewAction(null);
-                    setPreviewDeleteAction({
-                      label: 'Удалить героя из команды',
-                      action: () => onPairRemove(index)
-                    });
-                  }} />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-xs text-white/80 font-medium">Дракон</div>
-                        {pair.dragon ? <CardDisplay card={pair.dragon} showSellButton={false} className="w-[60px] h-[120px] sm:w-[80px] sm:h-[160px] md:w-[90px] md:h-[180px] lg:w-[100px] lg:h-[200px]" onClick={e => {
-                    e.stopPropagation();
-                    setPreviewCard(pair.dragon!);
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
+          {Array.from({ length: 5 }, (_, index) => {
+            const pair = syncedSelectedPairs[index];
+            return (
+              <TeamSlotCard
+                key={index}
+                pair={pair}
+                index={index}
+                onHeroClick={(hero) => {
+                  setPreviewCard(hero);
+                  setPreviewAction(null);
+                  setPreviewDeleteAction({
+                    label: 'Удалить героя из команды',
+                    action: () => onPairRemove(index),
+                  });
+                }}
+                onDragonClick={(i) => {
+                  if (pair?.dragon) {
+                    setPreviewCard(pair.dragon);
                     setPreviewAction(null);
                     setPreviewDeleteAction({
                       label: 'Удалить дракона из команды',
-                      action: () => onPairRemoveDragon(index)
+                      action: () => onPairRemoveDragon(i),
                     });
-                  }} /> : <button type="button" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActivePairIndex(index);
+                  } else {
+                    setActivePairIndex(i);
                     setShowDragonDeck(true);
-                  }} className="w-8 h-10 sm:w-12 sm:h-14 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center text-xs text-white/70 hover:text-white hover:border-white transition-all duration-300" style={{ touchAction: 'manipulation' }}>
-                            Выбрать дракона
-                          </button>}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => onPairRemove(index)} className="w-full text-xs border-white text-white hover:bg-white hover:text-black">
-                      Удалить
-                    </Button>
-                  </div> : <button type="button" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowHeroDeck(true);
-                  }} className="h-full w-full flex items-center justify-center text-white/40 text-xs sm:text-sm hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl cursor-pointer border-2 border-dashed border-white/20 hover:border-white/50" style={{ touchAction: 'manipulation' }}>
-                    <div className="flex flex-col items-center gap-2">
-                      <span>Пустой слот</span>
-                      <span className="text-[10px] text-white/60">Нажмите для выбора героя</span>
-                    </div>
-                  </button>}
-              </div>;
-        })}
+                  }
+                }}
+                onRemove={(i) => onPairRemove(i)}
+                onRemoveDragon={(i) => onPairRemoveDragon(i)}
+                onEmptyClick={() => setShowHeroDeck(true)}
+              />
+            );
+          })}
         </div>
       </section>
 
