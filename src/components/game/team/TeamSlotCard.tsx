@@ -114,7 +114,7 @@ export const TeamSlotCard = ({
       )}
 
       {/* Dragon badge - bottom right corner */}
-      <div className="absolute bottom-12 right-1.5 z-10">
+      <div className="absolute bottom-[72px] sm:bottom-[80px] right-1.5 z-10">
         {dragon ? (
           <button
             type="button"
@@ -122,16 +122,16 @@ export const TeamSlotCard = ({
               e.stopPropagation();
               onDragonClick?.(index);
             }}
-            className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/60 
-              hover:border-white hover:scale-110 transition-all duration-200 shadow-lg shadow-black/50"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden border-2 border-white/60 
+              hover:border-white hover:scale-105 transition-all duration-200 shadow-lg shadow-black/50"
             title={dragon.name}
           >
             <OptimizedImage
               src={dragonImageUrl!}
               alt={dragon.name}
               placeholder="/placeholder.svg"
-              width={32}
-              height={32}
+              width={96}
+              height={96}
               priority={false}
               progressive={false}
               className="w-full h-full object-cover"
@@ -144,12 +144,12 @@ export const TeamSlotCard = ({
               e.stopPropagation();
               onDragonClick?.(index);
             }}
-            className="w-7 h-7 rounded-full border-2 border-dashed border-white/30 
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-white/30 
               flex items-center justify-center bg-black/40 
-              hover:border-white/60 hover:scale-110 transition-all duration-200"
+              hover:border-white/60 hover:scale-105 transition-all duration-200"
             title="Назначить дракона"
           >
-            <Plus className="w-3 h-3 text-white/50" />
+            <Plus className="w-6 h-6 text-white/50" />
           </button>
         )}
       </div>
