@@ -97,7 +97,7 @@ export const TeamSlotCard = ({
         />
         
         {/* Bottom gradient overlay for text */}
-        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent" />
       </div>
 
       {/* Remove button */}
