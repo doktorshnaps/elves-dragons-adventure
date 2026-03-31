@@ -77,7 +77,7 @@ export const TeamSlotCard = ({
   const rarityBorder = getRarityBorderStyle(displayRarity);
   const heroImageUrl = resolveCardImageSync(hero) || hero.image || '/placeholder.svg';
   const dragonImageUrl = dragon ? (resolveCardImageSync(dragon) || dragon.image || '/placeholder.svg') : null;
-  const combatPower = heroStats ? heroStats.power + (heroStats.magic ?? 0) : 0;
+  const combatPower = heroStats ? heroStats.power : 0;
 
   return (
     <div
@@ -196,7 +196,7 @@ export const TeamSlotCard = ({
               <span className="text-[9px] text-white/60">🐉</span>
               <Swords className="w-2.5 h-2.5 text-amber-300 flex-shrink-0" />
               <span className="text-amber-300 font-semibold text-[9px] sm:text-[10px] drop-shadow-lg">
-                {dragonStats.power + (dragonStats.magic ?? 0)}
+                {dragonStats.power}
               </span>
             </div>
             <div className="flex items-center gap-0.5">
