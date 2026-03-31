@@ -357,7 +357,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
 
                         <div className="space-y-1">
                           <div className="flex items-center justify-center gap-0.5">
-                            {Array.from({ length: displayRarity }, (_, i) => (
+                            {Array.from({ length: card.rarity || 1 }, (_, i) => (
                               <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                             ))}
                           </div>
