@@ -83,11 +83,12 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
     if (allCards.length === 0) return [];
 
-    // Use all cards for the roulette pool (all classes can appear), but force rarity to 1
+    // Use all cards for the roulette pool (all classes can appear)
+    // Visual rarity from name for colors/borders/stats, but stars show 1
     for (let i = 0; i < 80; i++) {
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-      const cardRarity = 1 as CardType['rarity'];
-      const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
+      const visualRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
+      const stats = calculateCardStats(randomCard.name, visualRarity, randomCard.type);
       dummyCards.push({
         id: `dummy-${i}`,
         name: randomCard.name,
@@ -96,7 +97,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
         defense: stats.defense,
         health: stats.health,
         magic: stats.magic,
-        rarity: cardRarity,
+        rarity: 1 as CardType['rarity'],
         faction: (randomCard.faction || 'Каледор') as any,
         image: availableImages[randomCard.name],
       });
