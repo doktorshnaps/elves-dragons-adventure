@@ -295,7 +295,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               {allCards.map((card, index) => {
                 const isWinner = index === winningCardIndex;
                 const isWinRevealed = isWinner && showWinEffect;
-                const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+                const displayRarity = card.rarity;
                 const rarityStyle = getRarityStyle(displayRarity);
 
                 return (

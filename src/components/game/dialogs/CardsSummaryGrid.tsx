@@ -37,7 +37,7 @@ export const CardsSummaryGrid = ({ cards, onClose }: CardsSummaryGridProps) => {
         {/* Cards grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 w-full mb-6">
           {cards.map((card, index) => {
-            const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+            const displayRarity = card.rarity;
             const rarityStyle = getRarityStyle(displayRarity);
 
             return (
