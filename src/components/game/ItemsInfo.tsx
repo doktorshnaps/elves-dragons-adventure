@@ -172,7 +172,7 @@ const ItemCard = ({ item }: { item: ItemTemplate }) => {
             <img 
               src={src}
               alt={translateItemName(language, item.name)}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
             />
           ) : null;
