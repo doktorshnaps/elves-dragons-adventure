@@ -83,16 +83,10 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
     if (allCards.length === 0) return [];
 
-    // Only use 1-star (rarity 1) cards for the roulette, matching actual pack drops
-    const oneStarCards = allCards.filter((c: any) => {
-      const r = getCardRarityByName(c.name, c.type);
-      return r === 1;
-    });
-    const pool = oneStarCards.length > 0 ? oneStarCards : allCards;
-
+    // Use all cards for the roulette pool (all classes can appear), but force rarity to 1
     for (let i = 0; i < 80; i++) {
-      const randomCard = pool[Math.floor(Math.random() * pool.length)];
-      const cardRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
+      const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+      const cardRarity = 1 as CardType['rarity'];
       const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
       dummyCards.push({
         id: `dummy-${i}`,
@@ -301,7 +295,7 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
               {allCards.map((card, index) => {
                 const isWinner = index === winningCardIndex;
                 const isWinRevealed = isWinner && showWinEffect;
-                const displayRarity = getCardRarityByName(card.name, card.type, card.rarity);
+                const displayRarity = card.rarity;
                 const rarityStyle = getRarityStyle(displayRarity);
 
                 return (
