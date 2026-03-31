@@ -83,8 +83,15 @@ export const CardPackAnimation = ({ winningCard, onAnimationComplete, onSkipAll,
     const allCards = cardDatabase.filter((c: any) => c?.name && c?.image && availableImages[c.name]);
     if (allCards.length === 0) return [];
 
+    // Only use 1-star (rarity 1) cards for the roulette, matching actual pack drops
+    const oneStarCards = allCards.filter((c: any) => {
+      const r = getCardRarityByName(c.name, c.type);
+      return r === 1;
+    });
+    const pool = oneStarCards.length > 0 ? oneStarCards : allCards;
+
     for (let i = 0; i < 80; i++) {
-      const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+      const randomCard = pool[Math.floor(Math.random() * pool.length)];
       const cardRarity = getCardRarityByName(randomCard.name, randomCard.type) as CardType['rarity'];
       const stats = calculateCardStats(randomCard.name, cardRarity, randomCard.type);
       dummyCards.push({
