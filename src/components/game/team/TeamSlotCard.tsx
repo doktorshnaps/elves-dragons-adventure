@@ -77,7 +77,7 @@ export const TeamSlotCard = ({
   const rarityBorder = getRarityBorderStyle(displayRarity);
   const heroImageUrl = resolveCardImageSync(hero) || hero.image || '/placeholder.svg';
   const dragonImageUrl = dragon ? (resolveCardImageSync(dragon) || dragon.image || '/placeholder.svg') : null;
-  const combatPower = heroStats ? heroStats.power + (heroStats.magic ?? 0) : 0;
+  const combatPower = heroStats ? heroStats.power : 0;
 
   return (
     <div
