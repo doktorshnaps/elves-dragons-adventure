@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Star, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { resolveCardImageSync } from "@/utils/cardImageResolver";
-import { getRarityStyle, getRarityBorderStyle, getCardRarityByName } from "@/utils/rarityColors";
+import { getRarityStyle, getRarityBorderStyle } from "@/utils/rarityColors";
 
 interface CardsSummaryGridProps {
   cards: CardType[];
