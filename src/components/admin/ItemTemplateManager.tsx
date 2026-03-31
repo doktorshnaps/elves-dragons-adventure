@@ -135,33 +135,18 @@ export const ItemTemplateManager = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token || undefined;
-
       const formData = new FormData();
       formData.append('image', file);
       formData.append('filePath', filePath);
       formData.append('walletAddress', accountId);
 
-      const functionsUrl = "https://oimhwdymghkwxznjarkv.functions.supabase.co/upload-item-image";
-      const headers: Record<string, string> = {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k',
-      };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const resp = await fetch(functionsUrl, {
-        method: 'POST',
-        headers,
+      const { data, error } = await supabase.functions.invoke('upload-item-image', {
         body: formData,
       });
 
-      if (!resp.ok) {
-        const err = await resp.text();
-        throw new Error(err || 'Upload failed');
-      }
+      if (error) throw error;
 
-      const json = await resp.json();
-      const { url } = json;
-      return url;
+      return data?.url || null;
     } catch (error) {
       console.error('Error uploading image:', error);
       return null;

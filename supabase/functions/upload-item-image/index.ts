@@ -2,33 +2,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
-
-// Rate limiting function
-async function checkRateLimit(supabaseClient: any, clientIp: string, endpoint: string): Promise<void> {
-  const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
-  
-  const { count, error: countError } = await supabaseClient
-    .from('api_rate_limits')
-    .select('*', { count: 'exact', head: true })
-    .eq('ip_address', clientIp)
-    .eq('endpoint', endpoint)
-    .gte('created_at', oneMinuteAgo);
-  
-  if (countError) {
-    console.error('Rate limit check error:', countError);
-    return;
-  }
-  
-  if (count && count >= 3) {
-    throw new Error('Rate limit exceeded: maximum 3 uploads per minute');
-  }
-  
-  await supabaseClient
-    .from('api_rate_limits')
-    .insert({ ip_address: clientIp, endpoint: endpoint });
-}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -42,42 +17,27 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Require JWT and resolve wallet server-side
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const formData = await req.formData();
+    const image = formData.get('image') as File;
+    const filePath = formData.get('filePath') as string;
+    const walletAddress = formData.get('walletAddress') as string;
+
+    if (!image || !filePath || !walletAddress) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Missing required fields: image, filePath, walletAddress' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: authData, error: authError } = await userClient.auth.getUser();
-    if (authError || !authData?.user) {
+    // Validate wallet address format
+    if (walletAddress.length > 64 || !/^[a-zA-Z0-9._-]+$/.test(walletAddress)) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Invalid wallet address format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { data: profile } = await supabaseServiceClient
-      .from('profiles')
-      .select('wallet_address')
-      .eq('user_id', authData.user.id)
-      .single();
-
-    const walletAddress = profile?.wallet_address;
-    if (!walletAddress) {
-      return new Response(
-        JSON.stringify({ error: 'No wallet linked to this account' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check super admin using server-resolved wallet
+    // Check super admin using wallet address
     const { data: isSuperAdmin, error: adminCheckError } = await supabaseServiceClient
       .rpc('is_super_admin_wallet', { p_wallet_address: walletAddress });
 
@@ -91,26 +51,27 @@ Deno.serve(async (req) => {
     // Rate limit check
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                      req.headers.get('x-real-ip') || 'unknown';
-    try {
-      await checkRateLimit(supabaseServiceClient, clientIp, 'upload-item-image');
-    } catch (rateLimitError) {
+    
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const { count } = await supabaseServiceClient
+      .from('api_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip_address', clientIp)
+      .eq('endpoint', 'upload-item-image')
+      .gte('created_at', oneMinuteAgo);
+
+    if (count && count >= 3) {
       return new Response(
-        JSON.stringify({ error: (rateLimitError as Error).message, retryAfter: 60 }),
+        JSON.stringify({ error: 'Rate limit exceeded: maximum 3 uploads per minute', retryAfter: 60 }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' } }
       );
     }
 
-    const formData = await req.formData();
-    const image = formData.get('image') as File;
-    const filePath = formData.get('filePath') as string;
+    await supabaseServiceClient
+      .from('api_rate_limits')
+      .insert({ ip_address: clientIp, endpoint: 'upload-item-image' });
 
-    if (!image || !filePath) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: image, filePath' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+    // Upload image
     const imageBuffer = await image.arrayBuffer();
     const { data: uploadData, error: uploadError } = await supabaseServiceClient
       .storage
@@ -121,6 +82,7 @@ Deno.serve(async (req) => {
       });
 
     if (uploadError) {
+      console.error('Upload error:', uploadError);
       return new Response(
         JSON.stringify({ error: 'Upload failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
