@@ -2,25 +2,27 @@
 
 ## Problem
 
-`displayRarity` (derived from `getCardRarityByName`) is used for **both** color styling **and** star count. Since "Ветеран" maps to rarity 3, it shows 3 stars. Since "Этернал" maps to 7, it shows 7 stars. But all pack cards should show **1 star** (their actual `card.rarity`).
+The "Перезагрузить" button in `ErrorBoundary` calls `window.location.reload()`, which destroys all Zustand in-memory state — including `teamBattleState` (active battle). Since battle state is intentionally stored only in memory (not localStorage), a full page reload wipes it permanently.
+
+The "Сбросить состояние" button also explicitly clears battle state before resetting the error.
+
+**User's flow**: Start battle → go to menu → enter shelter → error → click "Перезагрузить" → page reloads → battle state gone.
 
 ## Solution
 
-Separate the two concerns:
-- **Visual rarity** (`displayRarity` from `getCardRarityByName`) → used for border colors, glow, shimmer
-- **Star count** (`card.rarity`) → used for the star icons, always 1 for pack drops
+Change `ErrorBoundary.tsx` so that:
 
-### File 1: `src/components/game/dialogs/CardPackAnimation.tsx` (line 360)
-Change star rendering from `displayRarity` to `card.rarity`:
-```tsx
-{Array.from({ length: card.rarity || 1 }, (_, i) => (
-```
+1. **"Перезагрузить"** → just resets the error boundary state (`hasError: false`) **without** clearing battle or reloading the page. This lets the user recover from the error and return to their battle.
 
-### File 2: `src/components/game/dialogs/CardsSummaryGrid.tsx` (line 75)
-Same change:
-```tsx
-{Array.from({ length: card.rarity || 1 }, (_, i) => (
-```
+2. **"Сбросить состояние"** → keeps its current behavior (clears battle state + resets error) as the "nuclear" option.
 
-No other changes needed. Colors stay class-based via `getCardRarityByName`, stars use the actual `rarity` field.
+3. Rename buttons for clarity:
+   - "Перезагрузить" → "Попробовать снова" (Try again — soft reset, preserves battle)
+   - "Сбросить состояние" stays as-is (hard reset)
+
+### File: `src/components/common/ErrorBoundary.tsx`
+
+Replace the two buttons section:
+- "Перезагрузить" button: change from `window.location.reload()` to `this.setState({ hasError: false })` and rename to "Попробовать снова"
+- "Сбросить состояние" button: no change in behavior, keeps clearing battle + resetting error
 
