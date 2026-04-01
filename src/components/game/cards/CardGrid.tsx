@@ -36,7 +36,7 @@ export const CardGrid = ({ type }: CardGridProps) => {
 
   return (
     <>
-      <div className={`grid ${gridCols} gap-2 justify-items-center`}>
+      <div className={`grid ${gridCols} gap-4 justify-items-center p-2`}>
         {cards.map((card, index) => (
           <Card 
             key={index}
