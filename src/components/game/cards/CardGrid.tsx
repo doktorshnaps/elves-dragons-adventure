@@ -7,6 +7,7 @@ import { translateCardName, translateFaction, translateCardDescription } from "@
 import { CardRarityModal } from "./CardRarityModal";
 import { CardInfo } from "@/data/cards/types";
 import { calculateCardStats } from "@/utils/cardUtils";
+import { getCardRarityByName, getRarityBorderStyle } from "@/utils/rarityColors";
 import { useState } from "react";
 
 interface CardGridProps {
@@ -41,7 +42,9 @@ export const CardGrid = ({ type }: CardGridProps) => {
             key={index}
             variant="menu"
             className="p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105"
-            style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
+            style={{
+              ...getRarityBorderStyle(getCardRarityByName(card.name, card.type)),
+            }}
             onClick={() => handleCardClick(card)}
           >
             {card.image && (
