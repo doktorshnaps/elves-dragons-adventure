@@ -40,8 +40,7 @@ export const CardGrid = ({ type }: CardGridProps) => {
         {cards.map((card, index) => (
           <Card 
             key={index}
-            variant="menu"
-            className="p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105"
+            className="rounded-3xl bg-black/50 text-white backdrop-blur-sm p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105"
             style={{
               ...getRarityBorderStyle(getCardRarityByName(card.name, card.type)),
             }}
