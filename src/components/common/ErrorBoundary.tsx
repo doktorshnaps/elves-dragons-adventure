@@ -61,10 +61,10 @@ export class ErrorBoundary extends Component<Props, State> {
                   Сбросить состояние
                 </Button>
                 <Button 
-                  onClick={() => window.location.reload()}
+                  onClick={() => this.setState({ hasError: false })}
                   className="bg-game-primary hover:bg-game-primary/80"
                 >
-                  Перезагрузить
+                  Попробовать снова
                 </Button>
               </div>
             </div>
