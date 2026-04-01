@@ -7,6 +7,7 @@ import { translateCardName, translateFaction, translateCardDescription } from "@
 import { CardRarityModal } from "./CardRarityModal";
 import { CardInfo } from "@/data/cards/types";
 import { calculateCardStats } from "@/utils/cardUtils";
+import { getCardRarityByName, getRarityBorderStyle } from "@/utils/rarityColors";
 import { useState } from "react";
 
 interface CardGridProps {
