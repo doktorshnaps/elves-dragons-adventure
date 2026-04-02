@@ -4,6 +4,7 @@ import { Rarity } from "@/types/cards";
 import { calculateCardStats } from "@/utils/cardUtils";
 import { resolveCardImage } from "@/utils/cardImageResolver";
 import { Card } from "@/types/cards";
+import { getRarityBorderStyle, getRarityStyle } from "@/utils/rarityColors";
 import { useLanguage } from "@/hooks/useLanguage";
 import { translateCardName, translateFaction } from "@/utils/cardTranslations";
 import { Sparkles } from "lucide-react";
