@@ -7,7 +7,7 @@ import { translateCardName, translateFaction, translateCardDescription } from "@
 import { CardRarityModal } from "./CardRarityModal";
 import { CardInfo } from "@/data/cards/types";
 import { calculateCardStats } from "@/utils/cardUtils";
-import { getCardRarityByName, getRarityBorderStyle } from "@/utils/rarityColors";
+import { getCardRarityByName, getRarityBorderStyle, getRarityStyle } from "@/utils/rarityColors";
 import { useState } from "react";
 
 interface CardGridProps {
@@ -37,12 +37,15 @@ export const CardGrid = ({ type }: CardGridProps) => {
   return (
     <>
       <div className={`grid ${gridCols} gap-4 justify-items-center p-2`}>
-        {cards.map((card, index) => (
+        {cards.map((card, index) => {
+          const displayRarity = getCardRarityByName(card.name, card.type);
+          const rarityStyle = getRarityStyle(displayRarity);
+          return (
           <Card 
             key={index}
-            className="rounded-3xl bg-black/50 text-white backdrop-blur-sm p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105"
+            className={`rounded-3xl bg-black/50 text-white backdrop-blur-sm p-2 transition-all duration-300 h-full cursor-pointer hover:scale-105 relative overflow-hidden ${rarityStyle.shimmer ? 'rarity-shimmer' : ''} ${displayRarity >= 9 ? 'rarity-diamond' : ''}`}
             style={{
-              ...getRarityBorderStyle(getCardRarityByName(card.name, card.type)),
+              ...getRarityBorderStyle(displayRarity),
             }}
             onClick={() => handleCardClick(card)}
           >
@@ -84,7 +87,8 @@ export const CardGrid = ({ type }: CardGridProps) => {
               })()}
             </div>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <CardRarityModal
