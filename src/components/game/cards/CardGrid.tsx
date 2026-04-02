@@ -87,7 +87,8 @@ export const CardGrid = ({ type }: CardGridProps) => {
               })()}
             </div>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       <CardRarityModal
