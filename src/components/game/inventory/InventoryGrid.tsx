@@ -114,11 +114,11 @@ export const InventoryGrid = ({
                 className="p-4 transition-all duration-300 flex flex-col cursor-pointer hover:scale-105"
                 style={{ boxShadow: '0 15px 10px rgba(0, 0, 0, 0.6)' }}
               >
-                <div className="w-full h-32 sm:h-40 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-black/40 to-black/20 border border-white/10 relative">
+                <div className="w-full mb-2 rounded-lg overflow-hidden flex items-center justify-center relative">
                   <img
                     src={resolveGroupImage(item)}
                     alt={item.name}
-                    className="w-full h-full object-contain"
+                    className="w-full h-auto object-contain rounded-lg"
                     loading="lazy"
                   />
                   {isQuestItem(item.items[0]?.template_id) && (
