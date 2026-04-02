@@ -1,28 +1,43 @@
 
+План исправления
 
-## Problem
+1. Найти причину расхождения с экраном колод
+- В `src/components/game/cards/CardGrid.tsx` сейчас применяются только цвет рамки и glow через `getRarityBorderStyle(...)`.
+- Анимация переливания не подключается вообще: в отличие от `CardDisplay.tsx` и `TeamSlotCard.tsx`, здесь не используется `getRarityStyle(...)` и не добавляются классы `rarity-shimmer` / `rarity-diamond`.
 
-The "Перезагрузить" button in `ErrorBoundary` calls `window.location.reload()`, which destroys all Zustand in-memory state — including `teamBattleState` (active battle). Since battle state is intentionally stored only in memory (not localStorage), a full page reload wipes it permanently.
+2. Привести карточки Гримуара к той же логике, что и в колодах
+- Для каждой карточки в `CardGrid.tsx` вычислять:
+  - `displayRarity = getCardRarityByName(card.name, card.type)`
+  - `rarityStyle = getRarityStyle(displayRarity)`
+- В `className` карточки добавить те же условные классы, что уже работают в колодах:
+  - `rarity-shimmer` для старших классов с `shimmer: true`
+  - `rarity-diamond` дополнительно для ранга 9
+- Добавить базовые классы контейнеру карточки, нужные для псевдоэлемента:
+  - `relative`
+  - `overflow-hidden`
+  - сохранить текущий `rounded-*`, hover и визуальную рамку
 
-The "Сбросить состояние" button also explicitly clears battle state before resetting the error.
+3. Проверить, не мешают ли базовые стили компонента `Card`
+- Если стандартный вариант `Card` визуально отличается от колод и ослабляет эффект, выровнять стили так, чтобы поведение совпадало с рабочими карточками на странице колод.
+- Цель: не просто цвет, а тот же заметный анимированный блик поверх карточки.
 
-**User's flow**: Start battle → go to menu → enter shelter → error → click "Перезагрузить" → page reloads → battle state gone.
+4. При необходимости дотянуть консистентность модалки редкости
+- В `CardRarityModal.tsx` сейчас карточки редкостей всё ещё белые и без rarity-оформления.
+- Если нужно единое поведение во всём Гримуаре, применить ту же rarity-стилизацию и туда, чтобы старшие классы внутри модалки тоже переливались.
 
-## Solution
+Технические детали
+- Рабочий эталон уже есть:
+  - `src/components/game/CardDisplay.tsx`
+  - `src/components/game/team/TeamSlotCard.tsx`
+- CSS-анимация уже существует:
+  - `src/index.css`
+  - классы `.rarity-shimmer` и `.rarity-diamond`
+- Главная проблема не в цветах и не в `box-shadow`, а в том, что `CardGrid.tsx` не подключает shimmer-классы вообще.
 
-Change `ErrorBoundary.tsx` so that:
-
-1. **"Перезагрузить"** → just resets the error boundary state (`hasError: false`) **without** clearing battle or reloading the page. This lets the user recover from the error and return to their battle.
-
-2. **"Сбросить состояние"** → keeps its current behavior (clears battle state + resets error) as the "nuclear" option.
-
-3. Rename buttons for clarity:
-   - "Перезагрузить" → "Попробовать снова" (Try again — soft reset, preserves battle)
-   - "Сбросить состояние" stays as-is (hard reset)
-
-### File: `src/components/common/ErrorBoundary.tsx`
-
-Replace the two buttons section:
-- "Перезагрузить" button: change from `window.location.reload()` to `this.setState({ hasError: false })` and rename to "Попробовать снова"
-- "Сбросить состояние" button: no change in behavior, keeps clearing battle + resetting error
-
+Проверка после внедрения
+- Открыть `/grimoire`
+- Проверить героев и драконов рангов 7–9:
+  - есть свечение рамки
+  - есть движущийся блик/переливание
+  - для ранга 9 видно diamond-вариант переливания
+- Сравнить визуально с карточками на странице колод, чтобы эффект был одинаково заметен.
