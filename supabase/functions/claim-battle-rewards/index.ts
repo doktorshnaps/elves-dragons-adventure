@@ -488,7 +488,7 @@ Deno.serve(async (req) => {
     const { ell_reward, experience_reward, items } = await calculateRewards(
       supabase,
       claimBody.dungeon_type,
-      claimBody.level,
+      effectiveLevel,
       dungeonNumber,
       claimBody.killed_monsters
     );
