@@ -407,10 +407,11 @@ Deno.serve(async (req) => {
     }
 
     // Cross-validate claimed level against session level
-    if (claimBody.level !== session.level) {
-      console.error('❌ Level mismatch:', {
-        expected: session.level,
-        received: claimBody.level
+    // ✅ Разрешаем claimed level <= session level (race condition при быстром нажатии)
+    if (claimBody.level > session.level) {
+      console.error('❌ Level mismatch (claimed > session):', {
+        session_level: session.level,
+        claimed_level: claimBody.level
       });
       
       await supabase.from('security_audit_log').insert({
@@ -420,8 +421,12 @@ Deno.serve(async (req) => {
         details: { expected: session.level, received: claimBody.level }
       }).then(null, () => {});
       
-      return json({ error: 'Level mismatch' }, 403);
+      return json({ error: `Level mismatch: claimed ${claimBody.level} but session has ${session.level}` }, 403);
     }
+    
+    // Используем уровень из сессии как более надёжный источник
+    const effectiveLevel = session.level;
+    console.log('📊 Level check passed:', { claimed: claimBody.level, session: session.level, effective: effectiveLevel });
 
     console.log('✅ Session validated:', {
       wallet: wallet_address.substring(0, 10),
