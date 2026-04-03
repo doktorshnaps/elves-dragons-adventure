@@ -331,7 +331,7 @@ export const useDungeonRewards = () => {
             description: result.message || "Не удалось начислить награды",
             variant: "destructive"
           });
-          return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
+          return { success: false, error: result.message || 'Не удалось начислить награды', rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
         }
         
         console.log('✅ Награды успешно начислены:', result.data);
