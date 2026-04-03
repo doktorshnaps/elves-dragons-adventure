@@ -351,11 +351,13 @@ export const useDungeonRewards = () => {
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
         
-        // Инвалидируем кеши для обновления UI
+        // Инвалидируем кеши для обновления UI (включая квесты)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
+          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['dailyQuests', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['userDailyQuests'] }),
         ]);
         
         // ✅ КРИТИЧНО: НЕ сбрасываем pendingReward здесь!

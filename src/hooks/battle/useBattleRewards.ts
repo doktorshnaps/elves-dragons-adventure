@@ -88,11 +88,13 @@ export const useBattleRewards = (accountId: string | null) => {
       console.log('✅ [useBattleRewards] Rewards claimed successfully:', result.data);
       const data = result.data;
 
-      // Инвалидируем кеши для обновления UI
+      // Инвалидируем кеши для обновления UI (включая квесты)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
         queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
+        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['dailyQuests', accountId] }),
+        queryClient.invalidateQueries({ queryKey: ['userDailyQuests'] }),
       ]);
 
       // Очищаем claim_key после успешного клейма
