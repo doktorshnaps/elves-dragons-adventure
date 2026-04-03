@@ -554,6 +554,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ✅ ОБНОВЛЕНИЕ ПРОГРЕССА ЕЖЕДНЕВНЫХ/НЕДЕЛЬНЫХ ЗАДАНИЙ
+    console.log('📋 [claim-battle-rewards] Updating quest progress...');
+    const monstersKilledCount = claimBody.killed_monsters.length;
+    
+    try {
+      // Обновляем квесты на убийство монстров
+      if (monstersKilledCount > 0) {
+        await supabase.rpc('update_daily_quest_progress', {
+          p_wallet_address: wallet_address,
+          p_quest_key: 'kill_monsters_5',
+          p_increment: monstersKilledCount
+        });
+        
+        await supabase.rpc('update_daily_quest_progress', {
+          p_wallet_address: wallet_address,
+          p_quest_key: 'kill_monsters_100',
+          p_increment: monstersKilledCount
+        });
+      }
+      
+      // Обновляем квест на прохождение подземелья
+      await supabase.rpc('update_daily_quest_progress', {
+        p_wallet_address: wallet_address,
+        p_quest_key: 'complete_dungeon_1',
+        p_increment: 1
+      });
+      
+      console.log('✅ [claim-battle-rewards] Quest progress updated:', {
+        monsters: monstersKilledCount,
+        dungeon_completion: 1
+      });
+    } catch (questError) {
+      // Не блокируем основной flow из-за ошибки квестов
+      console.error('⚠️ [claim-battle-rewards] Failed to update quest progress:', questError);
+    }
+
     // Mark nonce as used
     await supabase
       .from('claim_nonces')
