@@ -58,6 +58,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     rewards: null
   });
   
+  // Состояние для показа ошибки claim с возможностью повторной попытки
+  const [claimError, setClaimError] = useState<string | null>(null);
+  
   // Состояние для предупреждения об активной сессии
   const [activeSessionWarning, setActiveSessionWarning] = useState<{
     isOpen: boolean;
@@ -518,36 +521,37 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return;
     }
     
+    // Сбрасываем предыдущую ошибку
+    setClaimError(null);
     setIsClaiming(true);
     console.log('✅ isClaiming установлен в true, показываем "Обработка результатов боя..."');
-    console.log('💰 ============ НАЧАЛО handleClaimAndExit ============');
     
-    // 🔒 Таймаут безопасности: если процесс завис на >15 секунд, сбрасываем и показываем ошибку
+    // 🔒 Таймаут безопасности: если процесс завис на >30 секунд, сбрасываем
     const safetyTimeout = setTimeout(() => {
-      console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >15 секунд, принудительный сброс');
+      console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >30 секунд, принудительный сброс');
       setIsClaiming(false);
-      toast({
-        title: "⏰ Таймаут",
-        description: "Процесс обработки наград завис. Попробуйте переподключиться.",
-        variant: "destructive"
-      });
-      handleExitAndReset();
-    }, 15000); // 15 секунд таймаут
+      setClaimError('Процесс обработки наград завис. Попробуйте снова.');
+    }, 30000);
     
     toast({
       title: "🚨 Сохранение прогресса",
       description: "Начинаем сохранение здоровья и брони карт...",
     });
     
+    // ✅ КРИТИЧНО: Синхронизируем уровень в БД перед claim, чтобы убрать race condition
+    const claimKey = getCurrentClaimKey();
+    if (claimKey) {
+      console.log('🔄 [handleClaimAndExit] Синхронизируем уровень перед claim:', battleState.level);
+      const levelSynced = await updateDungeonLevel(battleState.level);
+      if (!levelSynced) {
+        console.warn('⚠️ [handleClaimAndExit] Не удалось синхронизировать уровень, но продолжаем claim');
+      }
+    }
+    
     const cardHealthUpdates = collectCardHealthUpdates();
     
-    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: если нет card_instances для сохранения, 
-    // все равно продолжаем claim наград (ELL, предметы, опыт)
-    // но предупреждаем о проблеме с картами
     if (cardHealthUpdates.length === 0) {
-      console.warn('⚠️ Нет card_instances для обновления здоровья. Это означает, что карты команды не синхронизированы с БД.');
-      console.warn('⚠️ Продолжаем claim наград, но здоровье/броня карт не будут сохранены.');
-      
+      console.warn('⚠️ Нет card_instances для обновления здоровья.');
       toast({
         title: "⚠️ Внимание",
         description: "Карты команды не синхронизированы с БД. Здоровье не будет сохранено, но награды будут начислены.",
@@ -560,74 +564,63 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       });
     }
     
-    // Продолжаем claim даже если cardHealthUpdates пустой - награды все равно нужно начислить
     try {
       const result = await claimRewardAndExit(
-        getCurrentClaimKey(), 
+        claimKey, 
         cardHealthUpdates, 
         dungeonType, 
         battleState.level,
-        monstersKilled // Передаем список убитых монстров для server-side расчета
+        monstersKilled
       );
       
       console.log('🎁 ========== РЕЗУЛЬТАТ claimRewardAndExit ==========');
-      console.log('🎁 Тип результата:', typeof result);
-      console.log('🎁 Полный объект результата:', JSON.stringify(result, null, 2));
-      console.log('🎁 result.success:', result && typeof result === 'object' ? result.success : 'N/A');
-      console.log('🎁 result.rewards:', result && typeof result === 'object' && 'rewards' in result ? result.rewards : 'N/A');
-      console.log('🎁 ===================================================');
+      console.log('🎁 result:', JSON.stringify(result, null, 2));
       
       if (result && typeof result === 'object' && 'success' in result && result.success) {
-        console.log('✅ Результат успешный, проверяем наличие rewards...');
-        // Показываем модалку с результатами наград всегда, если есть объект rewards
         if ('rewards' in result && result.rewards) {
-          console.log('🎉 НАЙДЕНЫ НАГРАДЫ! Показываем модалку с наградами:', result.rewards);
-          console.log('🔒 КРИТИЧНО: Сбрасываем флаг isClaiming и открываем модалку');
-          
-          // ✅ РЕШЕНИЕ: Сбрасываем state флаг - это вызовет ре-рендер и уберет "Обработка..."
+          console.log('🎉 НАЙДЕНЫ НАГРАДЫ! Показываем модалку');
           setIsClaiming(false);
-          console.log('✅ isClaiming сброшен в false');
-          
-          // Открываем финальную модалку с наградами
+          setClaimError(null);
           setClaimResultModal({
             isOpen: true,
             rewards: result.rewards
           });
-          console.log('✅ ClaimResultModal установлена с isOpen: true');
         } else {
           console.warn('⚠️ Нет объекта rewards в результате, выходим без модалки');
-          console.warn('⚠️ result:', result);
           setIsClaiming(false);
           handleExitAndReset();
         }
       } else {
-        console.error('❌ Ошибка при начислении наград или некорректный результат');
-        console.error('❌ result:', result);
-        console.error('❌ Условия проверки:');
-        console.error('   - result существует:', !!result);
-        console.error('   - result это объект:', typeof result === 'object');
-        console.error('   - result.success существует:', result && typeof result === 'object' && 'success' in result);
-        console.error('   - result.success === true:', result && typeof result === 'object' && 'success' in result ? result.success : false);
+        // ✅ КРИТИЧНО: При ошибке claim НЕ вызываем handleExitAndReset!
+        // Показываем реальную ошибку и даём возможность повторить
+        const errorMessage = result && typeof result === 'object' && 'error' in result 
+          ? String(result.error) 
+          : 'Не удалось начислить награды';
         
+        console.error('❌ Ошибка claim:', errorMessage);
         setIsClaiming(false);
+        setClaimError(errorMessage);
+        
         toast({
-          title: "❌ Ошибка",
-          description: "Не удалось сохранить состояние карт",
+          title: "❌ Ошибка начисления наград",
+          description: errorMessage,
           variant: "destructive"
         });
-        handleExitAndReset();
+        // НЕ вызываем handleExitAndReset() — игрок может повторить попытку
       }
     } catch (error) {
       console.error('❌ Критическая ошибка handleClaimAndExit:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Произошла ошибка при обработке наград';
       setIsClaiming(false);
+      setClaimError(errorMsg);
+      
       toast({
         title: "❌ Критическая ошибка",
-        description: "Произошла ошибка при обработке наград",
+        description: errorMsg,
         variant: "destructive"
       });
-      handleExitAndReset();
+      // НЕ вызываем handleExitAndReset() — игрок может повторить попытку
     } finally {
-      // ✅ Очищаем таймаут (флаг уже сброшен выше)
       clearTimeout(safetyTimeout);
     }
   };
@@ -850,6 +843,34 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
     
     // Если модальное окно еще не готово
+    // Если есть ошибка claim — показываем экран с ошибкой и кнопкой повторной попытки
+    if (claimError && !isClaiming && !claimResultModal.isOpen) {
+      console.log('🔴 [RENDER] Показываем экран ошибки claim с retry');
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-white text-center">❌ Ошибка начисления наград</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-white/80 text-sm">{claimError}</p>
+              <div className="flex gap-2 justify-center">
+                <Button variant="menu" onClick={handleClaimAndExit}>
+                  🔄 Повторить попытку
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setClaimError(null);
+                  handleSurrenderWithSave();
+                }}>
+                  Сдаться и выйти
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     if (!pendingReward && !isClaiming && !claimResultModal.isOpen) {
       console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
       // При полном поражении награды нет — показываем экран поражения с выходом

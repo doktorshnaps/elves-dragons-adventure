@@ -191,11 +191,12 @@ export const useDungeonRewards = () => {
     console.log('🚨 pendingReward:', pendingReward);
     console.log('🚨 cardHealthUpdates.length:', cardHealthUpdates.length);
     
-    // КРИТИЧНО: Если нет claim_key или награды (поражение), все равно сохраняем здоровье карт!
-    const shouldSkipRewards = !claimKey || !pendingReward;
+    // КРИТИЧНО: Если нет claim_key — сохраняем только здоровье карт (поражение/сдача)
+    // Но если есть claim_key — ВСЕГДА делаем claim, даже если pendingReward пустой
+    const shouldSkipRewards = !claimKey;
     
     if (shouldSkipRewards) {
-      console.log('💔 [claimRewardAndExit] Поражение/ошибка - сохраняем ТОЛЬКО здоровье карт, без наград');
+      console.log('💔 [claimRewardAndExit] Нет claim_key - сохраняем ТОЛЬКО здоровье карт, без наград');
       
       // Сохраняем здоровье карт через batch update даже без claim наград
       if (cardHealthUpdates.length > 0 && accountId) {
@@ -214,7 +215,7 @@ export const useDungeonRewards = () => {
               description: "Не удалось сохранить состояние карт",
               variant: "destructive"
             });
-            return { success: false };
+            return { success: false, error: 'Не удалось сохранить состояние карт' };
           }
           
           console.log('✅ Здоровье карт сохранено после поражения');
@@ -224,7 +225,7 @@ export const useDungeonRewards = () => {
           
         } catch (err) {
           console.error('❌ Критическая ошибка batch update:', err);
-          return { success: false };
+          return { success: false, error: String(err) };
         }
       }
       
@@ -278,8 +279,8 @@ export const useDungeonRewards = () => {
     console.log(`🔑 Используем claim_key из сервера:`, claimKey);
 
     try {
-      const rewardAmount = pendingReward.totalELL || 0;
-      const lootedItems = pendingReward.lootedItems || [];
+      const rewardAmount = pendingReward?.totalELL || 0;
+      const lootedItems = pendingReward?.lootedItems || [];
       
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
       console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);
@@ -330,7 +331,7 @@ export const useDungeonRewards = () => {
             description: result.message || "Не удалось начислить награды",
             variant: "destructive"
           });
-          return { success: false, rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
+          return { success: false, error: result.message || 'Не удалось начислить награды', rewards: { ell_reward: 0, experience_reward: 0, items: [] } };
         }
         
         console.log('✅ Награды успешно начислены:', result.data);
@@ -350,11 +351,13 @@ export const useDungeonRewards = () => {
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
         
-        // Инвалидируем кеши для обновления UI
+        // Инвалидируем кеши для обновления UI (включая квесты)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
           queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] })
+          queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['dailyQuests', accountId] }),
+          queryClient.invalidateQueries({ queryKey: ['userDailyQuests'] }),
         ]);
         
         // ✅ КРИТИЧНО: НЕ сбрасываем pendingReward здесь!

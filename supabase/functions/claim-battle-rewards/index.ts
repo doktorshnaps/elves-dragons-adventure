@@ -407,10 +407,11 @@ Deno.serve(async (req) => {
     }
 
     // Cross-validate claimed level against session level
-    if (claimBody.level !== session.level) {
-      console.error('❌ Level mismatch:', {
-        expected: session.level,
-        received: claimBody.level
+    // ✅ Разрешаем claimed level <= session level (race condition при быстром нажатии)
+    if (claimBody.level > session.level) {
+      console.error('❌ Level mismatch (claimed > session):', {
+        session_level: session.level,
+        claimed_level: claimBody.level
       });
       
       await supabase.from('security_audit_log').insert({
@@ -420,8 +421,12 @@ Deno.serve(async (req) => {
         details: { expected: session.level, received: claimBody.level }
       }).then(null, () => {});
       
-      return json({ error: 'Level mismatch' }, 403);
+      return json({ error: `Level mismatch: claimed ${claimBody.level} but session has ${session.level}` }, 403);
     }
+    
+    // Используем уровень из сессии как более надёжный источник
+    const effectiveLevel = session.level;
+    console.log('📊 Level check passed:', { claimed: claimBody.level, session: session.level, effective: effectiveLevel });
 
     console.log('✅ Session validated:', {
       wallet: wallet_address.substring(0, 10),
@@ -483,7 +488,7 @@ Deno.serve(async (req) => {
     const { ell_reward, experience_reward, items } = await calculateRewards(
       supabase,
       claimBody.dungeon_type,
-      claimBody.level,
+      effectiveLevel,
       dungeonNumber,
       claimBody.killed_monsters
     );
@@ -552,6 +557,42 @@ Deno.serve(async (req) => {
             });
         }
       }
+    }
+
+    // ✅ ОБНОВЛЕНИЕ ПРОГРЕССА ЕЖЕДНЕВНЫХ/НЕДЕЛЬНЫХ ЗАДАНИЙ
+    console.log('📋 [claim-battle-rewards] Updating quest progress...');
+    const monstersKilledCount = claimBody.killed_monsters.length;
+    
+    try {
+      // Обновляем квесты на убийство монстров
+      if (monstersKilledCount > 0) {
+        await supabase.rpc('update_daily_quest_progress', {
+          p_wallet_address: wallet_address,
+          p_quest_key: 'kill_monsters_5',
+          p_increment: monstersKilledCount
+        });
+        
+        await supabase.rpc('update_daily_quest_progress', {
+          p_wallet_address: wallet_address,
+          p_quest_key: 'kill_monsters_100',
+          p_increment: monstersKilledCount
+        });
+      }
+      
+      // Обновляем квест на прохождение подземелья
+      await supabase.rpc('update_daily_quest_progress', {
+        p_wallet_address: wallet_address,
+        p_quest_key: 'complete_dungeon_1',
+        p_increment: 1
+      });
+      
+      console.log('✅ [claim-battle-rewards] Quest progress updated:', {
+        monsters: monstersKilledCount,
+        dungeon_completion: 1
+      });
+    } catch (questError) {
+      // Не блокируем основной flow из-за ошибки квестов
+      console.error('⚠️ [claim-battle-rewards] Failed to update quest progress:', questError);
     }
 
     // Mark nonce as used
