@@ -58,6 +58,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     rewards: null
   });
   
+  // Состояние для показа ошибки claim с возможностью повторной попытки
+  const [claimError, setClaimError] = useState<string | null>(null);
+  
   // Состояние для предупреждения об активной сессии
   const [activeSessionWarning, setActiveSessionWarning] = useState<{
     isOpen: boolean;
