@@ -279,8 +279,8 @@ export const useDungeonRewards = () => {
     console.log(`🔑 Используем claim_key из сервера:`, claimKey);
 
     try {
-      const rewardAmount = pendingReward.totalELL || 0;
-      const lootedItems = pendingReward.lootedItems || [];
+      const rewardAmount = pendingReward?.totalELL || 0;
+      const lootedItems = pendingReward?.lootedItems || [];
       
       console.log(`💰 Начисляем ${rewardAmount} ELL`);
       console.log(`🎒 Начисляем ${lootedItems.length} предметов в item_instances`);

@@ -843,6 +843,34 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
     
     // Если модальное окно еще не готово
+    // Если есть ошибка claim — показываем экран с ошибкой и кнопкой повторной попытки
+    if (claimError && !isClaiming && !claimResultModal.isOpen) {
+      console.log('🔴 [RENDER] Показываем экран ошибки claim с retry');
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-white text-center">❌ Ошибка начисления наград</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-white/80 text-sm">{claimError}</p>
+              <div className="flex gap-2 justify-center">
+                <Button variant="menu" onClick={handleClaimAndExit}>
+                  🔄 Повторить попытку
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setClaimError(null);
+                  handleSurrenderWithSave();
+                }}>
+                  Сдаться и выйти
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     if (!pendingReward && !isClaiming && !claimResultModal.isOpen) {
       console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
       // При полном поражении награды нет — показываем экран поражения с выходом
