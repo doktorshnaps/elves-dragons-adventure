@@ -191,11 +191,12 @@ export const useDungeonRewards = () => {
     console.log('🚨 pendingReward:', pendingReward);
     console.log('🚨 cardHealthUpdates.length:', cardHealthUpdates.length);
     
-    // КРИТИЧНО: Если нет claim_key или награды (поражение), все равно сохраняем здоровье карт!
-    const shouldSkipRewards = !claimKey || !pendingReward;
+    // КРИТИЧНО: Если нет claim_key — сохраняем только здоровье карт (поражение/сдача)
+    // Но если есть claim_key — ВСЕГДА делаем claim, даже если pendingReward пустой
+    const shouldSkipRewards = !claimKey;
     
     if (shouldSkipRewards) {
-      console.log('💔 [claimRewardAndExit] Поражение/ошибка - сохраняем ТОЛЬКО здоровье карт, без наград');
+      console.log('💔 [claimRewardAndExit] Нет claim_key - сохраняем ТОЛЬКО здоровье карт, без наград');
       
       // Сохраняем здоровье карт через batch update даже без claim наград
       if (cardHealthUpdates.length > 0 && accountId) {
@@ -214,7 +215,7 @@ export const useDungeonRewards = () => {
               description: "Не удалось сохранить состояние карт",
               variant: "destructive"
             });
-            return { success: false };
+            return { success: false, error: 'Не удалось сохранить состояние карт' };
           }
           
           console.log('✅ Здоровье карт сохранено после поражения');
@@ -224,7 +225,7 @@ export const useDungeonRewards = () => {
           
         } catch (err) {
           console.error('❌ Критическая ошибка batch update:', err);
-          return { success: false };
+          return { success: false, error: String(err) };
         }
       }
       
