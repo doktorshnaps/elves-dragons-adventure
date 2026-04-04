@@ -109,11 +109,11 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
 
   // Проверка назначенных рабочих
   const hasWorkersInSawmill = useCallback(() => {
-    return gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'sawmill') || false;
+    return gameState?.activeWorkers?.some((worker: any) => worker.building === 'sawmill') || false;
   }, [gameState?.activeWorkers]);
 
   const hasWorkersInQuarry = useCallback(() => {
-    return gameState?.activeWorkers?.some((worker: any) => worker.assignedBuilding === 'quarry') || false;
+    return gameState?.activeWorkers?.some((worker: any) => worker.building === 'quarry') || false;
   }, [gameState?.activeWorkers]);
 
   // Эффект для автоматического обновления состояния производства каждую секунду
@@ -268,7 +268,7 @@ export const useResourceProduction = (): UseResourceProductionReturn => {
   // Функция для сохранения состояния производства в БД
   const saveProductionStateToDB = async (resource: 'wood' | 'stone', lastCollectionTime: number, isProducing: boolean, isStorageFull: boolean) => {
     try {
-      const walletAddress = localStorage.getItem('wallet');
+      const walletAddress = localStorage.getItem('walletAccountId');
       if (!walletAddress) return;
       
       await supabase.rpc('update_resource_production_state_by_wallet', {
