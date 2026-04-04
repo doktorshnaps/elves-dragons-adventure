@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const RequestSchema = z.object({
+  wallet_address: z.string().min(2).max(100),
   building_id: z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/),
 });
 
@@ -18,44 +19,9 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-
-    // Require JWT and resolve wallet server-side
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: authData, error: authError } = await userClient.auth.getUser();
-    if (authError || !authData?.user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: invalid token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('wallet_address')
-      .eq('user_id', authData.user.id)
-      .single();
-
-    const wallet_address = profile?.wallet_address;
-    if (!wallet_address) {
-      return new Response(
-        JSON.stringify({ error: 'No wallet linked to this account' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     // Validate input
     const body = await req.json();
@@ -68,15 +34,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { building_id } = parseResult.data;
+    const { wallet_address, building_id } = parseResult.data;
 
-    // Verify admin using server-resolved wallet
-    const { data: isAdmin, error: adminError } = await supabaseClient.rpc(
+    // Verify admin status via RPC
+    const { data: isAdmin, error: adminError } = await supabase.rpc(
       'is_admin_or_super_wallet',
       { p_wallet_address: wallet_address }
     );
 
     if (adminError || !isAdmin) {
+      console.error('❌ Admin check failed:', adminError?.message || 'Not an admin');
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,13 +51,14 @@ Deno.serve(async (req) => {
     }
 
     // Get current game data
-    const { data: gameData, error: gameError } = await supabaseClient
+    const { data: gameData, error: gameError } = await supabase
       .from('game_data')
       .select('active_building_upgrades, building_levels')
       .eq('wallet_address', wallet_address)
       .single();
 
     if (gameError || !gameData) {
+      console.error('❌ Game data not found:', gameError?.message);
       return new Response(
         JSON.stringify({ error: 'Game data not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -101,7 +69,7 @@ Deno.serve(async (req) => {
       ? gameData.active_building_upgrades 
       : [];
     
-    const buildingLevels = gameData.building_levels || {};
+    const buildingLevels = (gameData.building_levels as Record<string, number>) || {};
     const upgradeIndex = upgrades.findIndex((u: any) => u.buildingId === building_id);
     
     let targetLevel: number;
@@ -121,7 +89,7 @@ Deno.serve(async (req) => {
       [building_id]: targetLevel
     };
 
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabase
       .from('game_data')
       .update({
         building_levels: updatedBuildingLevels,
@@ -131,11 +99,14 @@ Deno.serve(async (req) => {
       .eq('wallet_address', wallet_address);
 
     if (updateError) {
+      console.error('❌ Update failed:', updateError.message);
       return new Response(
         JSON.stringify({ error: 'Failed to complete upgrade' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`✅ ${building_id} instantly upgraded to level ${targetLevel} for ${wallet_address}`);
 
     return new Response(
       JSON.stringify({
