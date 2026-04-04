@@ -24,8 +24,14 @@ export async function initWibe3() {
     
     return wibe3Instance;
   } catch (error) {
+    // Suppress "No wallet selected" — this is expected when no Hot wallet is active
+    const msg = String(error?.message || error);
+    if (msg.includes('No wallet selected') || msg.includes('no wallet')) {
+      console.warn('⚠️ [wibe3] No wallet selected — skipping HotConnector init');
+      return null;
+    }
     console.error('Failed to initialize HotConnector:', error);
-    throw error;
+    return null; // Never throw — caller handles null gracefully
   }
 }
 

@@ -74,6 +74,8 @@ export const useBuildingUpgrades = () => {
   // Проверяем завершенные улучшения и помечаем как готовые к установке (NO toast here — toast only in setInterval)
   useEffect(() => {
     if (activeUpgrades.length === 0) return;
+    // Guard: don't run background sync until wallet & game data are loaded
+    if (!accountId) return;
     
     const now = Date.now();
     let changed = false;
@@ -88,12 +90,13 @@ export const useBuildingUpgrades = () => {
     });
 
     if (changed) {
+      console.log('🏗️ [useBuildingUpgrades] Auto-transitioning upgrades to ready');
       setActiveUpgrades(updated);
       syncToCache(updated);
       gameState.actions.batchUpdate({ activeBuildingUpgrades: updated })
         .catch(err => console.error('❌ [useBuildingUpgrades] Failed to sync upgrade status:', err));
     }
-  }, [activeUpgrades, gameState.actions, syncToCache]);
+  }, [activeUpgrades, gameState.actions, syncToCache, accountId]);
 
   // Дополнительная проверка таймеров каждую секунду (single toast source)
   useEffect(() => {

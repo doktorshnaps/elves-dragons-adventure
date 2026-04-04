@@ -22,9 +22,31 @@ const clearBattleFromZustand = () => {
 };
 
 export class ErrorBoundary extends Component<Props, State> {
+  private unhandledRejectionHandler: ((e: PromiseRejectionEvent) => void) | null = null;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
+  }
+
+  componentDidMount() {
+    this.unhandledRejectionHandler = (e: PromiseRejectionEvent) => {
+      const msg = String(e.reason?.message || e.reason || '');
+      console.error('🔴 [ErrorBoundary] Unhandled rejection:', msg);
+      // Suppress known non-critical wallet errors
+      if (msg.includes('No wallet selected') || msg.includes('no wallet')) {
+        e.preventDefault();
+        console.warn('⚠️ Suppressed HotConnector "No wallet selected" rejection');
+        return;
+      }
+    };
+    window.addEventListener('unhandledrejection', this.unhandledRejectionHandler);
+  }
+
+  componentWillUnmount() {
+    if (this.unhandledRejectionHandler) {
+      window.removeEventListener('unhandledrejection', this.unhandledRejectionHandler);
+    }
   }
 
   static getDerivedStateFromError(error: Error): State {
