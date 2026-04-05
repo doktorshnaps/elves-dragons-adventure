@@ -53,6 +53,7 @@ export const useShelterState = () => {
   const gameState = useBatchedGameState();
   const { gameData } = useGameDataContext();
   const { toast } = useToast();
+  const walletAddress = gameData.walletAddress || gameState.walletAddress || '';
   const queryClient = useQueryClient();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
