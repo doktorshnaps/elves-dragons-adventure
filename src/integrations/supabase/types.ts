@@ -1308,6 +1308,7 @@ export type Database = {
           stone: number
           stone_last_collection_time: number | null
           stone_production_data: Json | null
+          telegram_chat_id: number | null
           updated_at: string
           user_id: string
           version: number | null
@@ -1346,6 +1347,7 @@ export type Database = {
           stone?: number
           stone_last_collection_time?: number | null
           stone_production_data?: Json | null
+          telegram_chat_id?: number | null
           updated_at?: string
           user_id: string
           version?: number | null
@@ -1384,6 +1386,7 @@ export type Database = {
           stone?: number
           stone_last_collection_time?: number | null
           stone_production_data?: Json | null
+          telegram_chat_id?: number | null
           updated_at?: string
           user_id?: string
           version?: number | null
@@ -2633,6 +2636,27 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      telegram_notification_log: {
+        Row: {
+          event_type: string
+          id: string
+          sent_at: string
+          wallet_address: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          sent_at?: string
+          wallet_address: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          sent_at?: string
           wallet_address?: string
         }
         Relationships: []
@@ -4842,6 +4866,10 @@ export type Database = {
       review_join_request: {
         Args: { p_accept: boolean; p_request_id: string; p_wallet: string }
         Returns: Json
+      }
+      save_telegram_chat_id: {
+        Args: { p_chat_id: number; p_wallet_address: string }
+        Returns: undefined
       }
       search_clans: { Args: { p_query?: string }; Returns: Json }
       start_bot_match: {
