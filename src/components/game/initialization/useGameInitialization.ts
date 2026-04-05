@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameStore } from "@/stores/gameStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { saveTelegramChatId } from "@/utils/telegramNotifications";
 
 /**
  * РЕФАКТОРИНГ: Убрана зависимость от setCards
@@ -112,6 +113,9 @@ export const useGameInitialization = () => {
           // Инвалидируем кэш React Query вместо window.dispatchEvent
           queryClient.invalidateQueries({ queryKey: ['gameData'] });
         }
+
+        // Save Telegram chat_id if running inside Mini App
+        saveTelegramChatId(accountId);
       } catch (error) {
         console.error('Error in game initialization:', error);
       }
