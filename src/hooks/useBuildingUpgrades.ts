@@ -13,6 +13,16 @@ interface UpgradeProgress {
   status?: 'in_progress' | 'ready';
 }
 
+const upgradeKey = (u: { buildingId: string; status?: string }) =>
+  `${u.buildingId}:${u.status ?? 'in_progress'}`;
+
+const upgradesEqual = (a: UpgradeProgress[], b: any[]): boolean => {
+  if (a.length !== b.length) return false;
+  const aKeys = a.map(upgradeKey).sort().join(',');
+  const bKeys = b.map(upgradeKey).sort().join(',');
+  return aKeys === bKeys;
+};
+
 export const useBuildingUpgrades = () => {
   const gameState = useUnifiedGameState();
   const { gameData } = useGameDataContext();
@@ -21,69 +31,73 @@ export const useBuildingUpgrades = () => {
   const { accountId } = useWalletContext();
   const [activeUpgrades, setActiveUpgrades] = useState<UpgradeProgress[]>([]);
 
-  // Флаг: были ли когда-либо получены реальные данные из БД (не дефолтный пустой массив).
-  // Нужен чтобы отличить "initial empty default" от "DB explicit empty after instant-complete".
   const hasReceivedRealData = useRef(false);
+  // Track which upgrades have already been transitioned to ready
+  const transitionedRef = useRef<Set<string>>(new Set());
+  // Track which upgrades have already shown a toast
+  const toastedUpgradesRef = useRef<Set<string>>(new Set());
 
-  // Helper to sync upgrades to React Query cache
+  // Helper to sync upgrades to React Query cache (used only for optimistic UI in start/install)
   const syncToCache = useCallback((upgrades: UpgradeProgress[], extraUpdates?: Record<string, any>) => {
     if (!accountId) return;
     queryClient.setQueryData(['gameData', accountId], (old: any) => {
       if (!old) return old;
-      return {
-        ...old,
-        activeBuildingUpgrades: upgrades,
-        ...extraUpdates
-      };
+      return { ...old, activeBuildingUpgrades: upgrades, ...extraUpdates };
     });
   }, [queryClient, accountId]);
 
-  // Синхронизация с данными из БД (через GameDataContext) или gameState (fallback)
+  // Sync from DB — with semantic equality check to break the loop
   useEffect(() => {
     const dbUpgrades = gameData.activeBuildingUpgrades;
 
     if (Array.isArray(dbUpgrades)) {
       if (dbUpgrades.length > 0) {
-        // Есть реальные данные из БД — синхронизируем локальный state
         hasReceivedRealData.current = true;
-        console.log('🔄 [useBuildingUpgrades] Syncing upgrades from DB:', dbUpgrades);
-        setActiveUpgrades(dbUpgrades);
+        // Only update if semantically different
+        if (!upgradesEqual(activeUpgrades, dbUpgrades)) {
+          console.log('🔄 [useBuildingUpgrades] Syncing upgrades from DB:', dbUpgrades);
+          setActiveUpgrades(dbUpgrades);
+        }
       } else if (hasReceivedRealData.current) {
-        // БД вернула пустой массив И ранее уже были реальные данные.
-        // Это значит: после instant-complete или installUpgrade данные реально удалены из БД.
-        // Очищаем локальный state.
-        console.log('🔄 [useBuildingUpgrades] DB returned empty after real data — clearing local state');
-        setActiveUpgrades([]);
+        if (activeUpgrades.length > 0) {
+          console.log('🔄 [useBuildingUpgrades] DB returned empty after real data — clearing');
+          setActiveUpgrades([]);
+        }
       }
-      // Если hasReceivedRealData = false и dbUpgrades = [] — это начальный дефолт, игнорируем.
       return;
     }
 
-    // Fallback: DB данные ещё не загружены, используем gameState
+    // Fallback: gameState
     const gsUpgrades = gameState.activeBuildingUpgrades;
     if (Array.isArray(gsUpgrades) && gsUpgrades.length > 0) {
       hasReceivedRealData.current = true;
-      console.log('🔄 [useBuildingUpgrades] Loading active upgrades from gameState:', gsUpgrades);
-      setActiveUpgrades(gsUpgrades);
+      if (!upgradesEqual(activeUpgrades, gsUpgrades)) {
+        setActiveUpgrades(gsUpgrades);
+      }
     }
   }, [gameData.activeBuildingUpgrades, gameState.activeBuildingUpgrades]);
 
-  // Track which upgrades have already shown a toast to prevent duplicates
-  const toastedUpgradesRef = useRef<Set<string>>(new Set());
-
-  // Проверяем завершенные улучшения и помечаем как готовые к установке (NO toast here — toast only in setInterval)
+  // Auto-transition expired upgrades to ready (single effect, no interval, no syncToCache)
   useEffect(() => {
-    if (activeUpgrades.length === 0) return;
-    // Guard: don't run background sync until wallet & game data are loaded
-    if (!accountId) return;
-    
+    if (activeUpgrades.length === 0 || !accountId) return;
+
     const now = Date.now();
     let changed = false;
 
     const updated = activeUpgrades.map(upgrade => {
+      const tKey = `${upgrade.buildingId}_${upgrade.startTime}`;
       const isDone = now >= upgrade.startTime + upgrade.duration;
-      if (isDone && upgrade.status !== 'ready') {
+      if (isDone && upgrade.status !== 'ready' && !transitionedRef.current.has(tKey)) {
+        transitionedRef.current.add(tKey);
         changed = true;
+        // Toast (once per upgrade)
+        if (!toastedUpgradesRef.current.has(tKey)) {
+          toastedUpgradesRef.current.add(tKey);
+          toast({
+            title: 'Улучшение завершено',
+            description: `Доступно к установке: уровень ${upgrade.targetLevel}`
+          });
+        }
         return { ...upgrade, status: 'ready' as const };
       }
       return upgrade;
@@ -92,57 +106,34 @@ export const useBuildingUpgrades = () => {
     if (changed) {
       console.log('🏗️ [useBuildingUpgrades] Auto-transitioning upgrades to ready');
       setActiveUpgrades(updated);
-      syncToCache(updated);
+      // Only batchUpdate — it already does optimistic cache update internally
       gameState.actions.batchUpdate({ activeBuildingUpgrades: updated })
         .catch(err => console.error('❌ [useBuildingUpgrades] Failed to sync upgrade status:', err));
     }
-  }, [activeUpgrades, gameState.actions, syncToCache, accountId]);
+  }, [activeUpgrades, accountId]);
 
-  // Дополнительная проверка таймеров каждую секунду (single toast source)
+  // Periodic check for upgrades that finish while the page is open (polling, no cache write)
   useEffect(() => {
+    if (activeUpgrades.length === 0) return;
+    const hasInProgress = activeUpgrades.some(u => u.status !== 'ready');
+    if (!hasInProgress) return;
+
     const interval = setInterval(() => {
-      if (activeUpgrades.length === 0) return;
-      
       const now = Date.now();
-      let needsUpdate = false;
-
-      const updated = activeUpgrades.map(upgrade => {
-        const isDone = now >= upgrade.startTime + upgrade.duration;
-        if (isDone && upgrade.status !== 'ready') {
-          needsUpdate = true;
-          // Only toast if we haven't toasted for this specific upgrade yet
-          const key = `${upgrade.buildingId}_${upgrade.startTime}`;
-          if (!toastedUpgradesRef.current.has(key)) {
-            toastedUpgradesRef.current.add(key);
-            toast({
-              title: 'Улучшение завершено',
-              description: `Доступно к установке: уровень ${upgrade.targetLevel}`
-            });
-          }
-          return { ...upgrade, status: 'ready' as const };
-        }
-        return upgrade;
+      const needsTransition = activeUpgrades.some(u => {
+        const tKey = `${u.buildingId}_${u.startTime}`;
+        return now >= u.startTime + u.duration && u.status !== 'ready' && !transitionedRef.current.has(tKey);
       });
-
-      if (needsUpdate) {
-        setActiveUpgrades(updated);
-        syncToCache(updated);
-        gameState.actions.batchUpdate({ activeBuildingUpgrades: updated })
-          .catch(err => console.error('❌ [useBuildingUpgrades] Failed to sync upgrade status (interval):', err));
+      if (needsTransition) {
+        // Trigger re-render so the effect above picks it up
+        setActiveUpgrades(prev => [...prev]);
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [activeUpgrades, gameState.actions, toast, syncToCache]);
+  }, [activeUpgrades]);
 
   const startUpgrade = (buildingId: string, duration: number, targetLevel: number) => {
-    console.log('🚀 [startUpgrade] Starting upgrade:', {
-      buildingId,
-      duration,
-      targetLevel,
-      currentActiveUpgrades: activeUpgrades.length
-    });
-    
     const upgrade: UpgradeProgress = {
       buildingId,
       startTime: Date.now(),
@@ -150,59 +141,35 @@ export const useBuildingUpgrades = () => {
       targetLevel,
       status: 'in_progress'
     };
-
     const newUpgrades = [...activeUpgrades, upgrade];
-    console.log('🚀 [startUpgrade] New upgrades array:', newUpgrades);
-    
     setActiveUpgrades(newUpgrades);
     syncToCache(newUpgrades);
     gameState.actions.batchUpdate({ activeBuildingUpgrades: newUpgrades })
-      .then(() => {
-        console.log('✅ [startUpgrade] Successfully saved to server');
-      })
-      .catch((error) => {
-        console.error('❌ [startUpgrade] Failed to save:', error);
-      });
+      .then(() => console.log('✅ [startUpgrade] Saved'))
+      .catch(err => console.error('❌ [startUpgrade] Failed:', err));
   };
 
   const installUpgrade = (buildingId: string) => {
-    console.log('🏗️ [installUpgrade] Starting installation for:', buildingId);
-    
     const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
-    console.log('🏗️ [installUpgrade] Found upgrade:', upgrade);
-    
-    if (!upgrade || upgrade.status !== 'ready') {
-      console.log('🏗️ [installUpgrade] Upgrade not ready or not found:', {
-        upgradeExists: !!upgrade,
-        status: upgrade?.status,
-        activeUpgrades
-      });
-      return;
-    }
+    if (!upgrade || upgrade.status !== 'ready') return;
 
     const currentBuildingLevels = gameData.buildingLevels || gameState.buildingLevels || {};
     const newBuildingLevels = { ...currentBuildingLevels, [buildingId]: upgrade.targetLevel };
     const remaining = activeUpgrades.filter(u => u.buildingId !== buildingId);
 
-    console.log('🏗️ [installUpgrade] Updating levels:', {
-      buildingId,
-      fromLevel: currentBuildingLevels[buildingId] || 0,
-      toLevel: upgrade.targetLevel,
-      newBuildingLevels,
-      remainingUpgrades: remaining.length
-    });
+    // Clean up refs
+    const tKey = `${upgrade.buildingId}_${upgrade.startTime}`;
+    transitionedRef.current.delete(tKey);
+    toastedUpgradesRef.current.delete(tKey);
 
     setActiveUpgrades(remaining);
     syncToCache(remaining, { buildingLevels: newBuildingLevels });
-    
+
     gameState.actions.batchUpdate({
       buildingLevels: newBuildingLevels,
       activeBuildingUpgrades: remaining
-    }).then(() => {
-      console.log('✅ [installUpgrade] Successfully updated building level');
-    }).catch((error) => {
-      console.error('❌ [installUpgrade] Failed to update:', error);
-    });
+    }).then(() => console.log('✅ [installUpgrade] Done'))
+      .catch(err => console.error('❌ [installUpgrade] Failed:', err));
 
     toast({
       title: 'Установка выполнена',
@@ -213,40 +180,25 @@ export const useBuildingUpgrades = () => {
   const getUpgradeProgress = (buildingId: string) => {
     const upgrade = activeUpgrades.find(u => u.buildingId === buildingId);
     if (!upgrade) return null;
-
     if (upgrade.status === 'ready') {
-      return {
-        progress: 100,
-        remainingTime: 0,
-        targetLevel: upgrade.targetLevel
-      };
+      return { progress: 100, remainingTime: 0, targetLevel: upgrade.targetLevel };
     }
-
-    const now = Date.now();
-    const elapsed = now - upgrade.startTime;
-    const progress = Math.min(100, (elapsed / upgrade.duration) * 100);
-    const remainingTime = Math.max(0, upgrade.duration - elapsed);
-
+    const elapsed = Date.now() - upgrade.startTime;
     return {
-      progress,
-      remainingTime,
+      progress: Math.min(100, (elapsed / upgrade.duration) * 100),
+      remainingTime: Math.max(0, upgrade.duration - elapsed),
       targetLevel: upgrade.targetLevel
     };
   };
 
-  const isUpgrading = (buildingId: string) => {
-    return activeUpgrades.some(upgrade => upgrade.buildingId === buildingId);
-  };
+  const isUpgrading = (buildingId: string) =>
+    activeUpgrades.some(u => u.buildingId === buildingId);
 
   const formatRemainingTime = (milliseconds: number) => {
     const totalMinutes = Math.ceil(milliseconds / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    
-    if (hours > 0) {
-      return `${hours}ч ${minutes}м`;
-    }
-    return `${minutes}м`;
+    return hours > 0 ? `${hours}ч ${minutes}м` : `${minutes}м`;
   };
 
   return {
@@ -257,13 +209,6 @@ export const useBuildingUpgrades = () => {
       targetLevel: number,
       resourcePatch: { wood?: number; stone?: number; iron?: number; gold?: number; balance?: number }
     ) => {
-      console.log('🚀 [startUpgradeAtomic] Starting atomic upgrade:', {
-        buildingId,
-        duration,
-        targetLevel,
-        resourcePatch
-      });
-      
       const upgrade: UpgradeProgress = {
         buildingId,
         startTime: Date.now(),
@@ -271,20 +216,17 @@ export const useBuildingUpgrades = () => {
         targetLevel,
         status: 'in_progress'
       };
-
       const newUpgrades = [...activeUpgrades, upgrade];
-      console.log('🚀 [startUpgradeAtomic] Setting active upgrades:', newUpgrades);
       setActiveUpgrades(newUpgrades);
       syncToCache(newUpgrades, resourcePatch);
-
       try {
         await gameState.actions.batchUpdate({
           ...resourcePatch,
           activeBuildingUpgrades: newUpgrades
         });
-        console.log('✅ [startUpgradeAtomic] Successfully saved upgrade to server');
+        console.log('✅ [startUpgradeAtomic] Saved');
       } catch (error) {
-        console.error('❌ [startUpgradeAtomic] Failed to save upgrade:', error);
+        console.error('❌ [startUpgradeAtomic] Failed:', error);
         throw error;
       }
     },
