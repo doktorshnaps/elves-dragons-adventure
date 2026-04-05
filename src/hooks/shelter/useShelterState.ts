@@ -13,6 +13,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { resolveItemKey } from '@/utils/itemNames';
 import { useCraftingRecipes } from '@/hooks/useCraftingRecipes';
 import { useAddItemToInstances } from '@/hooks/useAddItemToInstances';
+import { sendTelegramNotification } from '@/utils/telegramNotifications';
 export interface NestUpgrade {
   id: string;
   name: string;
@@ -731,6 +732,15 @@ export const useShelterState = () => {
                 title: t(language, 'shelter.craftingCompleted') || 'Крафт завершен',
                 description: `${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
               });
+
+              // Send Telegram notification about crafting completion
+              if (accountId) {
+                sendTelegramNotification(
+                  accountId,
+                  `⚒️ Крафт завершён!\n${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
+                  `crafting_complete_${craft.resultItemId}`
+                );
+              }
             }
           } catch (err) {
             console.error('❌ [useShelterState] Failed to complete craft:', err);
