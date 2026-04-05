@@ -4,6 +4,7 @@ import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { t } from '@/utils/translations';
 import { useToast } from '@/hooks/use-toast';
+import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useBuildingUpgrades } from '@/hooks/useBuildingUpgrades';
 import { useBuildingConfigs } from '@/hooks/useBuildingConfigs';
 import { useItemTemplates } from '@/hooks/useItemTemplates';
@@ -53,7 +54,7 @@ export const useShelterState = () => {
   const gameState = useBatchedGameState();
   const { gameData } = useGameDataContext();
   const { toast } = useToast();
-  const walletAddress = gameData.walletAddress || gameState.walletAddress || '';
+  const { accountId: walletAddress } = useWalletContext();
   const queryClient = useQueryClient();
   const { startUpgradeAtomic, isUpgrading, getUpgradeProgress, formatRemainingTime, installUpgrade, isUpgradeReady } = useBuildingUpgrades();
   const { getBuildingConfig, getUpgradeCost: getUpgradeCostFromDB, loading: configsLoading } = useBuildingConfigs(true);
@@ -735,9 +736,9 @@ export const useShelterState = () => {
               });
 
               // Send Telegram notification about crafting completion
-              if (accountId) {
+              if (walletAddress) {
                 sendTelegramNotification(
-                  accountId,
+                  walletAddress,
                   `⚒️ Крафт завершён!\n${resultTemplate.name} x${craft.resultQuantity || 1} готов!`,
                   `crafting_complete_${craft.resultItemId}`
                 );
