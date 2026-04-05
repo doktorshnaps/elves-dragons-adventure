@@ -1,42 +1,81 @@
 
-План исправления
 
-Что я нашёл
-- Текущий runtime error совпадает с `No wallet selected` из HotConnector/NEAR connector. В `src/contexts/WalletConnectContext.tsx` `initWibe3()` вызывается глобально при старте приложения для всех маршрутов. Если Hot wallet не выбран, библиотека может дать unhandled rejection, и это очень похоже на текущий краш.
-- В самом лагере есть фоновая логика, которая срабатывает именно после окончания таймера: `src/hooks/useBuildingUpgrades.ts` при открытии `/shelter` сразу переводит истёкшую стройку в `ready` и пишет это в БД через `batchUpdate`. Это нужно делать только после полной загрузки данных и с защитой от сбоев.
-- В `src/hooks/useResourceProduction.ts` есть 2 явные ошибки: поиск рабочих идёт по `worker.assignedBuilding`, хотя в остальном коде используется `worker.building`; сохранение состояния идёт через `localStorage.getItem('wallet')`, а приложение хранит другой ключ/контекст кошелька. Это ломает синхронизацию лагеря после возврата.
+## Исправление бесконечного цикла рендеринга в лагере
 
-Что нужно переделать
-1. Убрать глобальный краш от HotConnector
-- В `src/contexts/WalletConnectContext.tsx` перестать инициализировать `initWibe3()` на каждом старте приложения.
-- Перенести инициализацию в lazy/on-demand сценарий или полностью изолировать её так, чтобы `No wallet selected` никогда не уходила в unhandled rejection.
-- В `src/lib/wibe3.ts` добавить защиту: никаких вызовов wallet-dependent логики, пока кошелёк HotConnector реально не выбран.
+### Корень проблемы
 
-2. Стабилизировать обработку завершённых строек
-- В `src/hooks/useBuildingUpgrades.ts` выполнять авто-перевод стройки в `ready` только когда уже есть реальный `accountId` и загружены актуальные `gameData`.
-- Сделать защитный поток: если серверная синхронизация `ready` не удалась, лагерь всё равно не должен падать при открытии.
+Файл `src/hooks/useBuildingUpgrades.ts` содержит **бесконечный цикл** между двумя useEffect:
 
-3. Починить лагерь по данным рабочих и ресурсов
-- В `src/hooks/useResourceProduction.ts` заменить `assignedBuilding` на `building`.
-- Там же заменить источник wallet на тот же `accountId`/ключ, который реально использует приложение.
-- Это уберёт рассинхрон по рабочим и сохранению production state внутри лагеря.
+1. **Sync effect (строка 42-69)**: при каждом изменении `gameData.activeBuildingUpgrades` (новая ссылка из React Query кэша) безусловно вызывает `setActiveUpgrades(dbUpgrades)`.
+2. **Auto-transition effect (строка 75-99)**: при изменении `activeUpgrades` проверяет таймер → устанавливает `status: 'ready'` → вызывает `syncToCache()` + `batchUpdate()`.
+3. `syncToCache` обновляет React Query кэш → `gameData.activeBuildingUpgrades` получает НОВУЮ ссылку → снова срабатывает sync effect из шага 1.
+4. `batchUpdate` → `updateGameData` → ещё одно обновление кэша → ещё одна новая ссылка → sync effect → цикл повторяется.
 
-4. Добавить точную диагностику
-- В `src/components/common/ErrorBoundary.tsx` и/или верхнем уровне приложения добавить отдельное логирование для `unhandledrejection`.
-- В `useBuildingUpgrades.ts` оставить точечные логи для сценария: открытие лагеря с уже истёкшей стройкой.
+Каждый цикл выдаёт: `"Auto-transitioning upgrades to ready"` + `"Optimistic update - setting balance to: 445"`. В логе это повторяется **сотни раз**, полностью замораживая UI.
 
-Технические детали
-- Главный кандидат на текущий краш: `src/contexts/WalletConnectContext.tsx` + `src/lib/wibe3.ts`.
-- Главный shelter-flow после истечения таймера: `src/hooks/useBuildingUpgrades.ts`.
-- Сопутствующая ошибка данных лагеря: `src/hooks/useResourceProduction.ts`.
+### Решение
 
-Проверка после внедрения
-- Запустить улучшение здания.
-- Дождаться окончания таймера вне лагеря.
-- Открыть `/shelter`.
-- Проверить, что:
-  - экран больше не падает,
-  - здание отображается как готовое к установке,
-  - лагерь стабильно открывается несколько раз подряд,
-  - в runtime больше нет `No wallet selected`,
-  - добывающие здания корректно видят рабочих.
+Исправить `src/hooks/useBuildingUpgrades.ts`:
+
+1. **В sync effect**: не вызывать `setActiveUpgrades` если данные семантически идентичны текущему состоянию. Сравнивать по `JSON.stringify` или по `buildingId + status`, чтобы новая ссылка из кэша не запускала лишний цикл.
+
+2. **В auto-transition effect**: после одного успешного перехода в `ready` записать это в ref (`transitionedRef`), чтобы повторные срабатывания для того же upgrade игнорировались. Убрать `syncToCache()` из этого эффекта — достаточно одного `batchUpdate`, который сам обновит кэш через `updateGameData`.
+
+3. **Убрать дублирующий interval effect (строка 102-136)**: он делает то же самое, что auto-transition effect, создавая вторую точку входа в тот же цикл. Логику toast перенести в auto-transition effect.
+
+4. **Один вызов записи**: вместо `syncToCache()` + `batchUpdate()` (оба пишут в кэш), оставить только `batchUpdate()`, который через `updateGameData` уже делает оптимистичное обновление кэша.
+
+### Технические детали
+
+Файл для правки: `src/hooks/useBuildingUpgrades.ts`
+
+Sync effect — добавить сравнение:
+```typescript
+useEffect(() => {
+  const dbUpgrades = gameData.activeBuildingUpgrades;
+  if (!Array.isArray(dbUpgrades)) { /* fallback logic */ return; }
+  
+  // Не обновлять если данные идентичны
+  const currentKey = JSON.stringify(activeUpgrades.map(u => ({ id: u.buildingId, s: u.status })));
+  const newKey = JSON.stringify(dbUpgrades.map(u => ({ id: u.buildingId, s: u.status })));
+  if (currentKey === newKey && activeUpgrades.length === dbUpgrades.length) return;
+  
+  // ... остальная логика
+}, [gameData.activeBuildingUpgrades]);
+```
+
+Auto-transition effect — добавить ref-guard и убрать syncToCache:
+```typescript
+const transitionedRef = useRef<Set<string>>(new Set());
+
+useEffect(() => {
+  if (activeUpgrades.length === 0 || !accountId) return;
+  const now = Date.now();
+  let changed = false;
+  const updated = activeUpgrades.map(upgrade => {
+    const key = `${upgrade.buildingId}_${upgrade.startTime}`;
+    if (now >= upgrade.startTime + upgrade.duration 
+        && upgrade.status !== 'ready' 
+        && !transitionedRef.current.has(key)) {
+      transitionedRef.current.add(key);
+      changed = true;
+      return { ...upgrade, status: 'ready' as const };
+    }
+    return upgrade;
+  });
+  if (changed) {
+    setActiveUpgrades(updated);
+    // Только batchUpdate, без syncToCache
+    gameState.actions.batchUpdate({ activeBuildingUpgrades: updated }).catch(...);
+  }
+}, [activeUpgrades, accountId]);
+```
+
+Удалить interval effect целиком (строки 102-136) — toast вынести в auto-transition.
+
+### Проверка после внедрения
+- Запустить улучшение здания
+- Дождаться окончания таймера
+- Открыть лагерь
+- Убедиться: нет бесконечного повторения логов, UI не зависает, здание отображается как готовое к установке
+
