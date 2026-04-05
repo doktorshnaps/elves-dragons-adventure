@@ -6,6 +6,7 @@ import { useGameData } from '@/hooks/useGameData';
 import { useGameStore } from '@/stores/gameStore';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/config/reactQuery';
+import { sendTelegramNotification } from '@/utils/telegramNotifications';
 
 interface MedicalBayEntry {
   id: string;
@@ -245,6 +246,15 @@ export const useMedicalBay = () => {
         title: 'Карта забрана из медпункта',
         description: result.was_completed ? 'Здоровье восстановлено' : 'Лечение отменено',
       });
+
+      // Send Telegram notification if healing was completed
+      if (result.was_completed && accountId) {
+        sendTelegramNotification(
+          accountId,
+          `💊 Лечение завершено!\nЗдоровье карты полностью восстановлено.`,
+          `medical_complete_${cardInstanceId}`
+        );
+      }
 
       // Кэш обновится автоматически через Real-time
     } catch (error: any) {

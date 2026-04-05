@@ -4,6 +4,7 @@ import { useGameDataContext } from '@/contexts/GameDataContext';
 import { useToast } from './use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
+import { sendTelegramNotification } from '@/utils/telegramNotifications';
 
 interface UpgradeProgress {
   buildingId: string;
@@ -97,6 +98,14 @@ export const useBuildingUpgrades = () => {
             title: 'Улучшение завершено',
             description: `Доступно к установке: уровень ${upgrade.targetLevel}`
           });
+          // Send Telegram notification
+          if (accountId) {
+            sendTelegramNotification(
+              accountId,
+              `🏗️ Улучшение здания завершено!\nДоступно к установке: уровень ${upgrade.targetLevel}`,
+              `building_ready_${upgrade.buildingId}`
+            );
+          }
         }
         return { ...upgrade, status: 'ready' as const };
       }
