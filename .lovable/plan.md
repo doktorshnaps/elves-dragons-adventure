@@ -1,81 +1,92 @@
 
 
-## Исправление бесконечного цикла рендеринга в лагере
+## Пуш-уведомления в Telegram о событиях в игре
 
-### Корень проблемы
+### Архитектура
 
-Файл `src/hooks/useBuildingUpgrades.ts` содержит **бесконечный цикл** между двумя useEffect:
+Приложение уже работает как Telegram Mini App. У пользователя `window.Telegram.WebApp.initDataUnsafe.user.id` содержит Telegram chat_id. Нужно:
 
-1. **Sync effect (строка 42-69)**: при каждом изменении `gameData.activeBuildingUpgrades` (новая ссылка из React Query кэша) безусловно вызывает `setActiveUpgrades(dbUpgrades)`.
-2. **Auto-transition effect (строка 75-99)**: при изменении `activeUpgrades` проверяет таймер → устанавливает `status: 'ready'` → вызывает `syncToCache()` + `batchUpdate()`.
-3. `syncToCache` обновляет React Query кэш → `gameData.activeBuildingUpgrades` получает НОВУЮ ссылку → снова срабатывает sync effect из шага 1.
-4. `batchUpdate` → `updateGameData` → ещё одно обновление кэша → ещё одна новая ссылка → sync effect → цикл повторяется.
+1. Сохранять `telegram_chat_id` каждого игрока в БД (привязка к `wallet_address`)
+2. Создать Edge Function `send-telegram-notification`, которая шлёт сообщение через Telegram Bot API
+3. Вызывать эту функцию из существующих мест завершения событий (стройка, крафт, лечение)
+4. Для ивента «Искатели» — создать pg_cron задачу, которая при старте нового ивента рассылает уведомления всем игрокам
 
-Каждый цикл выдаёт: `"Auto-transitioning upgrades to ready"` + `"Optimistic update - setting balance to: 445"`. В логе это повторяется **сотни раз**, полностью замораживая UI.
+### Требования
 
-### Решение
+- Токен бота Mini App нужно добавить как секрет `TELEGRAM_BOT_TOKEN`
+- Бот может отправлять сообщения только тем пользователям, которые хотя бы раз взаимодействовали с ним (запускали Mini App)
 
-Исправить `src/hooks/useBuildingUpgrades.ts`:
+### Детали реализации
 
-1. **В sync effect**: не вызывать `setActiveUpgrades` если данные семантически идентичны текущему состоянию. Сравнивать по `JSON.stringify` или по `buildingId + status`, чтобы новая ссылка из кэша не запускала лишний цикл.
+**1. Миграция БД — сохранение telegram_chat_id**
 
-2. **В auto-transition effect**: после одного успешного перехода в `ready` записать это в ref (`transitionedRef`), чтобы повторные срабатывания для того же upgrade игнорировались. Убрать `syncToCache()` из этого эффекта — достаточно одного `batchUpdate`, который сам обновит кэш через `updateGameData`.
+Добавить колонку `telegram_chat_id bigint` в таблицу `game_data`. Обновлять её при каждом входе игрока через Mini App.
 
-3. **Убрать дублирующий interval effect (строка 102-136)**: он делает то же самое, что auto-transition effect, создавая вторую точку входа в тот же цикл. Логику toast перенести в auto-transition effect.
-
-4. **Один вызов записи**: вместо `syncToCache()` + `batchUpdate()` (оба пишут в кэш), оставить только `batchUpdate()`, который через `updateGameData` уже делает оптимистичное обновление кэша.
-
-### Технические детали
-
-Файл для правки: `src/hooks/useBuildingUpgrades.ts`
-
-Sync effect — добавить сравнение:
-```typescript
-useEffect(() => {
-  const dbUpgrades = gameData.activeBuildingUpgrades;
-  if (!Array.isArray(dbUpgrades)) { /* fallback logic */ return; }
-  
-  // Не обновлять если данные идентичны
-  const currentKey = JSON.stringify(activeUpgrades.map(u => ({ id: u.buildingId, s: u.status })));
-  const newKey = JSON.stringify(dbUpgrades.map(u => ({ id: u.buildingId, s: u.status })));
-  if (currentKey === newKey && activeUpgrades.length === dbUpgrades.length) return;
-  
-  // ... остальная логика
-}, [gameData.activeBuildingUpgrades]);
+```sql
+ALTER TABLE public.game_data ADD COLUMN IF NOT EXISTS telegram_chat_id bigint;
+CREATE INDEX IF NOT EXISTS idx_game_data_tg_chat ON public.game_data(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL;
 ```
 
-Auto-transition effect — добавить ref-guard и убрать syncToCache:
-```typescript
-const transitionedRef = useRef<Set<string>>(new Set());
+**2. Сохранение chat_id при входе**
 
-useEffect(() => {
-  if (activeUpgrades.length === 0 || !accountId) return;
-  const now = Date.now();
-  let changed = false;
-  const updated = activeUpgrades.map(upgrade => {
-    const key = `${upgrade.buildingId}_${upgrade.startTime}`;
-    if (now >= upgrade.startTime + upgrade.duration 
-        && upgrade.status !== 'ready' 
-        && !transitionedRef.current.has(key)) {
-      transitionedRef.current.add(key);
-      changed = true;
-      return { ...upgrade, status: 'ready' as const };
-    }
-    return upgrade;
-  });
-  if (changed) {
-    setActiveUpgrades(updated);
-    // Только batchUpdate, без syncToCache
-    gameState.actions.batchUpdate({ activeBuildingUpgrades: updated }).catch(...);
-  }
-}, [activeUpgrades, accountId]);
+В `src/contexts/WalletConnectContext.tsx` или `useGameData` — после инициализации, если `window.Telegram?.WebApp?.initDataUnsafe?.user?.id` существует, вызывать RPC для сохранения:
+
+```sql
+CREATE OR REPLACE FUNCTION public.save_telegram_chat_id(p_wallet_address text, p_chat_id bigint)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  UPDATE game_data SET telegram_chat_id = p_chat_id WHERE wallet_address = p_wallet_address;
+END;
+$$;
 ```
 
-Удалить interval effect целиком (строки 102-136) — toast вынести в auto-transition.
+Вызов из клиента: `supabase.rpc('save_telegram_chat_id', { p_wallet_address: accountId, p_chat_id: tgUser.id })`
 
-### Проверка после внедрения
-- Запустить улучшение здания
-- Дождаться окончания таймера
-- Открыть лагерь
-- Убедиться: нет бесконечного повторения логов, UI не зависает, здание отображается как готовое к установке
+**3. Edge Function `send-telegram-notification`**
+
+Принимает `wallet_address` и `message` (текст). Ищет `telegram_chat_id` в `game_data`, шлёт через `https://api.telegram.org/bot{TOKEN}/sendMessage`.
+
+```
+supabase/functions/send-telegram-notification/index.ts
+```
+
+Используется `TELEGRAM_BOT_TOKEN` (секрет) и `SUPABASE_SERVICE_ROLE_KEY` для чтения chat_id из БД.
+
+**4. Триггерные точки — откуда вызывать уведомления**
+
+| Событие | Где срабатывает | Как вызывать |
+|---------|----------------|-------------|
+| Постройка здания готова | `useBuildingUpgrades.ts` — auto-transition effect (status → ready) | `supabase.functions.invoke('send-telegram-notification', { body: { wallet_address, message } })` |
+| Крафт завершён | `useShelterState.ts` — `checkCraftingCompletion` (строка ~714) | Аналогично |
+| Лечение завершено | `useMedicalBay.ts` — при `is_completed = true` | Аналогично |
+| Новый ивент Искатели | Админ создаёт ивент → триггер в БД или pg_cron | Edge Function `notify-seekers-event` — массовая рассылка |
+
+**5. Массовая рассылка при старте ивента Искатели**
+
+Создать отдельную Edge Function `notify-seekers-event`, которая:
+- Берёт всех игроков с непустым `telegram_chat_id`
+- Шлёт каждому сообщение о новом ивенте
+- Вызывается вручную из админки или через триггер при INSERT в таблицу ивентов
+
+**6. Защита от спама**
+
+- Уведомления отправляются только серверно (Edge Function), клиент не может напрямую слать сообщения
+- Rate limiting: не более 1 уведомления в минуту на пользователя (проверка в Edge Function)
+- Telegram API лимит: 30 сообщений/сек, при массовой рассылке — задержка между сообщениями
+
+### Файлы для создания/изменения
+
+- **Новые**: `supabase/functions/send-telegram-notification/index.ts`, `supabase/functions/notify-seekers-event/index.ts`
+- **Миграция**: колонка `telegram_chat_id` + RPC `save_telegram_chat_id`
+- **Изменения**: `src/hooks/useBuildingUpgrades.ts`, `src/hooks/shelter/useShelterState.ts`, `src/hooks/useMedicalBay.ts`, `src/hooks/useGameData.ts` (или WalletConnectContext)
+- **Секрет**: `TELEGRAM_BOT_TOKEN` — нужно добавить перед реализацией
+
+### Порядок
+
+1. Добавить секрет `TELEGRAM_BOT_TOKEN`
+2. Миграция БД
+3. Сохранение chat_id при входе
+4. Edge Function для отправки
+5. Интеграция в триггерные точки
+6. Edge Function для массовой рассылки Искателей
 
