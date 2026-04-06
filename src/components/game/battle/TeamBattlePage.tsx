@@ -629,6 +629,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       // НЕ вызываем handleExitAndReset() — игрок может повторить попытку
     } finally {
       clearTimeout(safetyTimeout);
+      setClaimInProgress(false);
     }
   };
 
