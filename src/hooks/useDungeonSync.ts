@@ -102,6 +102,8 @@ export const useDungeonSync = () => {
         const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
         clearTeamBattleState();
         clearBattleState();
+        // Очищаем persisted battle state из localStorage
+        localStorage.removeItem('game-battle-state');
         setLocalSession(null);
         // Используем GameEventsContext вместо window.dispatchEvent
         emit('battleReset');
@@ -316,6 +318,8 @@ export const useDungeonSync = () => {
               const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
               clearTeamBattleState();
               clearBattleState();
+              // Очищаем persisted battle state из localStorage
+              localStorage.removeItem('game-battle-state');
               setLocalSession(null);
               // Используем GameEventsContext вместо window.dispatchEvent
               emit('battleReset');

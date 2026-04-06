@@ -334,6 +334,31 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       navigate('/dungeons');
     });
   };
+  // ✅ Сохраняем состояние боя в Zustand (для persist и навигации)
+  const saveBattleStateToStore = useCallback(() => {
+    if (!battleStarted || battleState.playerPairs.length === 0) return;
+    const currentBattleState = {
+      level: battleState.level,
+      dungeonType: dungeonType,
+      playerPairs: battleState.playerPairs,
+      opponents: battleState.opponents,
+      currentTurn: battleState.currentTurn,
+      currentAttacker: battleState.currentAttacker,
+      monstersKilled: monstersKilledRef.current
+    };
+    useGameStore.getState().setTeamBattleState(currentBattleState);
+    useGameStore.getState().setActiveBattleInProgress(true);
+  }, [battleState, dungeonType, battleStarted]);
+
+  // ✅ Сохраняем состояние боя при перезагрузке/закрытии вкладки
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      saveBattleStateToStore();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [saveBattleStateToStore]);
+
   // ✅ Общий хендлер для сохранения состояния боя при выходе в меню
   const handleSaveBattleStateAndNavigate = useCallback((targetRoute: string = '/dungeons') => {
     // ✅ FIX: Only save battle state if battle actually started AND team is non-empty

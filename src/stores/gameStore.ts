@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 /**
  * РЕФАКТОРИНГ: gameStore теперь содержит ТОЛЬКО UI-состояние.
@@ -43,54 +44,10 @@ interface GameState {
   clearAllData: () => void;
 }
 
-export const useGameStore = create<GameState>()((set, get) => ({
-  // Initial state - все данные приходят из Supabase через useGameSync
-  balance: 0,
-  selectedTeam: [],
-  accountLevel: 1,
-  accountExperience: 0,
-  battleState: null,
-  activeBattleInProgress: false,
-  teamBattleState: null,
-  
-  // Actions
-  setBalance: (balance) => set({ balance }),
-  addBalance: (amount) => set((state) => ({ balance: state.balance + amount })),
-  
-  setSelectedTeam: (selectedTeam) => set({ selectedTeam }),
-  setBattleState: (battleState) => set({ battleState }),
-  clearBattleState: () => set({ battleState: null }),
-  setActiveBattleInProgress: (active: boolean) => set({ activeBattleInProgress: active }),
-  setTeamBattleState: (state: any) => set({ teamBattleState: state }),
-  clearTeamBattleState: () => set({ teamBattleState: null, activeBattleInProgress: false }),
-  
-  // Account progression actions
-  setAccountLevel: (accountLevel) => set({ accountLevel }),
-  setAccountExperience: (accountExperience) => set({ accountExperience }),
-  setAccountData: (level: number, experience: number) => {
-    set({ accountLevel: level, accountExperience: experience });
-  },
-  
-  addAccountExperience: async (amount: number) => {
-    const state = get();
-    const newExperience = state.accountExperience + amount;
-    const experienceForNextLevel = state.accountLevel * 100;
-    
-    if (newExperience >= experienceForNextLevel) {
-      const newLevel = state.accountLevel + 1;
-      const remainingExperience = newExperience - experienceForNextLevel;
-      
-      set({ 
-        accountLevel: newLevel, 
-        accountExperience: remainingExperience 
-      });
-    } else {
-      set({ accountExperience: newExperience });
-    }
-  },
-  
-  clearAllData: () => {
-    set({
+export const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
+      // Initial state - все данные приходят из Supabase через useGameSync
       balance: 0,
       selectedTeam: [],
       accountLevel: 1,
@@ -98,6 +55,62 @@ export const useGameStore = create<GameState>()((set, get) => ({
       battleState: null,
       activeBattleInProgress: false,
       teamBattleState: null,
-    });
-  },
-}));
+      
+      // Actions
+      setBalance: (balance) => set({ balance }),
+      addBalance: (amount) => set((state) => ({ balance: state.balance + amount })),
+      
+      setSelectedTeam: (selectedTeam) => set({ selectedTeam }),
+      setBattleState: (battleState) => set({ battleState }),
+      clearBattleState: () => set({ battleState: null }),
+      setActiveBattleInProgress: (active: boolean) => set({ activeBattleInProgress: active }),
+      setTeamBattleState: (state: any) => set({ teamBattleState: state }),
+      clearTeamBattleState: () => set({ teamBattleState: null, activeBattleInProgress: false }),
+      
+      // Account progression actions
+      setAccountLevel: (accountLevel) => set({ accountLevel }),
+      setAccountExperience: (accountExperience) => set({ accountExperience }),
+      setAccountData: (level: number, experience: number) => {
+        set({ accountLevel: level, accountExperience: experience });
+      },
+      
+      addAccountExperience: async (amount: number) => {
+        const state = get();
+        const newExperience = state.accountExperience + amount;
+        const experienceForNextLevel = state.accountLevel * 100;
+        
+        if (newExperience >= experienceForNextLevel) {
+          const newLevel = state.accountLevel + 1;
+          const remainingExperience = newExperience - experienceForNextLevel;
+          
+          set({ 
+            accountLevel: newLevel, 
+            accountExperience: remainingExperience 
+          });
+        } else {
+          set({ accountExperience: newExperience });
+        }
+      },
+      
+      clearAllData: () => {
+        set({
+          balance: 0,
+          selectedTeam: [],
+          accountLevel: 1,
+          accountExperience: 0,
+          battleState: null,
+          activeBattleInProgress: false,
+          teamBattleState: null,
+        });
+      },
+    }),
+    {
+      name: 'game-battle-state',
+      partialize: (state) => ({
+        teamBattleState: state.teamBattleState,
+        activeBattleInProgress: state.activeBattleInProgress,
+        selectedTeam: state.selectedTeam,
+      }),
+    }
+  )
+);
