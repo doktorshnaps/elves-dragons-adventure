@@ -4636,6 +4636,7 @@ export type Database = {
         }[]
       }
       get_static_game_data: { Args: never; Returns: Json }
+      get_telegram_status: { Args: { p_wallet_address: string }; Returns: Json }
       get_user_daily_quests: {
         Args: { p_wallet_address: string }
         Returns: {
@@ -4867,9 +4868,9 @@ export type Database = {
         Args: { p_accept: boolean; p_request_id: string; p_wallet: string }
         Returns: Json
       }
-      save_telegram_chat_id: {
+      save_telegram_chat_id_v2: {
         Args: { p_chat_id: number; p_wallet_address: string }
-        Returns: undefined
+        Returns: Json
       }
       search_clans: { Args: { p_query?: string }; Returns: Json }
       start_bot_match: {
