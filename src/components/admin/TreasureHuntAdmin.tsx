@@ -180,8 +180,9 @@ export const TreasureHuntAdmin = () => {
         p_ended_at: endedAt.toISOString(),
       });
 
-      if (result?.status === 'error') {
-        throw new Error(result.message || 'Admin check failed');
+      const resultObj = result as Record<string, unknown> | null;
+      if (resultObj?.status === 'error') {
+        throw new Error((resultObj.message as string) || 'Admin check failed');
       }
 
       if (error) throw error;
