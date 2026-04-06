@@ -1,92 +1,102 @@
 
+Проблема, скорее всего, не в самом токене бота, а в том, что текущая схема отправки вообще не доходит до Telegram или не привязывает игрока к `chat_id`.
 
-## Пуш-уведомления в Telegram о событиях в игре
+Что я нашёл
+- В проекте уже есть:
+  - сохранение `telegram_chat_id` через `saveTelegramChatId`
+  - Edge Function `send-telegram-notification`
+  - вызовы уведомлений из стройки, крафта и медпункта
+- Но есть несколько слабых мест:
+  1. `saveTelegramChatId(accountId)` вызывается в `useGameInitialization`, а этот хук может отработать один раз и больше не повториться в нужный момент. Если `accountId` появился позже или Mini App ещё не был готов, `chat_id` не сохранится.
+  2. `sendTelegramNotification()` сейчас fire-and-forget: клиент не показывает, что именно вернула функция (`no_chat_id`, `rate_limited`, ошибка Telegram и т.д.).
+  3. В Edge Function нет явной проверки/валидации запроса и пользователя, а диагностика слишком слабая.
+  4. По логам сейчас нет свежих вызовов `send-telegram-notification` вообще — это сильный признак, что либо событие не срабатывает, либо функция не вызывается клиентом в реальном потоке.
 
-### Архитектура
+План исправления
+1. Усилить привязку Telegram пользователя
+- Перенести/дублировать вызов `saveTelegramChatId(accountId)` в место, где точно есть и `accountId`, и `window.Telegram.WebApp.initDataUnsafe.user.id`.
+- Сделать это через отдельный `useEffect`, завязанный на:
+  - `accountId`
+  - факт запуска внутри Telegram
+  - `tgWebApp?.initDataUnsafe?.user?.id`
+- Добавить защиту от повторных одинаковых RPC-вызовов, но не блокировать сохранение навсегда.
 
-Приложение уже работает как Telegram Mini App. У пользователя `window.Telegram.WebApp.initDataUnsafe.user.id` содержит Telegram chat_id. Нужно:
+2. Сделать клиентскую диагностику понятной
+- Изменить `sendTelegramNotification()` так, чтобы он логировал результат функции:
+  - `sent`
+  - `skipped: no_chat_id`
+  - `skipped: rate_limited`
+  - `Telegram API failed`
+- При желании добавить тихий debug-toast только в dev, чтобы быстро видеть причину без просмотра кода.
 
-1. Сохранять `telegram_chat_id` каждого игрока в БД (привязка к `wallet_address`)
-2. Создать Edge Function `send-telegram-notification`, которая шлёт сообщение через Telegram Bot API
-3. Вызывать эту функцию из существующих мест завершения событий (стройка, крафт, лечение)
-4. Для ивента «Искатели» — создать pg_cron задачу, которая при старте нового ивента рассылает уведомления всем игрокам
+3. Укрепить Edge Function `send-telegram-notification`
+- Добавить безопасную валидацию входных данных.
+- Привести CORS к актуальному формату проекта.
+- Добавить подробные серверные логи по этапам:
+  - пришёл запрос
+  - найден/не найден `telegram_chat_id`
+  - отправка в Telegram
+  - ответ Telegram API
+- Не менять бизнес-логику спама, но возвращать более явный JSON-ответ для клиента.
 
-### Требования
+4. Проверить и подправить триггеры событий
+- `useBuildingUpgrades.ts`: уведомление уже стоит, но нужно убедиться, что оно не теряется из-за перехода статуса/локального цикла.
+- `useShelterState.ts`: уведомление при завершении крафта зависит от таймера в открытой вкладке. Если пользователь закрыл игру, уведомления не будет. Я бы оставил текущий клиентский триггер как минимум, но отмечу это как архитектурное ограничение.
+- `useMedicalBay.ts`: сейчас уведомление отправляется при `removeCardFromMedicalBay`, то есть когда игрок уже сам забрал карту. Это не соответствует задаче “по завершении лечения”.
+  Нужно перенести уведомление на момент, когда запись становится завершённой (`is_completed = true`), а не на ручное снятие карты.
 
-- Токен бота Mini App нужно добавить как секрет `TELEGRAM_BOT_TOKEN`
-- Бот может отправлять сообщения только тем пользователям, которые хотя бы раз взаимодействовали с ним (запускали Mini App)
+5. Исправить логику лечения
+- Добавить отслеживание перехода записи медпункта в состояние `is_completed`.
+- Посылать уведомление один раз на завершённое лечение.
+- Использовать локальный ref/set, чтобы не слать повторно при каждом рефетче/real-time обновлении.
 
-### Детали реализации
+6. Подготовить более надёжную архитектуру на будущее
+- Сейчас стройка, крафт и лечение завязаны на открытый клиент.
+- Это значит:
+  - если игра закрыта, таймер на клиенте не сработает
+  - Telegram-уведомление не отправится
+- Следующий правильный шаг — вынести завершение таймерных событий на серверную сторону:
+  - cron / Edge Function / DB-triggered processing
+  - а Telegram отправлять уже оттуда
+- Для текущего фикса я бы сначала восстановил рабочие уведомления в существующей логике, затем при необходимости сделал серверную доставку для 100% надёжности.
 
-**1. Миграция БД — сохранение telegram_chat_id**
+Почему уведомления “по прежнему не приходят”
+Наиболее вероятные причины по текущему коду:
+- `telegram_chat_id` не сохраняется у игрока
+- функция вообще не вызывается из текущего пользовательского сценария
+- медпункт уведомляет не в тот момент
+- события завязаны на открытую вкладку, а не на сервер
 
-Добавить колонку `telegram_chat_id bigint` в таблицу `game_data`. Обновлять её при каждом входе игрока через Mini App.
+Что именно я бы внедрил
+- `useGameInitialization.ts` или `WalletConnectContext.tsx`:
+  - отдельный стабильный эффект сохранения `chat_id`
+- `src/utils/telegramNotifications.ts`:
+  - возврат результата и расширенные логи
+- `supabase/functions/send-telegram-notification/index.ts`:
+  - валидация, более подробные ответы и логи
+- `src/hooks/useMedicalBay.ts`:
+  - уведомление по факту завершения лечения, а не по ручному снятию
+- при необходимости:
+  - лёгкий debug-индикатор в консоли/тостах для причины пропуска
 
-```sql
-ALTER TABLE public.game_data ADD COLUMN IF NOT EXISTS telegram_chat_id bigint;
-CREATE INDEX IF NOT EXISTS idx_game_data_tg_chat ON public.game_data(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL;
+Технические детали
+```text
+Текущий поток:
+Mini App -> saveTelegramChatId(accountId) -> game_data.telegram_chat_id
+Событие в игре -> sendTelegramNotification(wallet, message, eventType)
+-> Edge Function -> ищет game_data.telegram_chat_id
+-> Telegram Bot API sendMessage
+
+Слабые точки:
+1) chat_id мог не сохраниться
+2) клиент не показывает результат invoke
+3) лечение отправляет уведомление слишком поздно
+4) часть событий работает только пока открыт клиент
 ```
 
-**2. Сохранение chat_id при входе**
-
-В `src/contexts/WalletConnectContext.tsx` или `useGameData` — после инициализации, если `window.Telegram?.WebApp?.initDataUnsafe?.user?.id` существует, вызывать RPC для сохранения:
-
-```sql
-CREATE OR REPLACE FUNCTION public.save_telegram_chat_id(p_wallet_address text, p_chat_id bigint)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  UPDATE game_data SET telegram_chat_id = p_chat_id WHERE wallet_address = p_wallet_address;
-END;
-$$;
-```
-
-Вызов из клиента: `supabase.rpc('save_telegram_chat_id', { p_wallet_address: accountId, p_chat_id: tgUser.id })`
-
-**3. Edge Function `send-telegram-notification`**
-
-Принимает `wallet_address` и `message` (текст). Ищет `telegram_chat_id` в `game_data`, шлёт через `https://api.telegram.org/bot{TOKEN}/sendMessage`.
-
-```
-supabase/functions/send-telegram-notification/index.ts
-```
-
-Используется `TELEGRAM_BOT_TOKEN` (секрет) и `SUPABASE_SERVICE_ROLE_KEY` для чтения chat_id из БД.
-
-**4. Триггерные точки — откуда вызывать уведомления**
-
-| Событие | Где срабатывает | Как вызывать |
-|---------|----------------|-------------|
-| Постройка здания готова | `useBuildingUpgrades.ts` — auto-transition effect (status → ready) | `supabase.functions.invoke('send-telegram-notification', { body: { wallet_address, message } })` |
-| Крафт завершён | `useShelterState.ts` — `checkCraftingCompletion` (строка ~714) | Аналогично |
-| Лечение завершено | `useMedicalBay.ts` — при `is_completed = true` | Аналогично |
-| Новый ивент Искатели | Админ создаёт ивент → триггер в БД или pg_cron | Edge Function `notify-seekers-event` — массовая рассылка |
-
-**5. Массовая рассылка при старте ивента Искатели**
-
-Создать отдельную Edge Function `notify-seekers-event`, которая:
-- Берёт всех игроков с непустым `telegram_chat_id`
-- Шлёт каждому сообщение о новом ивенте
-- Вызывается вручную из админки или через триггер при INSERT в таблицу ивентов
-
-**6. Защита от спама**
-
-- Уведомления отправляются только серверно (Edge Function), клиент не может напрямую слать сообщения
-- Rate limiting: не более 1 уведомления в минуту на пользователя (проверка в Edge Function)
-- Telegram API лимит: 30 сообщений/сек, при массовой рассылке — задержка между сообщениями
-
-### Файлы для создания/изменения
-
-- **Новые**: `supabase/functions/send-telegram-notification/index.ts`, `supabase/functions/notify-seekers-event/index.ts`
-- **Миграция**: колонка `telegram_chat_id` + RPC `save_telegram_chat_id`
-- **Изменения**: `src/hooks/useBuildingUpgrades.ts`, `src/hooks/shelter/useShelterState.ts`, `src/hooks/useMedicalBay.ts`, `src/hooks/useGameData.ts` (или WalletConnectContext)
-- **Секрет**: `TELEGRAM_BOT_TOKEN` — нужно добавить перед реализацией
-
-### Порядок
-
-1. Добавить секрет `TELEGRAM_BOT_TOKEN`
-2. Миграция БД
-3. Сохранение chat_id при входе
-4. Edge Function для отправки
-5. Интеграция в триггерные точки
-6. Edge Function для массовой рассылки Искателей
-
+Итог
+Сначала нужно восстановить базовую цепочку:
+1. гарантированно сохранять `telegram_chat_id`
+2. видеть точную причину пропуска отправки
+3. исправить момент уведомления по лечению
+4. только потом, если нужно, переводить таймерные события на сервер для гарантированной доставки
