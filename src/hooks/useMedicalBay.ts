@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
@@ -32,6 +32,8 @@ export const useMedicalBay = () => {
   const { accountId } = useWalletContext();
   const { gameData, updateGameData } = useGameData();
   const queryClient = useQueryClient();
+  // Track which entries already sent a completion notification
+  const notifiedCompletionsRef = useRef<Set<string>>(new Set());
 
   // React Query для данных медпункта
   const { 
@@ -77,7 +79,7 @@ export const useMedicalBay = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Real-time подписка на medical_bay
+  // Real-time подписка на medical_bay + notification on completion
   useEffect(() => {
     if (!accountId) return;
 
@@ -95,6 +97,25 @@ export const useMedicalBay = () => {
         },
         (payload) => {
           console.log('🏥 [Real-time] medical_bay changed:', payload.eventType);
+
+          // Send notification when healing completes (UPDATE with is_completed = true)
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const newRow = payload.new as any;
+            const oldRow = payload.old as any;
+            if (newRow.is_completed && !oldRow?.is_completed) {
+              const entryId = newRow.id || newRow.card_instance_id;
+              if (!notifiedCompletionsRef.current.has(entryId)) {
+                notifiedCompletionsRef.current.add(entryId);
+                console.log('📱 Sending healing completion notification for:', entryId);
+                sendTelegramNotification(
+                  accountId,
+                  `💊 Лечение завершено!\nЗдоровье карты полностью восстановлено.`,
+                  `medical_complete_${entryId}`
+                );
+              }
+            }
+          }
+
           // Инвалидируем кэш для обновления данных
           queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
           // Также обновляем cardInstances т.к. is_in_medical_bay меняется
