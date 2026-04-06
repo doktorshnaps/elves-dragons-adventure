@@ -5,6 +5,7 @@ import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useGameStore } from "@/stores/gameStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveTelegramChatId } from "@/utils/telegramNotifications";
+import useTelegram from "@/hooks/useTelegram";
 
 /**
  * РЕФАКТОРИНГ: Убрана зависимость от setCards
@@ -16,7 +17,9 @@ export const useGameInitialization = () => {
   const { accountId } = useWalletContext();
   const isConnected = !!accountId;
   const hasInitializedRef = useRef(false);
+  const tgChatIdSavedRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
+  const { isTelegram, tgWebApp } = useTelegram();
 
   console.log('🎮 useGameInitialization: accountId=', accountId, 'isConnected=', isConnected, 'hasInitialized=', hasInitializedRef.current);
 
@@ -114,8 +117,6 @@ export const useGameInitialization = () => {
           queryClient.invalidateQueries({ queryKey: ['gameData'] });
         }
 
-        // Save Telegram chat_id if running inside Mini App
-        saveTelegramChatId(accountId);
       } catch (error) {
         console.error('Error in game initialization:', error);
       }
@@ -128,6 +129,22 @@ export const useGameInitialization = () => {
       hasInitializedRef.current = false;
     };
   }, [accountId, isConnected, toast, queryClient]);
+
+  // Dedicated stable effect for saving Telegram chat_id
+  useEffect(() => {
+    if (!accountId || !isTelegram || !tgWebApp) return;
+    const tgUserId = tgWebApp.initDataUnsafe?.user?.id;
+    if (!tgUserId) return;
+
+    // Don't re-save if already saved for this wallet+chatId combo
+    const key = `${accountId}:${tgUserId}`;
+    if (tgChatIdSavedRef.current === key) return;
+
+    console.log('📱 Saving Telegram chat_id:', tgUserId, 'for wallet:', accountId);
+    saveTelegramChatId(accountId).then((ok) => {
+      if (ok) tgChatIdSavedRef.current = key;
+    });
+  }, [accountId, isTelegram, tgWebApp]);
 
   return {};
 };
