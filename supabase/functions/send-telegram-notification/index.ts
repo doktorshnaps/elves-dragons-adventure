@@ -3,8 +3,15 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,20 +20,19 @@ Deno.serve(async (req) => {
 
   try {
     const { wallet_address, message, event_type } = await req.json();
+    console.log("[TG-NOTIFY] Request received:", { wallet_address, event_type, messageLen: message?.length });
 
-    if (!wallet_address || !message) {
-      return new Response(
-        JSON.stringify({ error: "wallet_address and message are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!wallet_address || typeof wallet_address !== "string" || wallet_address.length > 128) {
+      return jsonResponse({ error: "invalid wallet_address" }, 400);
+    }
+    if (!message || typeof message !== "string" || message.length > 4096) {
+      return jsonResponse({ error: "invalid message" }, 400);
     }
 
     const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
     if (!botToken) {
-      return new Response(
-        JSON.stringify({ error: "TELEGRAM_BOT_TOKEN not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("[TG-NOTIFY] TELEGRAM_BOT_TOKEN not configured!");
+      return jsonResponse({ error: "TELEGRAM_BOT_TOKEN not configured" }, 500);
     }
 
     const supabase = createClient(
@@ -45,10 +51,8 @@ Deno.serve(async (req) => {
         .limit(1);
 
       if (recentLog && recentLog.length > 0) {
-        return new Response(
-          JSON.stringify({ ok: true, skipped: true, reason: "rate_limited" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.log("[TG-NOTIFY] Rate limited:", { wallet_address, event_type });
+        return jsonResponse({ ok: true, skipped: true, reason: "rate_limited" });
       }
     }
 
@@ -59,12 +63,17 @@ Deno.serve(async (req) => {
       .eq("wallet_address", wallet_address)
       .single();
 
-    if (dbError || !gameData?.telegram_chat_id) {
-      return new Response(
-        JSON.stringify({ ok: true, skipped: true, reason: "no_chat_id" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (dbError) {
+      console.error("[TG-NOTIFY] DB error:", dbError);
+      return jsonResponse({ ok: true, skipped: true, reason: "db_error" });
     }
+
+    if (!gameData?.telegram_chat_id) {
+      console.log("[TG-NOTIFY] No chat_id for wallet:", wallet_address);
+      return jsonResponse({ ok: true, skipped: true, reason: "no_chat_id" });
+    }
+
+    console.log("[TG-NOTIFY] Sending to chat_id:", gameData.telegram_chat_id);
 
     // Send via Telegram Bot API
     const tgResponse = await fetch(
@@ -81,12 +90,13 @@ Deno.serve(async (req) => {
     );
 
     const tgResult = await tgResponse.json();
+    console.log("[TG-NOTIFY] Telegram API response:", { ok: tgResult.ok, status: tgResponse.status });
 
     if (!tgResponse.ok) {
-      console.error("Telegram API error:", tgResult);
-      return new Response(
-        JSON.stringify({ error: "Telegram API failed", details: tgResult }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      console.error("[TG-NOTIFY] Telegram API error:", tgResult);
+      return jsonResponse(
+        { error: "Telegram API failed", details: tgResult.description || tgResult },
+        502
       );
     }
 
@@ -98,15 +108,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, sent: true }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ ok: true, sent: true });
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("[TG-NOTIFY] Unhandled error:", error);
+    return jsonResponse({ error: error.message }, 500);
   }
 });
