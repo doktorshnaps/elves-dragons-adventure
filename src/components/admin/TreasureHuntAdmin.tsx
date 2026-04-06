@@ -158,26 +158,17 @@ export const TreasureHuntAdmin = () => {
       // Получаем данные предмета
       const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
       
-      // Вычисляем дату окончания события
-      const now = new Date();
-      const durationMs = 
-        (formData.duration_days * 24 * 60 * 60 * 1000) +
-        (formData.duration_hours * 60 * 60 * 1000) +
-        (formData.duration_minutes * 60 * 1000);
-      const endedAt = new Date(now.getTime() + durationMs);
-      
       const { data: result, error } = await supabase.rpc('admin_create_treasure_hunt_event', {
         p_admin_wallet: accountId,
         p_item_template_id: parseInt(formData.item_template_id),
         p_item_name: selectedItem?.name || '',
         p_item_image_url: selectedItem?.image_url || null,
-        p_monster_id: formData.monster_id === "none" ? null : formData.monster_id,
-        p_dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
         p_drop_chance: parseFloat(formData.drop_chance),
+        p_dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
         p_total_quantity: formData.total_quantity,
         p_max_winners: formData.max_winners,
         p_reward_amount: formData.reward_amount,
-        p_ended_at: endedAt.toISOString(),
+        p_duration_days: formData.duration_days,
       });
 
       const resultObj = result as Record<string, unknown> | null;
@@ -220,31 +211,19 @@ export const TreasureHuntAdmin = () => {
 
   const toggleEventStatus = async (eventId: string, currentStatus: boolean) => {
     try {
-      // Деактивировать все активные события если активируем новое
-      if (!currentStatus) {
-        await supabase
-          .from('treasure_hunt_events')
-          .update({ is_active: false, ended_at: new Date().toISOString() })
-          .eq('is_active', true);
-      }
+      if (!accountId) return;
 
-      // При активации события сохраняем ended_at, при деактивации устанавливаем текущее время
-      const updateData: any = { 
-        is_active: !currentStatus,
-        started_at: !currentStatus ? new Date().toISOString() : null,
-      };
-      
-      // Только при деактивации устанавливаем ended_at на текущее время
-      if (currentStatus) {
-        updateData.ended_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('treasure_hunt_events')
-        .update(updateData)
-        .eq('id', eventId);
+      const { data: result, error } = await supabase.rpc('admin_toggle_treasure_hunt_event', {
+        p_admin_wallet: accountId,
+        p_event_id: eventId,
+        p_activate: !currentStatus,
+      });
 
       if (error) throw error;
+      const resultObj = result as Record<string, unknown> | null;
+      if (resultObj?.status === 'error') {
+        throw new Error((resultObj.message as string) || 'Failed');
+      }
 
       toast({
         title: "Успешно",
@@ -263,44 +242,25 @@ export const TreasureHuntAdmin = () => {
   };
 
   const deleteEvent = async (eventId: string) => {
-    if (!confirm('Вы уверены что хотите удалить это событие? Все предметы этого события будут удалены у игроков.')) return;
+    if (!confirm('Вы уверены что хотите удалить это событие?')) return;
 
     try {
-      // Получаем template_id события для удаления предметов
-      const eventToDelete = events.find(e => e.id === eventId);
-      
-      if (eventToDelete?.item_template_id) {
-        // Используем RPC функцию для удаления всех предметов этого события
-        const { data: deletedCount, error: itemsError } = await supabase
-          .rpc('delete_treasure_hunt_items', { 
-            p_template_id: eventToDelete.item_template_id 
-          });
+      if (!accountId) return;
 
-        if (itemsError) {
-          console.error('Error deleting quest items:', itemsError);
-          toast({
-            title: "Предупреждение",
-            description: "Событие удалено, но некоторые предметы могли остаться",
-            variant: "destructive",
-          });
-        } else {
-          console.log(`✅ Deleted ${deletedCount} quest items with template_id ${eventToDelete.item_template_id}`);
-        }
-      }
-
-      // Удаляем само событие
-      const { error } = await supabase
-        .from('treasure_hunt_events')
-        .delete()
-        .eq('id', eventId);
+      const { data: result, error } = await supabase.rpc('admin_delete_treasure_hunt_event', {
+        p_admin_wallet: accountId,
+        p_event_id: eventId,
+      });
 
       if (error) throw error;
+      const resultObj = result as Record<string, unknown> | null;
+      if (resultObj?.status === 'error') {
+        throw new Error((resultObj.message as string) || 'Failed');
+      }
 
       toast({
         title: "Успешно",
-        description: eventToDelete?.item_template_id 
-          ? `Событие и все предметы удалены` 
-          : "Событие удалено",
+        description: "Событие удалено",
       });
 
       await loadEvents();

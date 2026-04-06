@@ -3234,22 +3234,38 @@ export type Database = {
             }
             Returns: string
           }
-      admin_create_treasure_hunt_event: {
-        Args: {
-          p_admin_wallet: string
-          p_drop_chance?: number
-          p_dungeon_number?: number
-          p_ended_at?: string
-          p_item_image_url?: string
-          p_item_name: string
-          p_item_template_id: number
-          p_max_winners?: number
-          p_monster_id?: string
-          p_reward_amount?: number
-          p_total_quantity?: number
-        }
-        Returns: Json
-      }
+      admin_create_treasure_hunt_event:
+        | {
+            Args: {
+              p_admin_wallet: string
+              p_drop_chance?: number
+              p_dungeon_number?: number
+              p_duration_days?: number
+              p_item_image_url?: string
+              p_item_name: string
+              p_item_template_id: number
+              p_max_winners?: number
+              p_reward_amount?: number
+              p_total_quantity?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_admin_wallet: string
+              p_drop_chance?: number
+              p_dungeon_number?: number
+              p_ended_at?: string
+              p_item_image_url?: string
+              p_item_name: string
+              p_item_template_id: number
+              p_max_winners?: number
+              p_monster_id?: string
+              p_reward_amount?: number
+              p_total_quantity?: number
+            }
+            Returns: Json
+          }
       admin_delete_card_upgrade_requirement: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined
@@ -3273,6 +3289,10 @@ export type Database = {
       admin_delete_quest: {
         Args: { p_admin_wallet_address: string; p_id: string }
         Returns: boolean
+      }
+      admin_delete_treasure_hunt_event: {
+        Args: { p_admin_wallet: string; p_event_id: string }
+        Returns: Json
       }
       admin_distribute_season_rewards: {
         Args: { p_admin_wallet_address: string; p_season_id: string }
@@ -3591,6 +3611,14 @@ export type Database = {
           p_message?: string
         }
         Returns: boolean
+      }
+      admin_toggle_treasure_hunt_event: {
+        Args: {
+          p_activate: boolean
+          p_admin_wallet: string
+          p_event_id: string
+        }
+        Returns: Json
       }
       admin_unban_user: {
         Args: { p_target_wallet_address: string }
