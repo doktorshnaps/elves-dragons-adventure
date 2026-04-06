@@ -230,6 +230,22 @@ export const TreasureHuntAdmin = () => {
         description: currentStatus ? "Событие остановлено" : "Событие запущено",
       });
 
+      // Отправляем уведомление всем игрокам при запуске события
+      if (!currentStatus) {
+        const event = events.find(e => e.id === eventId);
+        const itemName = event?.item_name || 'предмет';
+        try {
+          await supabase.functions.invoke('admin-send-notification', {
+            body: {
+              admin_wallet: accountId,
+              message: `🔍 <b>Новое событие «Искатели»!</b>\n\n🎯 Найдите: <b>${itemName}</b>\n💰 Награда: <b>${event?.reward_amount || 0} ELL</b>\n🏆 Мест с наградой: <b>${event?.max_winners || 0}</b>\n⚔️ Шанс дропа: <b>${event?.drop_chance || 0}%</b>\n\nЗаходите в игру и будьте первыми! 🚀`,
+            },
+          });
+        } catch (notifError) {
+          console.error('Failed to send event notification:', notifError);
+        }
+      }
+
       await loadEvents();
     } catch (error) {
       console.error('Error toggling event status:', error);
