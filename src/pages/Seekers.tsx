@@ -104,15 +104,30 @@ export const Seekers = () => {
     try {
       setLoading(true);
       
-      // Загружаем последнее событие (активное или недавно завершенное)
-      const { data: event, error: eventError } = await supabase
+      // Сначала ищем активное событие
+      let { data: event, error: eventError } = await supabase
         .from('treasure_hunt_events')
         .select('*')
-        .order('created_at', { ascending: false })
+        .eq('is_active', true)
         .limit(1)
         .maybeSingle();
 
       if (eventError) throw eventError;
+
+      // Если нет активного — ищем последнее завершённое (started_at не null)
+      if (!event) {
+        const { data: finishedEvent, error: finishedError } = await supabase
+          .from('treasure_hunt_events')
+          .select('*')
+          .not('started_at', 'is', null)
+          .eq('is_active', false)
+          .order('ended_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (finishedError) throw finishedError;
+        event = finishedEvent;
+      }
 
       if (event) {
         setActiveEvent(event);
@@ -211,7 +226,7 @@ export const Seekers = () => {
                         />
                       )}
                       <div className="flex-1">
-                        {!activeEvent.is_active && (
+                        {!activeEvent.is_active && activeEvent.started_at && (
                           <div className="mb-3 p-3 bg-red-500/20 rounded-lg border border-red-500/30">
                             <div className="flex items-center gap-2 text-lg font-bold text-white">
                               <Trophy className="w-5 h-5" />
