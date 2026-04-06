@@ -75,6 +75,7 @@ export const clearActiveBattle = async (
       localStorage.removeItem('teamBattleState');
       localStorage.removeItem('activeBattleInProgress');
       localStorage.removeItem('battleState');
+      localStorage.removeItem('game-battle-state');
       console.log('✅ [clearActiveBattle] localStorage cleared');
     } catch (e) {
       console.warn('⚠️ [clearActiveBattle] Failed to clear localStorage:', e);
