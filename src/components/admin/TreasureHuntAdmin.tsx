@@ -166,21 +166,24 @@ export const TreasureHuntAdmin = () => {
         (formData.duration_minutes * 60 * 1000);
       const endedAt = new Date(now.getTime() + durationMs);
       
-      const { error } = await supabase
-        .from('treasure_hunt_events')
-        .insert({
-          item_template_id: parseInt(formData.item_template_id),
-          item_name: selectedItem?.name || '',
-          item_image_url: selectedItem?.image_url || null,
-          monster_id: formData.monster_id === "none" ? null : formData.monster_id,
-          dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
-          drop_chance: parseFloat(formData.drop_chance),
-          total_quantity: formData.total_quantity,
-          max_winners: formData.max_winners,
-          reward_amount: formData.reward_amount,
-          created_by_wallet_address: accountId,
-          ended_at: endedAt.toISOString(),
-        });
+      const { data: result, error } = await supabase.rpc('admin_create_treasure_hunt_event', {
+        p_admin_wallet: accountId,
+        p_item_template_id: parseInt(formData.item_template_id),
+        p_item_name: selectedItem?.name || '',
+        p_item_image_url: selectedItem?.image_url || null,
+        p_monster_id: formData.monster_id === "none" ? null : formData.monster_id,
+        p_dungeon_number: formData.dungeon_number ? parseInt(formData.dungeon_number) : null,
+        p_drop_chance: parseFloat(formData.drop_chance),
+        p_total_quantity: formData.total_quantity,
+        p_max_winners: formData.max_winners,
+        p_reward_amount: formData.reward_amount,
+        p_ended_at: endedAt.toISOString(),
+      });
+
+      const resultObj = result as Record<string, unknown> | null;
+      if (resultObj?.status === 'error') {
+        throw new Error((resultObj.message as string) || 'Admin check failed');
+      }
 
       if (error) throw error;
 
