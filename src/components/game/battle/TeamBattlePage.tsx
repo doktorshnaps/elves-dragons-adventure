@@ -94,7 +94,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   
   const { accountId } = useWalletContext();
-  const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey } = useDungeonSync();
+  const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey, setClaimInProgress } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   // Время создания сессии - используется чтобы не проверять сессию сразу после её создания
