@@ -118,6 +118,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="mgt-exchange" className="text-white data-[state=active]:bg-white/20 rounded-3xl">💰 mGT</TabsTrigger>
                 <TabsTrigger value="pvp-seasons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">⚔️ PvP Сезоны</TabsTrigger>
                 <TabsTrigger value="exchanges" className="text-white data-[state=active]:bg-white/20 rounded-3xl">🔄 Обмен</TabsTrigger>
+                <TabsTrigger value="tg-notify" className="text-white data-[state=active]:bg-white/20 rounded-3xl">📨 Рассылка</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
