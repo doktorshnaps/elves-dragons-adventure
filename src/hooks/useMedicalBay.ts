@@ -268,14 +268,7 @@ export const useMedicalBay = () => {
         description: result.was_completed ? 'Здоровье восстановлено' : 'Лечение отменено',
       });
 
-      // Send Telegram notification if healing was completed
-      if (result.was_completed && accountId) {
-        sendTelegramNotification(
-          accountId,
-          `💊 Лечение завершено!\nЗдоровье карты полностью восстановлено.`,
-          `medical_complete_${cardInstanceId}`
-        );
-      }
+      // Notification is now sent via real-time subscription on is_completed transition
 
       // Кэш обновится автоматически через Real-time
     } catch (error: any) {
