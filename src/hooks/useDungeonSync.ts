@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from './useGameData';
@@ -30,6 +30,9 @@ export const useDungeonSync = () => {
   const [currentClaimKey, setCurrentClaimKey] = useState<string | null>(() => {
     return localStorage.getItem('currentClaimKey');
   });
+  
+  // 🔒 Guard: prevents cleanup from wiping claimKey while a claim is in progress
+  const claimInProgressRef = useRef(false);
   
   const [deviceId] = useState(() => {
     // Генерируем уникальный ID устройства или берем из localStorage
