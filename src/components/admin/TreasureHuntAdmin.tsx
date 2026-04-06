@@ -158,14 +158,6 @@ export const TreasureHuntAdmin = () => {
       // Получаем данные предмета
       const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
       
-      // Вычисляем дату окончания события
-      const now = new Date();
-      const durationMs = 
-        (formData.duration_days * 24 * 60 * 60 * 1000) +
-        (formData.duration_hours * 60 * 60 * 1000) +
-        (formData.duration_minutes * 60 * 1000);
-      const endedAt = new Date(now.getTime() + durationMs);
-      
       const { data: result, error } = await supabase.rpc('admin_create_treasure_hunt_event', {
         p_admin_wallet: accountId,
         p_item_template_id: parseInt(formData.item_template_id),
