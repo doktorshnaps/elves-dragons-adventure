@@ -94,7 +94,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
   
   const { accountId } = useWalletContext();
-  const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey } = useDungeonSync();
+  const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey, setClaimInProgress } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
   // Время создания сессии - используется чтобы не проверять сессию сразу после её создания
@@ -521,6 +521,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return;
     }
     
+    // 🔒 КРИТИЧНО: Захватываем claimKey СРАЗУ в локальную переменную до любых async операций
+    const capturedClaimKey = getCurrentClaimKey();
+    console.log('🔑 [handleClaimAndExit] Captured claimKey:', capturedClaimKey?.substring(0, 8));
+    
+    // 🔒 Устанавливаем флаг claim-in-progress, чтобы Realtime/cleanup не стёрли claimKey
+    setClaimInProgress(true);
+    
     // Сбрасываем предыдущую ошибку
     setClaimError(null);
     setIsClaiming(true);
@@ -530,6 +537,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     const safetyTimeout = setTimeout(() => {
       console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >30 секунд, принудительный сброс');
       setIsClaiming(false);
+      setClaimInProgress(false);
       setClaimError('Процесс обработки наград завис. Попробуйте снова.');
     }, 30000);
     
@@ -539,8 +547,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     });
     
     // ✅ КРИТИЧНО: Синхронизируем уровень в БД перед claim, чтобы убрать race condition
-    const claimKey = getCurrentClaimKey();
-    if (claimKey) {
+    if (capturedClaimKey) {
       console.log('🔄 [handleClaimAndExit] Синхронизируем уровень перед claim:', battleState.level);
       const levelSynced = await updateDungeonLevel(battleState.level);
       if (!levelSynced) {
@@ -566,7 +573,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     
     try {
       const result = await claimRewardAndExit(
-        claimKey, 
+        capturedClaimKey, 
         cardHealthUpdates, 
         dungeonType, 
         battleState.level,
@@ -622,6 +629,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       // НЕ вызываем handleExitAndReset() — игрок может повторить попытку
     } finally {
       clearTimeout(safetyTimeout);
+      setClaimInProgress(false);
     }
   };
 

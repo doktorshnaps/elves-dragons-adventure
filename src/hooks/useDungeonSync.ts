@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useGameData } from './useGameData';
@@ -30,6 +30,9 @@ export const useDungeonSync = () => {
   const [currentClaimKey, setCurrentClaimKey] = useState<string | null>(() => {
     return localStorage.getItem('currentClaimKey');
   });
+  
+  // 🔒 Guard: prevents cleanup from wiping claimKey while a claim is in progress
+  const claimInProgressRef = useRef(false);
   
   const [deviceId] = useState(() => {
     // Генерируем уникальный ID устройства или берем из localStorage
@@ -90,13 +93,16 @@ export const useDungeonSync = () => {
     if (!hasThisDevice && localSession) {
       try {
         localStorage.removeItem('activeDungeonSession');
-        localStorage.removeItem('currentClaimKey');
+        // 🔒 Don't clear claimKey if claim is in progress
+        if (!claimInProgressRef.current) {
+          localStorage.removeItem('currentClaimKey');
+          setCurrentClaimKey(null);
+        }
         // Очищаем Zustand вместо localStorage для battle state
         const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
         clearTeamBattleState();
         clearBattleState();
         setLocalSession(null);
-        setCurrentClaimKey(null);
         // Используем GameEventsContext вместо window.dispatchEvent
         emit('battleReset');
       } catch {}
@@ -128,11 +134,10 @@ export const useDungeonSync = () => {
     }
 
     // Чистим локальную сессию и выключаем heartbeat в ЭТОМ табе
+    // 🔒 НЕ очищаем currentClaimKey здесь — он нужен для claim rewards
     try {
       localStorage.removeItem('activeDungeonSession');
-      localStorage.removeItem('currentClaimKey');
       setLocalSession(null);
-      setCurrentClaimKey(null);
     } catch {}
 
     // Удаляем сессию через Edge Function (RLS блокирует прямые удаления)
@@ -302,13 +307,16 @@ export const useDungeonSync = () => {
             console.log('🛑 Session DELETE detected for account, forcing local stop & cleanup');
             try {
               localStorage.removeItem('activeDungeonSession');
-              localStorage.removeItem('currentClaimKey');
+              // 🔒 Don't clear claimKey if claim is in progress
+              if (!claimInProgressRef.current) {
+                localStorage.removeItem('currentClaimKey');
+                setCurrentClaimKey(null);
+              }
               // Очищаем Zustand вместо localStorage для battle state
               const { clearTeamBattleState, clearBattleState } = useGameStore.getState();
               clearTeamBattleState();
               clearBattleState();
               setLocalSession(null);
-              setCurrentClaimKey(null);
               // Используем GameEventsContext вместо window.dispatchEvent
               emit('battleReset');
             } catch {}
@@ -369,11 +377,12 @@ export const useDungeonSync = () => {
     hasOtherActiveSessions: hasOtherActiveSessions(),
     hasAnyActiveSession: hasAnyActiveSession(),
     activeSessions: activeSessions.filter(s => s.device_id !== deviceId),
-    allActiveSessions: activeSessions, // Все сессии включая текущее устройство
+    allActiveSessions: activeSessions,
     startDungeonSession,
     endDungeonSession,
-    updateDungeonLevel, // ✅ Новая функция для обновления уровня
+    updateDungeonLevel,
     deviceId,
-    getCurrentClaimKey: () => currentClaimKey || localStorage.getItem('currentClaimKey')
+    getCurrentClaimKey: () => currentClaimKey || localStorage.getItem('currentClaimKey'),
+    setClaimInProgress: (v: boolean) => { claimInProgressRef.current = v; }
   };
 };

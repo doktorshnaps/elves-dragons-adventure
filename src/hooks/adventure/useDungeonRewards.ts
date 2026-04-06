@@ -209,23 +209,35 @@ export const useDungeonRewards = () => {
           });
           
           if (batchError) {
-            console.error('❌ Ошибка batch update при поражении:', batchError);
+            console.error('❌ Ошибка batch update при поражении:', JSON.stringify(batchError));
+            // 🔒 NON-BLOCKING: Предупреждаем, но НЕ блокируем выход
             toast({
-              title: "Ошибка",
-              description: "Не удалось сохранить состояние карт",
-              variant: "destructive"
+              title: "⚠️ Предупреждение",
+              description: "Не удалось сохранить состояние карт. Карты восстановятся автоматически.",
+              variant: "default"
             });
-            return { success: false, error: 'Не удалось сохранить состояние карт' };
+            // Пробуем ещё раз (1 retry)
+            try {
+              const { error: retryError } = await supabase.rpc('batch_update_card_stats', {
+                p_wallet_address: accountId,
+                p_card_updates: cardHealthUpdates
+              });
+              if (!retryError) {
+                console.log('✅ Retry batch update успешен');
+              } else {
+                console.error('❌ Retry batch update тоже провалился:', JSON.stringify(retryError));
+              }
+            } catch {}
+          } else {
+            console.log('✅ Здоровье карт сохранено после поражения');
           }
-          
-          console.log('✅ Здоровье карт сохранено после поражения');
           
           // Инвалидируем кеш карт для обновления UI
           await queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
           
         } catch (err) {
           console.error('❌ Критическая ошибка batch update:', err);
-          return { success: false, error: String(err) };
+          // 🔒 NON-BLOCKING: не возвращаем ошибку, позволяем выйти
         }
       }
       
