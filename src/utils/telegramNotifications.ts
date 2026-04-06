@@ -5,7 +5,7 @@ export type TelegramConnectionStatus = {
   chatId: number | null;
   currentTelegramUserId: number | null;
   isTelegramWebApp: boolean;
-  reason?: 'no_wallet' | 'no_chat_id' | 'query_error' | 'mismatch';
+  reason?: 'no_wallet' | 'no_chat_id' | 'no_player' | 'query_error' | 'mismatch';
 };
 
 const getCurrentTelegramUserId = () =>
@@ -13,7 +13,6 @@ const getCurrentTelegramUserId = () =>
 
 /**
  * Send a Telegram push notification to a player via Edge Function.
- * Logs the result for diagnostics.
  */
 export const sendTelegramNotification = async (
   walletAddress: string,
@@ -45,6 +44,9 @@ export const sendTelegramNotification = async (
   }
 };
 
+/**
+ * Get Telegram connection status using secure RPC (no direct game_data SELECT).
+ */
 export const getTelegramConnectionStatus = async (
   walletAddress: string
 ): Promise<TelegramConnectionStatus> => {
@@ -52,76 +54,44 @@ export const getTelegramConnectionStatus = async (
   const isTelegramWebApp = !!window.Telegram?.WebApp;
 
   if (!walletAddress) {
-    return {
-      connected: false,
-      chatId: null,
-      currentTelegramUserId,
-      isTelegramWebApp,
-      reason: 'no_wallet',
-    };
+    return { connected: false, chatId: null, currentTelegramUserId, isTelegramWebApp, reason: 'no_wallet' };
   }
 
   try {
-    const { data, error } = await supabase
-      .from('game_data')
-      .select('telegram_chat_id')
-      .eq('wallet_address', walletAddress)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('get_telegram_status', {
+      p_wallet_address: walletAddress,
+    });
 
     if (error) {
-      console.warn('📱 Failed to load telegram connection status:', error);
-      return {
-        connected: false,
-        chatId: null,
-        currentTelegramUserId,
-        isTelegramWebApp,
-        reason: 'query_error',
-      };
+      console.warn('📱 get_telegram_status RPC error:', error);
+      return { connected: false, chatId: null, currentTelegramUserId, isTelegramWebApp, reason: 'query_error' };
     }
 
-    const chatId = data?.telegram_chat_id ?? null;
-    if (!chatId) {
-      return {
-        connected: false,
-        chatId: null,
-        currentTelegramUserId,
-        isTelegramWebApp,
-        reason: 'no_chat_id',
-      };
+    const result = data as { status: string; chat_id: number | null } | null;
+
+    if (!result || result.status === 'no_player') {
+      return { connected: false, chatId: null, currentTelegramUserId, isTelegramWebApp, reason: 'no_player' };
     }
+
+    if (result.status === 'no_chat_id' || !result.chat_id) {
+      return { connected: false, chatId: null, currentTelegramUserId, isTelegramWebApp, reason: 'no_chat_id' };
+    }
+
+    const chatId = result.chat_id;
 
     if (currentTelegramUserId && chatId !== currentTelegramUserId) {
-      console.warn('📱 Telegram chat_id mismatch:', { walletAddress, chatId, currentTelegramUserId });
-      return {
-        connected: false,
-        chatId,
-        currentTelegramUserId,
-        isTelegramWebApp,
-        reason: 'mismatch',
-      };
+      return { connected: false, chatId, currentTelegramUserId, isTelegramWebApp, reason: 'mismatch' };
     }
 
-    return {
-      connected: true,
-      chatId,
-      currentTelegramUserId,
-      isTelegramWebApp,
-    };
+    return { connected: true, chatId, currentTelegramUserId, isTelegramWebApp };
   } catch (err) {
-    console.warn('📱 Failed to check telegram connection status:', err);
-    return {
-      connected: false,
-      chatId: null,
-      currentTelegramUserId,
-      isTelegramWebApp,
-      reason: 'query_error',
-    };
+    console.warn('📱 get_telegram_status error:', err);
+    return { connected: false, chatId: null, currentTelegramUserId, isTelegramWebApp, reason: 'query_error' };
   }
 };
 
 /**
- * Save the Telegram chat_id for the current player.
- * Should be called once on app initialization if running inside Telegram Mini App.
+ * Save Telegram chat_id using v2 RPC that returns structured result.
  */
 export const saveTelegramChatId = async (walletAddress: string): Promise<boolean> => {
   const tgUserId = getCurrentTelegramUserId();
@@ -135,30 +105,31 @@ export const saveTelegramChatId = async (walletAddress: string): Promise<boolean
   }
 
   try {
-    const { error } = await supabase.rpc('save_telegram_chat_id', {
+    const { data, error } = await supabase.rpc('save_telegram_chat_id_v2', {
       p_wallet_address: walletAddress,
       p_chat_id: tgUserId,
     });
+
     if (error) {
-      console.warn('📱 Failed to save telegram chat_id:', error);
+      console.warn('📱 save_telegram_chat_id_v2 RPC error:', error);
       return false;
     }
 
-    const status = await getTelegramConnectionStatus(walletAddress);
-    if (!status.chatId || status.chatId !== tgUserId) {
-      console.warn('📱 Telegram chat_id was not persisted after save:', {
-        walletAddress,
-        expectedChatId: tgUserId,
-        actualChatId: status.chatId,
-        reason: status.reason,
-      });
-      return false;
+    const result = data as { status: string; chat_id: number | null; was_updated: boolean } | null;
+    console.log('📱 save_telegram_chat_id_v2 result:', result);
+
+    if (result?.status === 'ok' && result.was_updated) {
+      console.log('📱 Telegram chat_id saved:', tgUserId, 'for wallet:', walletAddress);
+      return true;
     }
 
-    console.log('📱 Telegram chat_id saved:', tgUserId, 'for wallet:', walletAddress);
-    return true;
+    if (result?.status === 'no_player') {
+      console.warn('📱 No game_data row found for wallet:', walletAddress);
+    }
+
+    return false;
   } catch (err) {
-    console.warn('📱 Failed to save telegram chat_id:', err);
+    console.warn('📱 saveTelegramChatId error:', err);
     return false;
   }
 };

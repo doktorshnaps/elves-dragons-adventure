@@ -103,6 +103,12 @@ export const SettingsMenu = () => {
         : 'A different Telegram account was found. Reconnect notifications.';
     }
 
+    if (telegramStatus?.reason === 'no_player') {
+      return language === 'ru'
+        ? 'Запись игрока не найдена. Зайдите в игру и попробуйте снова.'
+        : 'Player record not found. Enter the game and try again.';
+    }
+
     return language === 'ru'
       ? 'Подключите Telegram аккаунт для отправки уведомлений.'
       : 'Connect your Telegram account to receive notifications.';
@@ -145,11 +151,18 @@ export const SettingsMenu = () => {
         return;
       }
 
+      const reason = result.reason || 'unknown';
+      const desc = language === 'ru'
+        ? reason === 'no_player'
+          ? 'Запись игрока не найдена. Зайдите в игру и попробуйте снова.'
+          : 'chat_id не сохранился. Проверьте запуск через бота и повторите.'
+        : reason === 'no_player'
+          ? 'Player record not found. Enter the game and try again.'
+          : 'chat_id was not saved. Open the app from the bot and try again.';
+
       toast({
         title: language === 'ru' ? 'Не удалось подключить Telegram' : 'Failed to connect Telegram',
-        description: language === 'ru'
-          ? 'chat_id не сохранился. Проверьте запуск через бота и повторите.'
-          : 'chat_id was not saved. Open the app from the bot and try again.',
+        description: desc,
         variant: 'destructive',
       });
     } catch {

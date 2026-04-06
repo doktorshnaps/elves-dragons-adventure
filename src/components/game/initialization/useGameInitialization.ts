@@ -140,9 +140,14 @@ export const useGameInitialization = () => {
     const key = `${accountId}:${tgUserId}`;
     if (tgChatIdSavedRef.current === key) return;
 
-    console.log('📱 Saving Telegram chat_id:', tgUserId, 'for wallet:', accountId);
+    console.log('📱 Auto-saving Telegram chat_id:', tgUserId, 'for wallet:', accountId);
     saveTelegramChatId(accountId).then((ok) => {
-      if (ok) tgChatIdSavedRef.current = key;
+      if (ok) {
+        tgChatIdSavedRef.current = key;
+        console.log('📱 Auto-save Telegram chat_id succeeded');
+      } else {
+        console.log('📱 Auto-save Telegram chat_id skipped or failed (use Settings to connect manually)');
+      }
     });
   }, [accountId, isTelegram, tgWebApp]);
 
