@@ -1,45 +1,62 @@
 
 
-# Fix: Dungeon Reward Claim Losing Progress
+# Fix: Battle State Lost on Page Reload
 
-## Problem Analysis
+## Problem
 
-Players lose all dungeon progress (rewards, card damage, items) when pressing "Забрать и выйти" after many levels. The error "Не удалось сохранить состояние карт" appears.
-
-**Root Cause**: The `currentClaimKey` is being cleared BEFORE the player claims rewards, causing the code to enter the wrong path (defeat/surrender path instead of reward claim path). Three sources of premature clearing:
-
-1. **Realtime DELETE listener** (`useDungeonSync.ts:301-314`): When the dungeon session row is deleted from DB (by timeout, heartbeat miss, or concurrent tab), the listener immediately wipes `currentClaimKey` from state and localStorage, even if a claim is in progress.
-2. **Session validity check** (`useDungeonSync.ts:83-103`): Periodically checks if the device's session exists in DB. If the session expires or gets cleaned, it wipes `currentClaimKey`.
-3. **`endDungeonSession`** (`useDungeonSync.ts:131-135`): Wipes `currentClaimKey` before even calling the edge function.
-
-When `getCurrentClaimKey()` returns `null`, the code at `useDungeonRewards.ts:196` sets `shouldSkipRewards = true`, entering the defeat-only path. This path tries `batch_update_card_stats` which may also fail, resulting in total loss of progress.
+Zustand `gameStore` has NO persistence. On page reload, `teamBattleState` is `null`, so the battle restarts from level 1. The save/restore logic only works for in-app navigation (clicking "Back to menu"), not for browser refresh.
 
 ## Solution
 
-### 1. Protect claimKey from premature clearing (useDungeonSync.ts)
+Add `zustand/middleware` persist for battle-related fields only. This saves `teamBattleState`, `activeBattleInProgress`, and `selectedTeam` to `localStorage` automatically, so they survive page reloads.
 
-- Add a `claimInProgressRef` flag that prevents ANY cleanup path from clearing `currentClaimKey` while a claim is active.
-- Export `setClaimInProgress(true/false)` for the battle page to call before/after claiming.
-- In the Realtime DELETE handler, session validity check, and `endDungeonSession`: skip clearing `currentClaimKey` if `claimInProgressRef.current === true`.
+## Changes
 
-### 2. Save claimKey independently (TeamBattlePage.tsx)
+### 1. `src/stores/gameStore.ts` — Add persist middleware
 
-- In `handleClaimAndExit`, capture the claimKey at the very start and store it in a local `useRef` as backup. Even if external cleanup fires, the local copy survives.
-- Pass this captured key to `claimRewardAndExit` instead of calling `getCurrentClaimKey()` which may return null after race.
+- Import `persist` from `zustand/middleware`
+- Wrap the store with `persist()`, persisting only battle-related keys:
+  - `teamBattleState`
+  - `activeBattleInProgress`  
+  - `selectedTeam`
+- Use storage name `'game-battle-state'`
+- Use `partialize` to exclude non-battle fields (balance, accountLevel, etc. come from Supabase and should NOT be persisted locally)
 
-### 3. Improve error handling in batch_update_card_stats path (useDungeonRewards.ts)
+### 2. `src/components/game/battle/TeamBattlePage.tsx` — Add beforeunload save
 
-- Log the actual `batchError` details (code, message) for debugging.
-- Make the card-save failure non-blocking: show warning but still return `success: true` so the player can exit. Cards will heal naturally or via other mechanisms.
-- Add retry logic (1 retry) for `batch_update_card_stats` on failure.
+- Add a `beforeunload` event listener that saves the current battle state to Zustand before the page unloads (ensures the latest state is captured even mid-battle, not just when navigating via buttons)
+- This complements the persist middleware by ensuring the state is written synchronously before the tab closes
 
-### 4. Don't clear claimKey in endDungeonSession (useDungeonSync.ts)
+### 3. `src/hooks/useDungeonSync.ts` — Protect against stale persisted state
 
-- Move `localStorage.removeItem('currentClaimKey')` out of `endDungeonSession`. The claim key should only be cleared after a successful claim (already done in `useDungeonRewards.ts:352`) or in `handleExitAndReset` (already done at line 317).
+- In the DELETE handler and session validity check, also clear the persisted localStorage key `'game-battle-state'` when wiping battle state, to prevent stale restored battles after session expiry
 
-## Files to Modify
+## Technical Detail
 
-- `src/hooks/useDungeonSync.ts` — Add claim-in-progress guard, remove premature claimKey clearing
-- `src/components/game/battle/TeamBattlePage.tsx` — Capture claimKey early in ref, set claim-in-progress flag
-- `src/hooks/adventure/useDungeonRewards.ts` — Improve error logging, make card-save non-blocking
+```typescript
+// gameStore.ts — key change
+import { persist } from 'zustand/middleware';
+
+export const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
+      // ... existing store code unchanged
+    }),
+    {
+      name: 'game-battle-state',
+      partialize: (state) => ({
+        teamBattleState: state.teamBattleState,
+        activeBattleInProgress: state.activeBattleInProgress,
+        selectedTeam: state.selectedTeam,
+      }),
+    }
+  )
+);
+```
+
+## Files
+
+- `src/stores/gameStore.ts` — persist middleware
+- `src/components/game/battle/TeamBattlePage.tsx` — beforeunload handler
+- `src/hooks/useDungeonSync.ts` — clear persisted storage on session end
 
