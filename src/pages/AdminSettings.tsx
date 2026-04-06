@@ -195,6 +195,10 @@ const AdminSettingsContent = () => {
               <TabsContent value="exchanges" className="space-y-4">
                 <ItemExchangeAdmin />
               </TabsContent>
+
+              <TabsContent value="tg-notify" className="space-y-4">
+                <TelegramNotificationSender />
+              </TabsContent>
             </>
           )}
 
