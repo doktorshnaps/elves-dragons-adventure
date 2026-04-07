@@ -49,9 +49,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   level,
   lastRoll,
   onSurrenderWithSave,
-  onMenuReturn, // ✅ Новый prop
+  onMenuReturn,
   dungeonType,
-  monstersKilledRef
+  monstersKilledRef,
+  onQuickBattle,
+  hasGoldenTicket
 }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
