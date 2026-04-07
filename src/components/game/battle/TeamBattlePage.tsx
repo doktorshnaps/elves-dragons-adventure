@@ -94,8 +94,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // ✅ КРИТИЧНО: Используем state вместо ref, чтобы изменение вызывало ре-рендер
   // Это исправляет зависание на "Обработка результатов боя..."
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
+  const [quickBattleInProgress, setQuickBattleInProgress] = useState(false);
   
   const { accountId } = useWalletContext();
+  const { hasGoldenTicket } = useGoldenTicketCheck();
   const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey, setClaimInProgress } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
