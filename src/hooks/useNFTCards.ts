@@ -61,7 +61,7 @@ export const useNFTCards = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const syncNFTCards = useCallback(async (walletAddress: string, contractId?: string) => {
+  const syncNFTCards = useCallback(async (walletAddress: string, contractId?: string, additionalContracts: string[] = []) => {
     if (!walletAddress) {
       console.log('No wallet address provided');
       return [];
@@ -77,7 +77,7 @@ export const useNFTCards = () => {
         body: { 
           wallet_address: walletAddress,
           contract_id: contractId || 'heroesnft.near',
-          additional_contracts: ['elleonortesr.mintbase1.near']
+          additional_contracts: Array.from(new Set(['elleonortesr.mintbase1.near', ...additionalContracts]))
         }
       });
 
