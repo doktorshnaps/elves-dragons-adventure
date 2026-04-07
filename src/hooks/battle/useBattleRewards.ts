@@ -91,8 +91,8 @@ export const useBattleRewards = (accountId: string | null) => {
       // Инвалидируем кеши для обновления UI (включая квесты)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
-        queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] }),
-        queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] }),
+        queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] }),
         queryClient.invalidateQueries({ queryKey: ['dailyQuests', accountId] }),
         queryClient.invalidateQueries({ queryKey: ['userDailyQuests'] }),
       ]);

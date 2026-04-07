@@ -52,7 +52,7 @@ export const useItemInstances = () => {
     staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 2 мин)
     gcTime: 60 * 60 * 1000, // 60 минут (было 5 мин)
     refetchOnWindowFocus: false,
-    refetchOnMount: false, // НЕ перезагружать при каждом монтировании
+    refetchOnMount: true, // Перезагружать при монтировании если данные stale (после invalidation)
   });
 
   const refetch = useCallback(async () => {

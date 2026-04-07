@@ -69,7 +69,7 @@ export const useCardInstances = () => {
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
     staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 5 мин)
     gcTime: 60 * 60 * 1000, // 60 минут (было 10 мин)
-    refetchOnMount: false, // НЕ перезагружать при каждом монтировании
+    refetchOnMount: true, // Перезагружать при монтировании если данные stale (после invalidation)
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
