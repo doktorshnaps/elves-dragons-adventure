@@ -564,13 +564,19 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                     {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
                   </Button>
 
-                  {hasGoldenTicket && onQuickBattle && (
+                  {onQuickBattle && (
                     <Button
                       variant="menu"
                       size="sm"
                       onClick={onQuickBattle}
-                      className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100"
+                      disabled={!hasGoldenTicket}
+                      className={`h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs ${
+                        hasGoldenTicket 
+                          ? 'bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100' 
+                          : 'bg-gray-700/60 text-gray-400 cursor-not-allowed opacity-60'
+                      }`}
                       style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                      title={hasGoldenTicket ? 'Быстрый бой' : 'Требуется Golden Ticket NFT'}
                     >
                       ⚡ Быстрый бой
                     </Button>
