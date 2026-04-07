@@ -15,7 +15,13 @@ export const useGoldenTicketCheck = () => {
     queryFn: async () => {
       if (walletCandidates.length === 0) return false;
 
-      const [userNftResult, cardInstancesResult] = await Promise.all([
+      const [whitelistResult, userNftResult, cardInstancesResult] = await Promise.all([
+        supabase
+          .from('whitelist_contracts')
+          .select('id')
+          .eq('contract_id', GOLDEN_TICKET_CONTRACT)
+          .eq('is_active', true)
+          .limit(1),
         supabase
           .from('user_nft_cards')
           .select('id')
@@ -30,6 +36,10 @@ export const useGoldenTicketCheck = () => {
           .limit(1),
       ]);
 
+      if (whitelistResult.error) {
+        console.error('❌ [GoldenTicket] whitelist_contracts check failed:', whitelistResult.error);
+      }
+
       if (userNftResult.error) {
         console.error('❌ [GoldenTicket] user_nft_cards check failed:', userNftResult.error);
       }
@@ -37,6 +47,9 @@ export const useGoldenTicketCheck = () => {
       if (cardInstancesResult.error) {
         console.error('❌ [GoldenTicket] card_instances check failed:', cardInstancesResult.error);
       }
+
+      const isGoldenTicketEnabled = (whitelistResult.data?.length ?? 0) > 0;
+      if (!isGoldenTicketEnabled) return false;
 
       return ((userNftResult.data?.length ?? 0) > 0) || ((cardInstancesResult.data?.length ?? 0) > 0);
     },
