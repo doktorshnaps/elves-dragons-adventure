@@ -1,57 +1,77 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 
 const GOLDEN_TICKET_CONTRACT = 'golden_ticket.nfts.tg';
+const STALE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export const useGoldenTicketCheck = () => {
   const { accountId, nearAccountId } = useWalletContext();
   const queryClient = useQueryClient();
   const walletCandidates = Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[];
+  const refreshingRef = useRef(false);
 
-  const { data: hasGoldenTicket = false, isLoading } = useQuery({
-    queryKey: ['goldenTicketCheck', walletCandidates],
+  // Trigger the edge function to refresh NFT access cache
+  const refreshAccess = useCallback(async () => {
+    if (refreshingRef.current || walletCandidates.length === 0) return;
+    refreshingRef.current = true;
+    try {
+      for (const wallet of walletCandidates) {
+        console.log('🔄 [GoldenTicket] Refreshing access for:', wallet);
+        await supabase.functions.invoke('refresh-wallet-whitelist-access', {
+          body: { wallet_address: wallet },
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['goldenTicketAccess'] });
+    } catch (err) {
+      console.error('❌ [GoldenTicket] refresh failed:', err);
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [walletCandidates, queryClient]);
+
+  // Main query: read from wallet_whitelist_nft_access table
+  const { data, isLoading } = useQuery({
+    queryKey: ['goldenTicketAccess', walletCandidates],
     queryFn: async () => {
-      if (walletCandidates.length === 0) return false;
+      if (walletCandidates.length === 0) return { hasAccess: false, isStale: true, lastVerifiedAt: null };
 
-      const [whitelistResult, userNftResult, cardInstancesResult] = await Promise.all([
-        supabase
-          .from('whitelist_contracts')
-          .select('id')
-          .eq('contract_id', GOLDEN_TICKET_CONTRACT)
-          .eq('is_active', true)
-          .limit(1),
-        supabase
-          .from('user_nft_cards')
-          .select('id')
-          .in('wallet_address', walletCandidates)
-          .eq('nft_contract_id', GOLDEN_TICKET_CONTRACT)
-          .limit(1),
-        supabase
-          .from('card_instances')
-          .select('id')
-          .in('wallet_address', walletCandidates)
-          .eq('nft_contract_id', GOLDEN_TICKET_CONTRACT)
-          .limit(1),
-      ]);
+      const { data: rows, error } = await supabase
+        .from('wallet_whitelist_nft_access')
+        .select('has_access, last_verified_at')
+        .in('wallet_address', walletCandidates)
+        .eq('contract_id', GOLDEN_TICKET_CONTRACT)
+        .eq('has_access', true)
+        .limit(1);
 
-      if (whitelistResult.error) {
-        console.error('❌ [GoldenTicket] whitelist_contracts check failed:', whitelistResult.error);
+      if (error) {
+        console.error('❌ [GoldenTicket] access table query failed:', error);
+        return { hasAccess: false, isStale: true, lastVerifiedAt: null };
       }
 
-      if (userNftResult.error) {
-        console.error('❌ [GoldenTicket] user_nft_cards check failed:', userNftResult.error);
+      if (rows && rows.length > 0) {
+        const lastVerified = new Date(rows[0].last_verified_at).getTime();
+        const isStale = Date.now() - lastVerified > STALE_TTL_MS;
+        return { hasAccess: true, isStale, lastVerifiedAt: rows[0].last_verified_at };
       }
 
-      if (cardInstancesResult.error) {
-        console.error('❌ [GoldenTicket] card_instances check failed:', cardInstancesResult.error);
+      // No record with has_access=true — check if any record exists at all
+      const { data: anyRows } = await supabase
+        .from('wallet_whitelist_nft_access')
+        .select('last_verified_at')
+        .in('wallet_address', walletCandidates)
+        .eq('contract_id', GOLDEN_TICKET_CONTRACT)
+        .limit(1);
+
+      if (anyRows && anyRows.length > 0) {
+        const lastVerified = new Date(anyRows[0].last_verified_at).getTime();
+        const isStale = Date.now() - lastVerified > STALE_TTL_MS;
+        return { hasAccess: false, isStale, lastVerifiedAt: anyRows[0].last_verified_at };
       }
 
-      const isGoldenTicketEnabled = (whitelistResult.data?.length ?? 0) > 0;
-      if (!isGoldenTicketEnabled) return false;
-
-      return ((userNftResult.data?.length ?? 0) > 0) || ((cardInstancesResult.data?.length ?? 0) > 0);
+      // No record at all — needs refresh
+      return { hasAccess: false, isStale: true, lastVerifiedAt: null };
     },
     enabled: walletCandidates.length > 0,
     staleTime: 30 * 1000,
@@ -61,39 +81,40 @@ export const useGoldenTicketCheck = () => {
     refetchInterval: 30 * 1000,
   });
 
+  const hasGoldenTicket = data?.hasAccess ?? false;
+  const isChecking = isLoading || refreshingRef.current;
+
+  // Auto-refresh when data is stale or missing
+  useEffect(() => {
+    if (!isLoading && data?.isStale && walletCandidates.length > 0) {
+      refreshAccess();
+    }
+  }, [isLoading, data?.isStale, walletCandidates.length, refreshAccess]);
+
+  // Realtime subscription on wallet_whitelist_nft_access
   useEffect(() => {
     if (walletCandidates.length === 0) return;
 
     const channels = walletCandidates.map((wallet) =>
       supabase
-        .channel(`golden-ticket-check:${wallet}`)
+        .channel(`nft-access:${wallet}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'user_nft_cards',
+            table: 'wallet_whitelist_nft_access',
             filter: `wallet_address=eq.${wallet}`,
           },
-          () => queryClient.invalidateQueries({ queryKey: ['goldenTicketCheck'] })
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'card_instances',
-            filter: `wallet_address=eq.${wallet}`,
-          },
-          () => queryClient.invalidateQueries({ queryKey: ['goldenTicketCheck'] })
+          () => queryClient.invalidateQueries({ queryKey: ['goldenTicketAccess'] })
         )
         .subscribe()
     );
 
     return () => {
-      channels.forEach((channel) => supabase.removeChannel(channel));
+      channels.forEach((ch) => supabase.removeChannel(ch));
     };
   }, [queryClient, walletCandidates]);
 
-  return { hasGoldenTicket, isLoading };
+  return { hasGoldenTicket, isLoading: isChecking, refreshAccess };
 };

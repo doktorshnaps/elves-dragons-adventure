@@ -97,7 +97,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const [quickBattleInProgress, setQuickBattleInProgress] = useState(false);
   
   const { accountId } = useWalletContext();
-  const { hasGoldenTicket } = useGoldenTicketCheck();
+  const { hasGoldenTicket, isLoading: isCheckingGoldenTicket } = useGoldenTicketCheck();
   const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey, setClaimInProgress } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
@@ -1126,6 +1126,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         monstersKilledRef={monstersKilledRef}
         onQuickBattle={handleQuickBattle}
         hasGoldenTicket={hasGoldenTicket}
+        isCheckingGoldenTicket={isCheckingGoldenTicket}
       />
       
       {/* ⚡ Quick Battle Loading Overlay */}

@@ -38,6 +38,7 @@ interface TeamBattleArenaProps {
   monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>;
   onQuickBattle?: () => void;
   hasGoldenTicket?: boolean;
+  isCheckingGoldenTicket?: boolean;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -54,7 +55,8 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   dungeonType,
   monstersKilledRef,
   onQuickBattle,
-  hasGoldenTicket
+  hasGoldenTicket,
+  isCheckingGoldenTicket
 }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -576,7 +578,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                               onClick={hasGoldenTicket ? onQuickBattle : undefined}
                               aria-disabled={!hasGoldenTicket}
                               aria-label="Быстрый бой"
-                              title={!hasGoldenTicket ? 'Требуется Golden Ticket NFT' : undefined}
                               className={`h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs ${
                                 hasGoldenTicket
                                   ? 'bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100'
@@ -584,13 +585,13 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                               }`}
                               style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                             >
-                              ⚡ Быстрый бой
+                              {isCheckingGoldenTicket ? '⏳ Проверка...' : '⚡ Быстрый бой'}
                             </Button>
                           </span>
                         </TooltipTrigger>
                         {!hasGoldenTicket && (
                           <TooltipContent side="top">
-                            Требуется Golden Ticket NFT
+                            {isCheckingGoldenTicket ? 'Проверка Golden Ticket...' : 'Требуется Golden Ticket NFT'}
                           </TooltipContent>
                         )}
                       </Tooltip>

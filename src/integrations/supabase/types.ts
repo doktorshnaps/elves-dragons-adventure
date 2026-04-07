@@ -3033,6 +3033,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_whitelist_nft_access: {
+        Row: {
+          contract_id: string
+          created_at: string
+          error_message: string | null
+          has_access: boolean
+          id: string
+          last_verified_at: string
+          token_count: number
+          token_ids: Json
+          updated_at: string
+          verification_source: string
+          wallet_address: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          error_message?: string | null
+          has_access?: boolean
+          id?: string
+          last_verified_at?: string
+          token_count?: number
+          token_ids?: Json
+          updated_at?: string
+          verification_source?: string
+          wallet_address: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          error_message?: string | null
+          has_access?: boolean
+          id?: string
+          last_verified_at?: string
+          token_count?: number
+          token_ids?: Json
+          updated_at?: string
+          verification_source?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       whitelist_contracts: {
         Row: {
           contract_id: string
