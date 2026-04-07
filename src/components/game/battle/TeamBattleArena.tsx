@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Sword, Shield, Heart, ArrowLeft, Zap, FastForward } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
@@ -565,21 +566,34 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   </Button>
 
                   {onQuickBattle && (
-                    <Button
-                      variant="menu"
-                      size="sm"
-                      onClick={onQuickBattle}
-                      disabled={!hasGoldenTicket}
-                      className={`h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs ${
-                        hasGoldenTicket 
-                          ? 'bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100' 
-                          : 'bg-gray-700/60 text-gray-400 cursor-not-allowed opacity-60'
-                      }`}
-                      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                      title={hasGoldenTicket ? 'Быстрый бой' : 'Требуется Golden Ticket NFT'}
-                    >
-                      ⚡ Быстрый бой
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} className="inline-flex">
+                            <Button
+                              variant="menu"
+                              size="sm"
+                              onClick={onQuickBattle}
+                              disabled={!hasGoldenTicket}
+                              aria-label="Быстрый бой"
+                              className={`h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs ${
+                                hasGoldenTicket
+                                  ? 'bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100'
+                                  : 'bg-gray-700/60 text-gray-400 cursor-not-allowed opacity-60'
+                              }`}
+                              style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                            >
+                              ⚡ Быстрый бой
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {!hasGoldenTicket && (
+                          <TooltipContent side="top">
+                            Требуется Golden Ticket NFT
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
               </div>
