@@ -1124,7 +1124,28 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         onMenuReturn={handleArenaMenuReturn}
         dungeonType={dungeonType}
         monstersKilledRef={monstersKilledRef}
+        onQuickBattle={handleQuickBattle}
+        hasGoldenTicket={hasGoldenTicket}
       />
+      
+      {/* ⚡ Quick Battle Loading Overlay */}
+      {quickBattleInProgress && (
+        <div className="fixed inset-0 bg-black/85 flex flex-col items-center justify-center z-[300] gap-4">
+          <div className="text-2xl font-bold text-yellow-400 animate-pulse">⚡ Идёт бой...</div>
+          <div className="w-64 h-3 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full transition-all duration-[1500ms] ease-linear"
+              style={{ width: '100%', animation: 'quickBattleProgress 1.5s ease-in-out forwards' }}
+            />
+          </div>
+          <style>{`
+            @keyframes quickBattleProgress {
+              0% { width: 0%; }
+              100% { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
       
       {/* Модалка с результатами наград после клейма */}
       {claimResultModal.isOpen && claimResultModal.rewards && (
