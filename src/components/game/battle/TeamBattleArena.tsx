@@ -32,9 +32,11 @@ interface TeamBattleArenaProps {
   level: number;
   lastRoll?: { attackerRoll: number; defenderRoll?: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; isMiss?: boolean; isCounterAttack?: boolean; counterAttackDamage?: number; level: number } | null;
   onSurrenderWithSave?: () => Promise<void>;
-  onMenuReturn?: () => void; // ✅ Новый callback для сохранения состояния
-  dungeonType?: string; // ✅ Для сохранения в Zustand
-  monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>; // ✅ Для сохранения убитых монстров
+  onMenuReturn?: () => void;
+  dungeonType?: string;
+  monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>;
+  onQuickBattle?: () => void;
+  hasGoldenTicket?: boolean;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
