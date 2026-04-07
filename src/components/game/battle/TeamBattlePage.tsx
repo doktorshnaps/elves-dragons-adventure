@@ -134,6 +134,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   const { 
     battleState,
+    setBattleState,
     attackOrder,
     updateAttackOrder,
     executePlayerAttack,
