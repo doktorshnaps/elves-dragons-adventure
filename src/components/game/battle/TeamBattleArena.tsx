@@ -567,19 +567,20 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
 
                   {onQuickBattle && (
                     <TooltipProvider>
-                      <Tooltip>
+                      <Tooltip delayDuration={150}>
                         <TooltipTrigger asChild>
                           <span tabIndex={0} className="inline-flex">
                             <Button
                               variant="menu"
                               size="sm"
-                              onClick={onQuickBattle}
-                              disabled={!hasGoldenTicket}
+                              onClick={hasGoldenTicket ? onQuickBattle : undefined}
+                              aria-disabled={!hasGoldenTicket}
                               aria-label="Быстрый бой"
+                              title={!hasGoldenTicket ? 'Требуется Golden Ticket NFT' : undefined}
                               className={`h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs ${
                                 hasGoldenTicket
                                   ? 'bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100'
-                                  : 'bg-gray-700/60 text-gray-400 cursor-not-allowed opacity-60'
+                                  : 'bg-gray-700/60 text-gray-400 opacity-60 pointer-events-none'
                               }`}
                               style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
                             >
