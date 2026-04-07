@@ -26,6 +26,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ActiveDungeonWarning } from '@/components/dungeon/ActiveDungeonWarning';
+import { useGoldenTicketCheck } from '@/hooks/useGoldenTicketCheck';
+import { simulateQuickBattle } from '@/utils/quickBattleSimulator';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
