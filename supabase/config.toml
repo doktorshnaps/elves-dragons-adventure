@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.open-elleonor-box]
 verify_jwt = false
+
+[functions.refresh-wallet-whitelist-access]
+verify_jwt = false
