@@ -118,6 +118,23 @@ export const useNFTCardIntegration = () => {
       console.log('⚠️ Skipping sync - no accountId');
       return;
     }
+
+    let whitelistedContracts: string[] = [];
+
+    try {
+      const { data: activeContracts, error: whitelistError } = await supabase
+        .from('whitelist_contracts')
+        .select('contract_id')
+        .eq('is_active', true);
+
+      if (whitelistError) {
+        console.error('Failed to load whitelist contracts for NFT sync:', whitelistError);
+      } else {
+        whitelistedContracts = (activeContracts || []).map((item: any) => item.contract_id).filter(Boolean);
+      }
+    } catch (error) {
+      console.error('Unexpected whitelist contracts load error:', error);
+    }
     
     // Проверяем cooldown - не синхронизируем чаще чем раз в 10 секунд
     const now = Date.now();
@@ -154,6 +171,12 @@ export const useNFTCardIntegration = () => {
         fetched = await getUserNFTCards(accountId);
       } catch (fetchError) {
         console.log('NFT fetch failed:', fetchError);
+      }
+
+      try {
+        synced = await syncNFTCards(accountId, undefined, whitelistedContracts);
+      } catch (syncError) {
+        console.log('NFT sync failed:', syncError);
       }
 
       // Синхронизируем NFT из Mintbase контрактов
@@ -473,6 +496,7 @@ export const useNFTCardIntegration = () => {
       }
       
       setHasSynced(true);
+      await queryClient.invalidateQueries({ queryKey: ['goldenTicketCheck'] });
       
       // Убираем успешные уведомления - синхронизация в фоне
       console.log(`✅ NFT sync completed silently, cards: ${gameCards.length}`);
@@ -483,6 +507,7 @@ export const useNFTCardIntegration = () => {
       setIsLoading(false);
       syncInFlight = false;
       if (!globalHasSynced) globalHasSynced = true;
+      queryClient.invalidateQueries({ queryKey: ['goldenTicketCheck'] });
       
       performance.mark('sync-nfts-end');
       performance.measure('Total NFT Sync', 'sync-nfts-start', 'sync-nfts-end');
