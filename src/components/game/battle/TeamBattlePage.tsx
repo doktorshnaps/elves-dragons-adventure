@@ -442,24 +442,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
 
     // Show loading overlay for 1.5s, then apply results
     setTimeout(() => {
-      // Apply final state — this triggers the isBattleOver effect
-      // We need to use the resetBattle-like pattern but with custom state
-      // Actually we update battleState directly via the hook's internal setter
-      // The battleState is from useTeamBattle — we need to set it via the exposed method
-      // Since useTeamBattle doesn't expose setBattleState, we'll dispatch via the existing pattern:
-      // Update opponents and pairs in battleState
-      
-      // We use a workaround: directly call the battle state update
-      // by simulating the result through the existing flow
-      import('@/hooks/team/useTeamBattle').then(() => {
-        // Actually, battleState comes from useTeamBattle which uses useState internally
-        // We can't set it from outside. Let's use a different approach:
-        // We'll set the result in a ref and trigger re-render
-      });
+      // Apply final battle state — triggers isBattleOver effect
+      setBattleState(prev => ({
+        ...prev,
+        playerPairs: result.resultPairs,
+        opponents: result.resultOpponents,
+        currentTurn: 'player' as const,
+      }));
 
       setQuickBattleInProgress(false);
     }, 1500);
-  }, [quickBattleInProgress, battleState, attackOrder, dungeonType]);
+  }, [quickBattleInProgress, battleState, attackOrder, dungeonType, setBattleState]);
 
   const handleNextLevel = async () => {
     // ✅ КРИТИЧНО: Сначала обновляем уровень в БД, потом локально
