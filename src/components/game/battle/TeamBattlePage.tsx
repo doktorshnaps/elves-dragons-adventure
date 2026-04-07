@@ -26,6 +26,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCardInstances } from '@/hooks/useCardInstances';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ActiveDungeonWarning } from '@/components/dungeon/ActiveDungeonWarning';
+import { useGoldenTicketCheck } from '@/hooks/useGoldenTicketCheck';
+import { simulateQuickBattle } from '@/utils/quickBattleSimulator';
 
 interface TeamBattlePageProps {
   dungeonType: DungeonType;
@@ -92,8 +94,10 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   // ✅ КРИТИЧНО: Используем state вместо ref, чтобы изменение вызывало ре-рендер
   // Это исправляет зависание на "Обработка результатов боя..."
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
+  const [quickBattleInProgress, setQuickBattleInProgress] = useState(false);
   
   const { accountId } = useWalletContext();
+  const { hasGoldenTicket } = useGoldenTicketCheck();
   const { deviceId, startDungeonSession, endDungeonSession, updateDungeonLevel, getCurrentClaimKey, setClaimInProgress } = useDungeonSync();
   const [sessionTerminated, setSessionTerminated] = useState(false);
   const [showingFinishDelay, setShowingFinishDelay] = useState(false);
@@ -130,6 +134,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   
   const { 
     battleState,
+    setBattleState,
     attackOrder,
     updateAttackOrder,
     executePlayerAttack,
@@ -405,6 +410,50 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
   const handleArenaMenuReturn = useCallback(() => {
     handleSaveBattleStateAndNavigate('/menu');
   }, [handleSaveBattleStateAndNavigate]);
+
+  // ⚡ Quick Battle handler for Golden Ticket holders
+  const handleQuickBattle = useCallback(() => {
+    if (quickBattleInProgress || !battleState.playerPairs.length || !battleState.opponents.length) return;
+
+    console.log('⚡ [QuickBattle] Starting instant simulation...');
+    setQuickBattleInProgress(true);
+
+    // Run simulation synchronously
+    const result = simulateQuickBattle(
+      battleState.playerPairs,
+      battleState.opponents,
+      attackOrder
+    );
+
+    console.log('⚡ [QuickBattle] Result:', {
+      isVictory: result.isVictory,
+      monstersKilled: result.monstersKilled,
+      alivePairs: result.resultPairs.filter(p => p.health > 0).length,
+    });
+
+    // Track killed monsters
+    if (result.monstersKilled > 0) {
+      const newKills = result.resultOpponents
+        .filter(o => o.health <= 0)
+        .map(o => ({ level: battleState.level, dungeonType, name: o.name }));
+      monstersKilledRef.current = [...monstersKilledRef.current, ...newKills];
+      setMonstersKilled(prev => [...prev, ...newKills]);
+    }
+
+    // Show loading overlay for 1.5s, then apply results
+    setTimeout(() => {
+      // Apply final battle state — triggers isBattleOver effect
+      setBattleState(prev => ({
+        ...prev,
+        playerPairs: result.resultPairs,
+        opponents: result.resultOpponents,
+        currentTurn: 'player' as const,
+      }));
+
+      setQuickBattleInProgress(false);
+    }, 1500);
+  }, [quickBattleInProgress, battleState, attackOrder, dungeonType, setBattleState]);
+
   const handleNextLevel = async () => {
     // ✅ КРИТИЧНО: Сначала обновляем уровень в БД, потом локально
     const nextLevel = battleState.level + 1;
@@ -1075,7 +1124,28 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         onMenuReturn={handleArenaMenuReturn}
         dungeonType={dungeonType}
         monstersKilledRef={monstersKilledRef}
+        onQuickBattle={handleQuickBattle}
+        hasGoldenTicket={hasGoldenTicket}
       />
+      
+      {/* ⚡ Quick Battle Loading Overlay */}
+      {quickBattleInProgress && (
+        <div className="fixed inset-0 bg-black/85 flex flex-col items-center justify-center z-[300] gap-4">
+          <div className="text-2xl font-bold text-yellow-400 animate-pulse">⚡ Идёт бой...</div>
+          <div className="w-64 h-3 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full transition-all duration-[1500ms] ease-linear"
+              style={{ width: '100%', animation: 'quickBattleProgress 1.5s ease-in-out forwards' }}
+            />
+          </div>
+          <style>{`
+            @keyframes quickBattleProgress {
+              0% { width: 0%; }
+              100% { width: 100%; }
+            }
+          `}</style>
+        </div>
+      )}
       
       {/* Модалка с результатами наград после клейма */}
       {claimResultModal.isOpen && claimResultModal.rewards && (

@@ -32,9 +32,11 @@ interface TeamBattleArenaProps {
   level: number;
   lastRoll?: { attackerRoll: number; defenderRoll?: number; source: 'player' | 'enemy'; damage: number; isBlocked: boolean; isCritical?: boolean; isMiss?: boolean; isCounterAttack?: boolean; counterAttackDamage?: number; level: number } | null;
   onSurrenderWithSave?: () => Promise<void>;
-  onMenuReturn?: () => void; // ✅ Новый callback для сохранения состояния
-  dungeonType?: string; // ✅ Для сохранения в Zustand
-  monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>; // ✅ Для сохранения убитых монстров
+  onMenuReturn?: () => void;
+  dungeonType?: string;
+  monstersKilledRef?: React.MutableRefObject<Array<{level: number, dungeonType: string, name?: string}>>;
+  onQuickBattle?: () => void;
+  hasGoldenTicket?: boolean;
 }
 export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   playerPairs,
@@ -47,9 +49,11 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   level,
   lastRoll,
   onSurrenderWithSave,
-  onMenuReturn, // ✅ Новый prop
+  onMenuReturn,
   dungeonType,
-  monstersKilledRef
+  monstersKilledRef,
+  onQuickBattle,
+  hasGoldenTicket
 }) => {
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -559,6 +563,18 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                   >
                     {autoBattle ? t(language, 'battlePage.stopAutoBattle') : t(language, 'battlePage.autoBattle')}
                   </Button>
+
+                  {hasGoldenTicket && onQuickBattle && (
+                    <Button
+                      variant="menu"
+                      size="sm"
+                      onClick={onQuickBattle}
+                      className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-xs bg-yellow-600/80 hover:bg-yellow-500/80 text-yellow-100"
+                      style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
+                    >
+                      ⚡ Быстрый бой
+                    </Button>
+                  )}
                 </div>
               </div>
 

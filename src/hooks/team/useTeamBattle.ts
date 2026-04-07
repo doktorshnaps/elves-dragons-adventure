@@ -678,6 +678,7 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
 
   return {
     battleState,
+    setBattleState,
     attackOrder,
     updateAttackOrder,
     executePlayerAttack,
