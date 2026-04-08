@@ -363,13 +363,16 @@ export const useDungeonRewards = () => {
         // Очищаем claim_key после успешного клейма
         localStorage.removeItem('currentClaimKey');
         
-        // Инвалидируем кеши для обновления UI (включая квесты)
+        // Инвалидируем кеши для обновления UI (включая квесты и Искатели)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['gameData', accountId] }),
           queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] }),
           queryClient.refetchQueries({ queryKey: ['itemInstances', accountId] }),
           queryClient.invalidateQueries({ queryKey: ['dailyQuests', accountId] }),
           queryClient.invalidateQueries({ queryKey: ['userDailyQuests'] }),
+          queryClient.invalidateQueries({ queryKey: ['treasureHuntEvents'] }),
+          queryClient.invalidateQueries({ queryKey: ['treasureHuntFindings'] }),
+          queryClient.invalidateQueries({ queryKey: ['treasureHuntLeaderboard'] }),
         ]);
         
         // ✅ КРИТИЧНО: НЕ сбрасываем pendingReward здесь!

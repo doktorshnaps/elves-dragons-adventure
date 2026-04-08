@@ -116,11 +116,20 @@ export const claimBattleRewards = async (
 
         if (claimError) {
           console.error(`❌ [claimBattleRewards] Attempt ${attempt} failed:`, claimError);
-          throw new Error(claimError.message || 'Failed to claim rewards');
+          // Extract structured error from response if available
+          const errorMsg = claimError.message || 'Failed to claim rewards';
+          throw new Error(errorMsg);
         }
 
         if (!result) {
           throw new Error('Empty response from claim endpoint');
+        }
+
+        // Handle structured error responses (ok: false)
+        if (result.ok === false) {
+          const errorCode = result.code || 'UNKNOWN';
+          console.error(`❌ [claimBattleRewards] Server error [${errorCode}]:`, result.error);
+          throw new Error(result.error || 'Server error');
         }
 
         console.log('✅ [claimBattleRewards] Rewards claimed successfully:', result);
