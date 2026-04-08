@@ -1,40 +1,109 @@
 
+План исправления разделю на 2 связанные проблемы: нестабильный claim после высоких уровней и несинхронный учет события «Искатели».
 
-# Fix: Rewards and Card State Not Updating After Dungeon Claim (Until Reload)
+1. Подтвердить точную причину падения claim на сервере
+- Проверить логи Edge Function `claim-battle-rewards` именно на моментах ошибок после 21–25 уровней.
+- Сопоставить, где падает функция:
+  - `calculateRewards`
+  - блок treasure hunt
+  - `apply_battle_rewards`
+  - запись в `treasure_hunt_findings`
+- Отдельно проверить, не остаётся ли `reward_claims` записанным при частичном фейле.
 
-## Root Cause
+2. Убрать главный архитектурный риск в treasure hunt
+Сейчас логика «Искателей» в `claim-battle-rewards` небезопасна:
+- `treasure_hunt_events.found_quantity` увеличивается до финального успеха начисления наград
+- при неудачном claim событие уже частично изменено
+- `treasure_hunt_findings` обновляется позже, отдельными запросами, вне атомарного блока
 
-Both `useCardInstances` and `useItemInstances` have aggressive cache settings that prevent updates:
+Из-за этого возможны симптомы игроков:
+- несколько ошибок подряд, потом успех
+- предмет/прохождение не засчитывается сразу
+- счетчики события и лидерборд расходятся
 
+Что изменить:
+- перенести обновление `treasure_hunt_events` и `treasure_hunt_findings` внутрь одной серверной атомарной операции
+- не делать отдельные post-processing update/insert после `apply_battle_rewards`
+- если treasure hunt не удалось зафиксировать, весь claim должен либо:
+  - корректно откатиться,
+  - либо завершиться без поломанного промежуточного состояния
+
+3. Сделать серверный RPC для полного применения наград вместе с Seekers
+Создать/расширить RPC, который в одной транзакции выполнит:
+- начисление ELL/опыта
+- добавление предметов
+- обновление здоровья карт
+- фиксацию treasure hunt находок
+- обновление счетчиков события
+- возврат итоговых данных для UI
+
+Предлагаемый поток:
+```text
+claim-battle-rewards
+  -> calculateRewards(...)
+  -> apply_battle_rewards_and_treasure_hunt(...)
+      - game_data
+      - item_instances
+      - card_instances
+      - treasure_hunt_findings
+      - treasure_hunt_events.found_quantity
+  -> update quests
+  -> delete session
+  -> mark nonce used
 ```
-staleTime: 30 * 60 * 1000  // 30 minutes
-refetchOnMount: false
-refetchOnWindowFocus: false
-refetchOnReconnect: false
-```
 
-When `invalidateQueries` is called after claiming rewards, it marks queries as stale. But if no component is **currently observing** the query (e.g., user is still on the battle page, not on inventory/team page), the refetch doesn't happen. When the user then navigates to a page that uses these queries, `refetchOnMount: false` prevents fetching the fresh data — so stale cached data is shown until a full page reload.
+Это устранит рассинхрон между инвентарем, карточками и «Искателями».
 
-## Fix
+4. Исправить защиту от частично успешного claim
+Сейчас `reward_claims` вставляется до полного завершения всей операции. Если дальше что-то падает, возможен «залипший» claim.
+Нужно изменить поток так, чтобы:
+- либо запись идемпотентности создавалась в рамках той же транзакции, что и награды
+- либо в случае неуспеха claim не считался завершенным
+- повторная попытка не блокировалась ложным `already claimed`
 
-Two changes in each hook:
+Это особенно важно для жалоб «пару раз ошибка, потом прогрузился выигрыш».
 
-1. **`refetchOnMount: true`** (default behavior) — when a component mounts and the query is stale (which it will be after invalidation), React Query will refetch. This doesn't break the 30-min cache for normal navigation — it only refetches when the data has been explicitly invalidated.
+5. Починить учет «прохождения» для Искателей
+По текущему коду `Seekers.tsx` показывает только `treasure_hunt_findings`, а эти записи создаются лишь при успешном конце claim.
+Исправление:
+- считать найденный предмет события только после реального успешного начисления
+- гарантировать upsert в `treasure_hunt_findings` внутри транзакции
+- обновлять данные страницы «Искатели» через invalidate/refetch после успешного claim
+- если есть отдельный квест/счетчик “прохождение” для события, привязать его к серверному успешному commit, а не к клиентскому состоянию боя
 
-2. **Use `refetchQueries` instead of `invalidateQueries`** in the claim flow — this forces an immediate network request regardless of whether any component is observing the query. This ensures data is fresh by the time the user sees the reward modal and navigates away.
+6. Усилить фронтенд после успешного claim
+После успеха сразу рефетчить не только:
+- `cardInstances`
+- `itemInstances`
+но и:
+- данные/кэш «Искателей»
+- активное событие treasure hunt
+- лидерборд treasure hunt
 
-## Files to Change
+Чтобы игрок видел засчитывание без перезагрузки.
 
-### `src/hooks/useCardInstances.ts` (line 72)
-- Change `refetchOnMount: false` → `refetchOnMount: true`
+7. Улучшить обработку ошибок для игрока
+Сейчас пользователь видит общий текст `Edge Function returned a non-2xx status code`.
+Нужно:
+- пробрасывать нормализованное серверное сообщение
+- различать:
+  - временная ошибка начисления
+  - конфликт сессии
+  - claim уже обработан
+  - ошибка фиксации treasure hunt
+- для повторной попытки сохранять корректный путь без потери состояния
 
-### `src/hooks/useItemInstances.ts` (line 55)
-- Change `refetchOnMount: false` → `refetchOnMount: true`
+8. Файлы, которые нужно менять
+- `supabase/functions/claim-battle-rewards/index.ts`
+- новая migration с RPC для атомарной фиксации treasure hunt вместе с наградами
+- возможно обновление существующего `apply_battle_rewards` RPC
+- `src/hooks/adventure/useDungeonRewards.ts`
+- `src/components/game/battle/TeamBattlePage.tsx`
+- при необходимости `src/pages/Seekers.tsx` или соответствующие query hooks для немедленного обновления UI
 
-### `src/hooks/adventure/useDungeonRewards.ts` (lines 367-373)
-- Change `invalidateQueries` → `refetchQueries` for `cardInstances` and `itemInstances` after successful claim
-- Keep `invalidateQueries` for other keys (gameData, quests) as they're less critical
+Технические выводы по текущему коду
+- Проблема почти наверняка не в одном только фронтенде: основной риск в серверной последовательности `reward_claims -> apply_battle_rewards -> treasure_hunt_findings`, где часть шагов уже необратима.
+- В текущем коде treasure hunt логика разбита на несколько независимых операций, из-за чего после длинных забегов и ретраев растёт шанс расхождения состояния.
+- Исправлять нужно не косметически, а переводом всей фиксации наград/Seekers в один атомарный серверный commit.
 
-### `src/hooks/battle/useBattleRewards.ts` (lines 92-98)
-- Same change: `invalidateQueries` → `refetchQueries` for `cardInstances` and `itemInstances`
-
+После утверждения я бы реализовал это именно так: сначала миграция/RPC, затем упрощение `claim-battle-rewards`, затем фронтенд-рефетч и улучшенные ошибки.
