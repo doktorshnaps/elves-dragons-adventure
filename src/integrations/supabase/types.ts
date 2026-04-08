@@ -4040,6 +4040,19 @@ export type Database = {
         }
         Returns: Json
       }
+      apply_battle_rewards_v2: {
+        Args: {
+          p_card_health_updates: Json
+          p_card_kills: Json
+          p_claim_key: string
+          p_ell_reward: number
+          p_experience_reward: number
+          p_items: Json
+          p_treasure_hunt_findings?: Json
+          p_wallet_address: string
+        }
+        Returns: Json
+      }
       assign_worker_to_building: {
         Args: {
           p_active_worker: Json
