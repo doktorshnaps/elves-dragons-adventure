@@ -1,109 +1,38 @@
 
-План исправления разделю на 2 связанные проблемы: нестабильный claim после высоких уровней и несинхронный учет события «Искатели».
 
-1. Подтвердить точную причину падения claim на сервере
-- Проверить логи Edge Function `claim-battle-rewards` именно на моментах ошибок после 21–25 уровней.
-- Сопоставить, где падает функция:
-  - `calculateRewards`
-  - блок treasure hunt
-  - `apply_battle_rewards`
-  - запись в `treasure_hunt_findings`
-- Отдельно проверить, не остаётся ли `reward_claims` записанным при частичном фейле.
+# Fix: Seekers Leaderboard Empty + Soul Altar Donation Loss
 
-2. Убрать главный архитектурный риск в treasure hunt
-Сейчас логика «Искателей» в `claim-battle-rewards` небезопасна:
-- `treasure_hunt_events.found_quantity` увеличивается до финального успеха начисления наград
-- при неудачном claim событие уже частично изменено
-- `treasure_hunt_findings` обновляется позже, отдельными запросами, вне атомарного блока
+## Problem 1: Seekers Leaderboard Shows Empty
 
-Из-за этого возможны симптомы игроков:
-- несколько ошибок подряд, потом успех
-- предмет/прохождение не засчитывается сразу
-- счетчики события и лидерборд расходятся
-
-Что изменить:
-- перенести обновление `treasure_hunt_events` и `treasure_hunt_findings` внутрь одной серверной атомарной операции
-- не делать отдельные post-processing update/insert после `apply_battle_rewards`
-- если treasure hunt не удалось зафиксировать, весь claim должен либо:
-  - корректно откатиться,
-  - либо завершиться без поломанного промежуточного состояния
-
-3. Сделать серверный RPC для полного применения наград вместе с Seekers
-Создать/расширить RPC, который в одной транзакции выполнит:
-- начисление ELL/опыта
-- добавление предметов
-- обновление здоровья карт
-- фиксацию treasure hunt находок
-- обновление счетчиков события
-- возврат итоговых данных для UI
-
-Предлагаемый поток:
-```text
-claim-battle-rewards
-  -> calculateRewards(...)
-  -> apply_battle_rewards_and_treasure_hunt(...)
-      - game_data
-      - item_instances
-      - card_instances
-      - treasure_hunt_findings
-      - treasure_hunt_events.found_quantity
-  -> update quests
-  -> delete session
-  -> mark nonce used
+**Root cause**: The `treasure_hunt_findings` table has an RLS policy that only allows users to see **their own** records:
 ```
+treasure_hunt_findings_select_own: wallet_address = get_current_user_wallet()
+```
+The `Seekers.tsx` page queries ALL findings for the event to build a leaderboard, but RLS filters out everyone else's records. Result: leaderboard appears empty unless you personally found an item.
 
-Это устранит рассинхрон между инвентарем, карточками и «Искателями».
+**Fix**: Create a SECURITY DEFINER RPC function `get_treasure_hunt_leaderboard(p_event_id)` that returns all findings with masked wallet addresses (same pattern as `get_soul_donations_leaderboard`). Update `Seekers.tsx` to use this RPC instead of direct table query.
 
-4. Исправить защиту от частично успешного claim
-Сейчас `reward_claims` вставляется до полного завершения всей операции. Если дальше что-то падает, возможен «залипший» claim.
-Нужно изменить поток так, чтобы:
-- либо запись идемпотентности создавалась в рамках той же транзакции, что и награды
-- либо в случае неуспеха claim не считался завершенным
-- повторная попытка не блокировалась ложным `already claimed`
+## Problem 2: Soul Altar - Crystals Disappear But Donation Not Recorded
 
-Это особенно важно для жалоб «пару раз ошибка, потом прогрузился выигрыш».
+**Root cause**: In `SoulAltarTab.tsx`, the donation flow is:
+1. Remove crystal instances from `item_instances` (irreversible)
+2. Insert into `soul_donations`
 
-5. Починить учет «прохождения» для Искателей
-По текущему коду `Seekers.tsx` показывает только `treasure_hunt_findings`, а эти записи создаются лишь при успешном конце claim.
-Исправление:
-- считать найденный предмет события только после реального успешного начисления
-- гарантировать upsert в `treasure_hunt_findings` внутри транзакции
-- обновлять данные страницы «Искатели» через invalidate/refetch после успешного claim
-- если есть отдельный квест/счетчик “прохождение” для события, привязать его к серверному успешному commit, а не к клиентскому состоянию боя
+If step 2 fails (network error, RLS issue), the crystals are already gone. Additionally, the SELECT policies on `soul_donations` target `public` role instead of `authenticated`, which may cause `get_current_user_wallet()` to fail silently.
 
-6. Усилить фронтенд после успешного claim
-После успеха сразу рефетчить не только:
-- `cardInstances`
-- `itemInstances`
-но и:
-- данные/кэш «Искателей»
-- активное событие treasure hunt
-- лидерборд treasure hunt
+**Fix**:
+- Reverse the order: insert donation FIRST, then remove crystals
+- Better: create an Edge Function or RPC that does both atomically
+- Fix SELECT policies to target `authenticated` role
 
-Чтобы игрок видел засчитывание без перезагрузки.
+## Changes
 
-7. Улучшить обработку ошибок для игрока
-Сейчас пользователь видит общий текст `Edge Function returned a non-2xx status code`.
-Нужно:
-- пробрасывать нормализованное серверное сообщение
-- различать:
-  - временная ошибка начисления
-  - конфликт сессии
-  - claim уже обработан
-  - ошибка фиксации treasure hunt
-- для повторной попытки сохранять корректный путь без потери состояния
+### Migration (new SQL)
+1. Create `get_treasure_hunt_leaderboard(p_event_id UUID)` RPC - SECURITY DEFINER, returns findings with masked wallets, ordered by `found_quantity DESC`
+2. Create `donate_soul_crystals(p_wallet TEXT, p_amount INT)` RPC - SECURITY DEFINER, atomically inserts donation AND removes crystal item_instances in one transaction
+3. Fix `soul_donations` SELECT policies: change role from `public` to `authenticated`
 
-8. Файлы, которые нужно менять
-- `supabase/functions/claim-battle-rewards/index.ts`
-- новая migration с RPC для атомарной фиксации treasure hunt вместе с наградами
-- возможно обновление существующего `apply_battle_rewards` RPC
-- `src/hooks/adventure/useDungeonRewards.ts`
-- `src/components/game/battle/TeamBattlePage.tsx`
-- при необходимости `src/pages/Seekers.tsx` или соответствующие query hooks для немедленного обновления UI
+### Frontend changes
+1. **`src/pages/Seekers.tsx`** (~line 148-161): Replace direct `supabase.from('treasure_hunt_findings').select(...)` with `supabase.rpc('get_treasure_hunt_leaderboard', { p_event_id: eventId })`
+2. **`src/components/soul-altar/SoulAltarTab.tsx`** (~line 105-135): Replace manual crystal deletion + donation insert with single `supabase.rpc('donate_soul_crystals', { p_wallet, p_amount })` call. Remove `removeItemInstancesByIds` from the donation flow. After success, invalidate `itemInstances` query cache to reflect removed crystals.
 
-Технические выводы по текущему коду
-- Проблема почти наверняка не в одном только фронтенде: основной риск в серверной последовательности `reward_claims -> apply_battle_rewards -> treasure_hunt_findings`, где часть шагов уже необратима.
-- В текущем коде treasure hunt логика разбита на несколько независимых операций, из-за чего после длинных забегов и ретраев растёт шанс расхождения состояния.
-- Исправлять нужно не косметически, а переводом всей фиксации наград/Seekers в один атомарный серверный commit.
-
-После утверждения я бы реализовал это именно так: сначала миграция/RPC, затем упрощение `claim-battle-rewards`, затем фронтенд-рефетч и улучшенные ошибки.
