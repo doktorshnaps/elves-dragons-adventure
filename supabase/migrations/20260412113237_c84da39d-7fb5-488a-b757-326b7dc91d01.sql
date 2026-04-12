@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.add_card_to_forge_bay(p_card_instance_id uuid, p_wallet_address text);
