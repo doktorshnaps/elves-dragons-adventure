@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
@@ -9,13 +9,16 @@ const STALE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 export const useGoldenTicketCheck = () => {
   const { accountId, nearAccountId } = useWalletContext();
   const queryClient = useQueryClient();
-  const walletCandidates = Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[];
-  const refreshingRef = useRef(false);
+  const walletCandidates = useMemo(
+    () => Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[],
+    [accountId, nearAccountId]
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Trigger the edge function to refresh NFT access cache
   const refreshAccess = useCallback(async () => {
-    if (refreshingRef.current || walletCandidates.length === 0) return;
-    refreshingRef.current = true;
+    if (isRefreshing || walletCandidates.length === 0) return;
+    setIsRefreshing(true);
     try {
       for (const wallet of walletCandidates) {
         console.log('🔄 [GoldenTicket] Refreshing access for:', wallet);
@@ -27,9 +30,9 @@ export const useGoldenTicketCheck = () => {
     } catch (err) {
       console.error('❌ [GoldenTicket] refresh failed:', err);
     } finally {
-      refreshingRef.current = false;
+      setIsRefreshing(false);
     }
-  }, [walletCandidates, queryClient]);
+  }, [walletCandidates, queryClient, isRefreshing]);
 
   // Main query: read from wallet_whitelist_nft_access table
   const { data, isLoading } = useQuery({
@@ -82,14 +85,14 @@ export const useGoldenTicketCheck = () => {
   });
 
   const hasGoldenTicket = data?.hasAccess ?? false;
-  const isChecking = isLoading || refreshingRef.current;
+  const isChecking = isLoading || isRefreshing;
 
   // Auto-refresh when data is stale or missing
   useEffect(() => {
-    if (!isLoading && data?.isStale && walletCandidates.length > 0) {
+    if (!isLoading && data?.isStale && walletCandidates.length > 0 && !isRefreshing) {
       refreshAccess();
     }
-  }, [isLoading, data?.isStale, walletCandidates.length, refreshAccess]);
+  }, [isLoading, data?.isStale, walletCandidates.length]);
 
   // Realtime subscription on wallet_whitelist_nft_access
   useEffect(() => {
