@@ -3128,15 +3128,10 @@ export type Database = {
         Args: { p_card_instance_id: string; p_wallet_address?: string }
         Returns: string
       }
-      add_card_to_medical_bay:
-        | {
-            Args: { p_card_instance_id: string; p_wallet_address?: string }
-            Returns: string
-          }
-        | {
-            Args: { p_card_instance_id: string; p_wallet_address?: string }
-            Returns: string
-          }
+      add_card_to_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address?: string }
+        Returns: string
+      }
       add_ell_balance: {
         Args: { p_amount: number; p_wallet_address: string }
         Returns: undefined
