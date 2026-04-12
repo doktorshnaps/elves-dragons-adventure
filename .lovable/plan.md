@@ -1,38 +1,24 @@
 
 
-# Fix: Seekers Leaderboard Empty + Soul Altar Donation Loss
+# Fix: Forge Bay Function Overload Conflict
 
-## Problem 1: Seekers Leaderboard Shows Empty
+## Problem
+The error `Could not choose the best candidate function between: public.add_card_to_forge_bay(p_card_instance => text, ...) and public.add_card_to_forge_bay(p_card_instance => uuid, ...)` occurs because the recent migration created a second version of the function with `uuid` parameter type, but didn't drop the old `text` version. PostgREST cannot resolve which function to call.
 
-**Root cause**: The `treasure_hunt_findings` table has an RLS policy that only allows users to see **their own** records:
+## Solution
+Drop the `uuid` version (which lacks slot limit enforcement) and keep the `text` version (which has the correct slot limit validation).
+
+## Technical Details
+
+**Database migration** -- single SQL statement:
+```sql
+DROP FUNCTION IF EXISTS public.add_card_to_forge_bay(p_card_instance_id uuid, p_wallet_address text);
 ```
-treasure_hunt_findings_select_own: wallet_address = get_current_user_wallet()
-```
-The `Seekers.tsx` page queries ALL findings for the event to build a leaderboard, but RLS filters out everyone else's records. Result: leaderboard appears empty unless you personally found an item.
 
-**Fix**: Create a SECURITY DEFINER RPC function `get_treasure_hunt_leaderboard(p_event_id)` that returns all findings with masked wallet addresses (same pattern as `get_soul_donations_leaderboard`). Update `Seekers.tsx` to use this RPC instead of direct table query.
+The remaining `text` version already:
+- Casts `p_card_instance_id::UUID` internally where needed
+- Enforces forge slot limits (`forge_level + 1`)
+- Checks for duplicate entries in both forge and medical bays
 
-## Problem 2: Soul Altar - Crystals Disappear But Donation Not Recorded
-
-**Root cause**: In `SoulAltarTab.tsx`, the donation flow is:
-1. Remove crystal instances from `item_instances` (irreversible)
-2. Insert into `soul_donations`
-
-If step 2 fails (network error, RLS issue), the crystals are already gone. Additionally, the SELECT policies on `soul_donations` target `public` role instead of `authenticated`, which may cause `get_current_user_wallet()` to fail silently.
-
-**Fix**:
-- Reverse the order: insert donation FIRST, then remove crystals
-- Better: create an Edge Function or RPC that does both atomically
-- Fix SELECT policies to target `authenticated` role
-
-## Changes
-
-### Migration (new SQL)
-1. Create `get_treasure_hunt_leaderboard(p_event_id UUID)` RPC - SECURITY DEFINER, returns findings with masked wallets, ordered by `found_quantity DESC`
-2. Create `donate_soul_crystals(p_wallet TEXT, p_amount INT)` RPC - SECURITY DEFINER, atomically inserts donation AND removes crystal item_instances in one transaction
-3. Fix `soul_donations` SELECT policies: change role from `public` to `authenticated`
-
-### Frontend changes
-1. **`src/pages/Seekers.tsx`** (~line 148-161): Replace direct `supabase.from('treasure_hunt_findings').select(...)` with `supabase.rpc('get_treasure_hunt_leaderboard', { p_event_id: eventId })`
-2. **`src/components/soul-altar/SoulAltarTab.tsx`** (~line 105-135): Replace manual crystal deletion + donation insert with single `supabase.rpc('donate_soul_crystals', { p_wallet, p_amount })` call. Remove `removeItemInstancesByIds` from the donation flow. After success, invalidate `itemInstances` query cache to reflect removed crystals.
+No frontend changes needed.
 
