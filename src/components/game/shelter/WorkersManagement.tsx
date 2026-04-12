@@ -269,13 +269,16 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
         }
         
         // Активируем ожидающих рабочих (только если нет активных в том же здании)
-        updated = updated.map(worker => {
+        // IMPORTANT: используем for-цикл вместо .map(), чтобы активация одного рабочего
+        // была видна при проверке следующих (иначе все стартуют одновременно)
+        for (let i = 0; i < updated.length; i++) {
+          const worker = updated[i];
           if (worker.status === 'waiting' && now >= worker.startTime) {
             // Проверяем, нет ли уже работающих рабочих в этом здании
             const hasActiveWorkerInBuilding = updated.some(
-              w => w.building === worker.building && 
+              (w, idx) => idx !== i &&
+                   w.building === worker.building && 
                    w.status === 'working' && 
-                   w.id !== worker.id &&
                    (w.startTime + w.duration) > now
             );
             
@@ -286,7 +289,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
                 scheduledStart: new Date(worker.startTime)
               });
               hasChanges = true;
-              return { ...worker, status: 'working' as const };
+              updated[i] = { ...worker, status: 'working' as const };
             } else {
               console.log('⏸️ Worker still waiting (another active in building):', {
                 name: worker.name,
@@ -294,8 +297,7 @@ export const WorkersManagement = ({ onSpeedBoostChange }: WorkersManagementProps
               });
             }
           }
-          return worker;
-        });
+        }
         
         // Сохраняем изменения
         if (hasChanges || updated.length !== prev.length) {
