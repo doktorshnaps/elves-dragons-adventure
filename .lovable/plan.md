@@ -1,38 +1,29 @@
 
 
-# Fix: Golden Ticket check stuck in infinite loop
+# Fix: Medical Bay overload error + Forge Bay real-time sync
 
-## Problem
-Two bugs in `useGoldenTicketCheck` cause the NFT check to hang permanently showing "Проверка Golden Ticket...":
+## Problem 1: Medical Bay "Could not choose the best candidate function"
+Same issue we fixed for forge -- there are **two overloaded versions** of `add_card_to_medical_bay` (one with `text` param, one with `uuid`). PostgREST cannot resolve the ambiguity.
 
-1. **Infinite refresh loop** -- `walletCandidates` is created as a new array on every render (`Array.from(new Set(...))`). Since it's a dependency of the `refreshAccess` `useCallback`, the callback is recreated each render. The `useEffect` on line 88 depends on `refreshAccess`, so it fires every render, calling the edge function in a tight loop (confirmed by edge function logs showing boot/shutdown every 1-2 seconds).
+**Fix**: Drop the `uuid` version, keep only the `text` version (matching the forge fix pattern).
 
-2. **`refreshingRef` doesn't trigger re-renders** -- `isChecking` is computed as `isLoading || refreshingRef.current`. When `refreshingRef.current` changes from `true` to `false`, no re-render occurs, so the UI stays stuck showing "Проверка..." even though the data is already in the DB (`has_access: true`).
+## Problem 2: Forge Bay not visible on other devices
+The `forge_bay` and `medical_bay` tables are **not added to the Supabase Realtime publication**. Real-time subscriptions only work on the device that made the change because no events are broadcast to other clients.
 
-## Solution
-Two changes in `src/hooks/useGoldenTicketCheck.ts`:
-
-1. **Memoize `walletCandidates`** with `useMemo` keyed on `accountId` and `nearAccountId` -- stops the infinite loop
-2. **Replace `refreshingRef` with `useState`** -- ensures re-renders when the refresh completes, so `isChecking` updates properly
+**Fix**: Add both tables to the `supabase_realtime` publication.
 
 ## Technical Details
 
-**File**: `src/hooks/useGoldenTicketCheck.ts`
+**Single migration** with:
 
-```typescript
-// Before (broken):
-const walletCandidates = Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[];
-const refreshingRef = useRef(false);
+```sql
+-- 1. Drop the duplicate uuid overload for medical_bay
+DROP FUNCTION IF EXISTS public.add_card_to_medical_bay(uuid, text);
 
-// After (fixed):
-const walletCandidates = useMemo(
-  () => Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[],
-  [accountId, nearAccountId]
-);
-const [isRefreshing, setIsRefreshing] = useState(false);
+-- 2. Enable realtime for forge_bay and medical_bay
+ALTER PUBLICATION supabase_realtime ADD TABLE forge_bay;
+ALTER PUBLICATION supabase_realtime ADD TABLE medical_bay;
 ```
 
-Update `refreshAccess` to use `setIsRefreshing(true/false)` instead of `refreshingRef.current`, and update `isChecking` to use `isRefreshing` state.
-
-No database or edge function changes needed -- the edge function and DB data are working correctly.
+No frontend changes needed -- both hooks already subscribe to real-time changes correctly.
 
