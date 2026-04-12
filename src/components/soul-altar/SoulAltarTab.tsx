@@ -27,7 +27,7 @@ export const SoulAltarTab = () => {
   const { accountId } = useWalletContext();
   const { toast } = useToast();
   const { gameData, updateGameData } = useGameData();
-  const { instances: itemInstances, removeItemInstancesByIds } = useItemInstances();
+  const { instances: itemInstances, refetch: refetchItems } = useItemInstances();
   
   const [leaderboard, setLeaderboard] = useState<DonationStats[]>([]);
   const [myStats, setMyStats] = useState<DonationStats | null>(null);
