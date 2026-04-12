@@ -109,30 +109,11 @@ export const SoulAltarTab = () => {
     try {
       setDonating(true);
 
-      // Получаем все кристаллы из item_instances
-      const allCrystalInstances = itemInstances.filter(inst => 
-        inst.name === "Кристалл Жизни" || inst.item_id === "lifeCrystal"
-      );
-      
-      if (allCrystalInstances.length < amount) {
-        throw new Error(`Недостаточно кристаллов в базе данных. Найдено: ${allCrystalInstances.length}, требуется: ${amount}`);
-      }
-
-      // Берем точное количество для удаления
-      const crystalInstancesToRemove = allCrystalInstances.slice(0, amount);
-      const instanceIds = crystalInstancesToRemove.map(inst => inst.id);
-      
-      console.log(`Удаление ${amount} кристаллов жизни из item_instances. IDs:`, instanceIds);
-      await removeItemInstancesByIds(instanceIds);
-      console.log('✅ Кристаллы удалены из item_instances');
-
-      // Записываем пожертвование
-      const { error } = await supabase
-        .from('soul_donations')
-        .insert({
-          wallet_address: accountId,
-          amount: amount,
-        });
+      // Атомарное пожертвование через RPC
+      const { error } = await supabase.rpc('donate_soul_crystals', {
+        p_wallet: accountId,
+        p_amount: amount,
+      });
 
       if (error) throw error;
 

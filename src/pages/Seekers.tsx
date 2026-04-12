@@ -148,13 +148,10 @@ export const Seekers = () => {
   const loadFindings = async (eventId: string) => {
     try {
       const { data, error } = await supabase
-        .from('treasure_hunt_findings')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('found_quantity', { ascending: false });
+        .rpc('get_treasure_hunt_leaderboard', { p_event_id: eventId });
 
       if (error) throw error;
-      setFindings(data || []);
+      setFindings((data || []) as any[]);
     } catch (error) {
       console.error('Error loading findings:', error);
     }
