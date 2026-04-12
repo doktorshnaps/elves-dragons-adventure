@@ -85,24 +85,37 @@ export const useBuildingUpgrades = () => {
     const now = Date.now();
     let changed = false;
 
+    const BUILDING_NAMES: Record<string, string> = {
+      main_hall: 'Главный зал',
+      workshop: 'Мастерская',
+      storage: 'Склад',
+      sawmill: 'Лесопилка',
+      quarry: 'Каменоломня',
+      barracks: 'Казармы',
+      dragon_lair: 'Драконье логово',
+      medical: 'Медицинский блок',
+      forge: 'Кузница',
+    };
+
     const updated = activeUpgrades.map(upgrade => {
       const tKey = `${upgrade.buildingId}_${upgrade.startTime}`;
       const isDone = now >= upgrade.startTime + upgrade.duration;
       if (isDone && upgrade.status !== 'ready' && !transitionedRef.current.has(tKey)) {
         transitionedRef.current.add(tKey);
         changed = true;
+        const buildingName = BUILDING_NAMES[upgrade.buildingId] || upgrade.buildingId;
         // Toast (once per upgrade)
         if (!toastedUpgradesRef.current.has(tKey)) {
           toastedUpgradesRef.current.add(tKey);
           toast({
             title: 'Улучшение завершено',
-            description: `Доступно к установке: уровень ${upgrade.targetLevel}`
+            description: `${buildingName}: доступно к установке уровень ${upgrade.targetLevel}`
           });
           // Send Telegram notification
           if (accountId) {
             sendTelegramNotification(
               accountId,
-              `🏗️ Улучшение здания завершено!\nДоступно к установке: уровень ${upgrade.targetLevel}`,
+              `🏗️ Улучшение здания завершено!\n${buildingName}: доступно к установке уровень ${upgrade.targetLevel}`,
               `building_ready_${upgrade.buildingId}`
             );
           }
