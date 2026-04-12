@@ -4234,6 +4234,10 @@ export type Database = {
         Returns: number
       }
       disband_clan: { Args: { p_wallet: string }; Returns: Json }
+      donate_soul_crystals: {
+        Args: { p_amount: number; p_wallet: string }
+        Returns: undefined
+      }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
         Returns: string
@@ -4736,6 +4740,15 @@ export type Database = {
       }
       get_static_game_data: { Args: never; Returns: Json }
       get_telegram_status: { Args: { p_wallet_address: string }; Returns: Json }
+      get_treasure_hunt_leaderboard: {
+        Args: { p_event_id: string }
+        Returns: {
+          found_quantity: number
+          last_found_at: string
+          reward_claimed: boolean
+          wallet_address: string
+        }[]
+      }
       get_user_daily_quests: {
         Args: { p_wallet_address: string }
         Returns: {
