@@ -123,7 +123,7 @@ export const SoulAltarTab = () => {
       });
 
       setDonationAmount("");
-      await loadDonationStats();
+      await Promise.all([loadDonationStats(), refetchItems()]);
 
     } catch (error) {
       console.error('Error making donation:', error);
