@@ -1,24 +1,30 @@
 
 
-# Fix: Forge Bay Function Overload Conflict
+# Fix: Duplicate key error in Forge Bay
 
 ## Problem
-The error `Could not choose the best candidate function between: public.add_card_to_forge_bay(p_card_instance => text, ...) and public.add_card_to_forge_bay(p_card_instance => uuid, ...)` occurs because the recent migration created a second version of the function with `uuid` parameter type, but didn't drop the old `text` version. PostgREST cannot resolve which function to call.
+When placing a card in the forge, the RPC `add_card_to_forge_bay` succeeds (repair starts), but a duplicate call (likely from real-time subscription triggering a re-render or double-click edge case) hits the unique constraint `idx_forge_bay_active_card` and shows an error toast.
+
+The function has a check on line 98 (`IF EXISTS ... WHERE card_instance_id = ... AND is_completed = false`), but there is a race condition: two concurrent calls can both pass this check before either inserts.
 
 ## Solution
-Drop the `uuid` version (which lacks slot limit enforcement) and keep the `text` version (which has the correct slot limit validation).
+Two changes in the RPC function:
+
+1. **Add row-level locking** — `SELECT ... FOR UPDATE` on the card_instances row to serialize concurrent calls
+2. **Use `ON CONFLICT DO NOTHING`** on the INSERT into `forge_bay` and check if a row was actually inserted — if not, return the existing entry ID instead of raising an error
 
 ## Technical Details
 
-**Database migration** -- single SQL statement:
+**Database migration** — recreate the function with conflict handling:
+
 ```sql
-DROP FUNCTION IF EXISTS public.add_card_to_forge_bay(p_card_instance_id uuid, p_wallet_address text);
+CREATE OR REPLACE FUNCTION public.add_card_to_forge_bay(...)
 ```
 
-The remaining `text` version already:
-- Casts `p_card_instance_id::UUID` internally where needed
-- Enforces forge slot limits (`forge_level + 1`)
-- Checks for duplicate entries in both forge and medical bays
+Key changes inside the function:
+- Lock the card_instances row with `FOR UPDATE` to prevent concurrent modifications
+- Replace the plain `INSERT INTO forge_bay ... RETURNING id` with `INSERT ... ON CONFLICT (card_instance_id) WHERE is_completed = false DO NOTHING RETURNING id`
+- If `v_entry_id IS NULL` after insert (conflict occurred), select the existing entry ID and return it (no error)
 
 No frontend changes needed.
 
