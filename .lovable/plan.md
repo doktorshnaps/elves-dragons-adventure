@@ -1,30 +1,38 @@
 
 
-# Fix: Duplicate key error in Forge Bay
+# Fix: Golden Ticket check stuck in infinite loop
 
 ## Problem
-When placing a card in the forge, the RPC `add_card_to_forge_bay` succeeds (repair starts), but a duplicate call (likely from real-time subscription triggering a re-render or double-click edge case) hits the unique constraint `idx_forge_bay_active_card` and shows an error toast.
+Two bugs in `useGoldenTicketCheck` cause the NFT check to hang permanently showing "Проверка Golden Ticket...":
 
-The function has a check on line 98 (`IF EXISTS ... WHERE card_instance_id = ... AND is_completed = false`), but there is a race condition: two concurrent calls can both pass this check before either inserts.
+1. **Infinite refresh loop** -- `walletCandidates` is created as a new array on every render (`Array.from(new Set(...))`). Since it's a dependency of the `refreshAccess` `useCallback`, the callback is recreated each render. The `useEffect` on line 88 depends on `refreshAccess`, so it fires every render, calling the edge function in a tight loop (confirmed by edge function logs showing boot/shutdown every 1-2 seconds).
+
+2. **`refreshingRef` doesn't trigger re-renders** -- `isChecking` is computed as `isLoading || refreshingRef.current`. When `refreshingRef.current` changes from `true` to `false`, no re-render occurs, so the UI stays stuck showing "Проверка..." even though the data is already in the DB (`has_access: true`).
 
 ## Solution
-Two changes in the RPC function:
+Two changes in `src/hooks/useGoldenTicketCheck.ts`:
 
-1. **Add row-level locking** — `SELECT ... FOR UPDATE` on the card_instances row to serialize concurrent calls
-2. **Use `ON CONFLICT DO NOTHING`** on the INSERT into `forge_bay` and check if a row was actually inserted — if not, return the existing entry ID instead of raising an error
+1. **Memoize `walletCandidates`** with `useMemo` keyed on `accountId` and `nearAccountId` -- stops the infinite loop
+2. **Replace `refreshingRef` with `useState`** -- ensures re-renders when the refresh completes, so `isChecking` updates properly
 
 ## Technical Details
 
-**Database migration** — recreate the function with conflict handling:
+**File**: `src/hooks/useGoldenTicketCheck.ts`
 
-```sql
-CREATE OR REPLACE FUNCTION public.add_card_to_forge_bay(...)
+```typescript
+// Before (broken):
+const walletCandidates = Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[];
+const refreshingRef = useRef(false);
+
+// After (fixed):
+const walletCandidates = useMemo(
+  () => Array.from(new Set([accountId, nearAccountId].filter(Boolean))) as string[],
+  [accountId, nearAccountId]
+);
+const [isRefreshing, setIsRefreshing] = useState(false);
 ```
 
-Key changes inside the function:
-- Lock the card_instances row with `FOR UPDATE` to prevent concurrent modifications
-- Replace the plain `INSERT INTO forge_bay ... RETURNING id` with `INSERT ... ON CONFLICT (card_instance_id) WHERE is_completed = false DO NOTHING RETURNING id`
-- If `v_entry_id IS NULL` after insert (conflict occurred), select the existing entry ID and return it (no error)
+Update `refreshAccess` to use `setIsRefreshing(true/false)` instead of `refreshingRef.current`, and update `isChecking` to use `isRefreshing` state.
 
-No frontend changes needed.
+No database or edge function changes needed -- the edge function and DB data are working correctly.
 
