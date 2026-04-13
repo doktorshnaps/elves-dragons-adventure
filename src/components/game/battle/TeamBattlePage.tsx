@@ -607,13 +607,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     setIsClaiming(true);
     console.log('✅ isClaiming установлен в true, показываем "Обработка результатов боя..."');
     
-    // 🔒 Таймаут безопасности: если процесс завис на >30 секунд, сбрасываем
+    // 🔒 Таймаут безопасности: на высоких уровнях серверный расчёт наград может занять заметно дольше
     const safetyTimeout = setTimeout(() => {
-      console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >30 секунд, принудительный сброс');
+      console.error('⏰ КРИТИЧЕСКАЯ ОШИБКА: Процесс claim завис на >90 секунд, принудительный сброс');
       setIsClaiming(false);
       setClaimInProgress(false);
       setClaimError('Процесс обработки наград завис. Попробуйте снова.');
-    }, 30000);
+    }, 90000);
     
     toast({
       title: "🚨 Сохранение прогресса",

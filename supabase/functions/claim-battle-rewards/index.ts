@@ -156,9 +156,26 @@ async function calculateRewards(
     console.log('🎯 Active treasure hunt event found:', treasureEvent.item_name);
     
     if (!treasureEvent.ended_at || new Date(treasureEvent.ended_at) > new Date()) {
+      const remainingTreasureQuantity = Math.max(
+        0,
+        (treasureEvent.total_quantity || 0) - (treasureEvent.found_quantity || 0)
+      );
       let treasureDropCount = 0;
 
+      const { data: treasureTemplate } = remainingTreasureQuantity > 0
+        ? await supabase
+            .from('item_templates')
+            .select('*')
+            .eq('id', treasureEvent.item_template_id)
+            .maybeSingle()
+        : { data: null };
+
       for (const monster of killedMonsters) {
+        if (treasureDropCount >= remainingTreasureQuantity) {
+          console.log('ℹ️ Treasure hunt stock exhausted during reward calculation');
+          break;
+        }
+
         const cleanMonsterName = monster.monster_name.replace(/\s*\(Lv\d+\)\s*$/i, '').trim();
         const monsterIdLower = treasureEvent.monster_id?.toLowerCase() || '';
         const cleanNameLower = cleanMonsterName.toLowerCase();
@@ -169,50 +186,24 @@ async function calculateRewards(
         
         if (!matchesMonster) continue;
 
-        // 🔒 Atomic check: UPDATE with WHERE to prevent race condition
-        const { data: updatedEvent, error: updateError } = await supabase
-          .from('treasure_hunt_events')
-          .update({ found_quantity: treasureEvent.found_quantity + treasureDropCount + 1 })
-          .eq('id', treasureEvent.id)
-          .lt('found_quantity', treasureEvent.total_quantity)
-          .select('id')
-          .maybeSingle();
-
-        if (updateError || !updatedEvent) {
-          console.log('⚠️ Treasure hunt item limit reached or update failed');
-          continue;
-        }
-
         const roll = (Math.floor(Math.random() * 10000) + 1) / 100;
         const dropChance = treasureEvent.drop_chance || 0;
         
         if (roll <= dropChance) {
           console.log(`🎊 TREASURE HUNT ITEM DROPPED! ${treasureEvent.item_name}`);
           treasureDropCount++;
-          
-          const { data: template } = await supabase
-            .from('item_templates')
-            .select('*')
-            .eq('id', treasureEvent.item_template_id)
-            .single();
-          
-          if (template) {
+
+          if (treasureTemplate) {
             items.push({
-              template_id: template.id,
-              item_id: template.item_id,
-              name: template.name,
-              type: template.type,
+              template_id: treasureTemplate.id,
+              item_id: treasureTemplate.item_id,
+              name: treasureTemplate.name,
+              type: treasureTemplate.type,
               quantity: 1,
               isTreasureHunt: true,
               treasureHuntEventId: treasureEvent.id
             });
           }
-        } else {
-          // Roll failed, revert the atomic increment
-          await supabase
-            .from('treasure_hunt_events')
-            .update({ found_quantity: treasureEvent.found_quantity + treasureDropCount })
-            .eq('id', treasureEvent.id);
         }
       }
 
