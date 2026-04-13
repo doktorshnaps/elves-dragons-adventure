@@ -175,6 +175,8 @@ export const useMedicalBay = () => {
       });
     }
 
+    isSubmittingRef.current = true;
+
     try {
       // Пытаемся найти экземпляр карты
       let { data: instance, error: instErr } = await supabase
@@ -200,20 +202,6 @@ export const useMedicalBay = () => {
       
       // Защита от дубликатов
       if ((instance as any)?.is_in_medical_bay) {
-        toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
-        return;
-      }
-
-      // Проверка активной записи в БД
-      const { data: existing } = await supabase
-        .from('medical_bay')
-        .select('id')
-        .eq('wallet_address', accountId)
-        .eq('card_instance_id', actualInstanceId)
-        .eq('is_completed', false)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
         toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
         return;
       }
@@ -255,6 +243,8 @@ export const useMedicalBay = () => {
         description: error.message || "Не удалось поместить карту в медпункт",
         variant: "destructive"
       });
+    } finally {
+      isSubmittingRef.current = false;
     }
   }, [accountId, toast, gameData.selectedTeam, updateGameData, gameData]);
 
