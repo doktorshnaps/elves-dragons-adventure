@@ -197,6 +197,11 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
   const damagedCards = getDamagedCards();
   const canStartRepair = getAvailableSlots() > 0;
   const maxSlots = forgeLevel + 1;
+  
+  // Check if workers are assigned to forge
+  const forgeWorkers = Array.isArray(gameState?.activeWorkers) ? gameState.activeWorkers : [];
+  const nowMs = Date.now();
+  const hasWorkersInForge = forgeWorkers.some((w: any) => w.building === 'forge' && (w.startTime + w.duration) > nowMs);
 
   return (
     <div className="space-y-6">
