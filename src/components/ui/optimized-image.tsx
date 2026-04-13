@@ -38,6 +38,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const prevSrcRef = useRef(src);
 
   // Use cached WebP result synchronously
   const webPSupported = getWebPSupport();
@@ -45,9 +46,14 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   // Progressive loading — only when lowQualitySrc is actually provided
   useEffect(() => {
     if (!progressive || !lowQualitySrc) {
+      const srcChanged = prevSrcRef.current !== src;
+      prevSrcRef.current = src;
       setCurrentSrc(src);
-      setIsLoaded(false);
-      setHasError(false);
+      // Only reset loaded state if src actually changed
+      if (srcChanged) {
+        setIsLoaded(false);
+        setHasError(false);
+      }
       return;
     }
 

@@ -151,9 +151,11 @@ export const useMedicalBay = () => {
     
     if (!hasWorkersInMedical) {
       toast({
-        title: "Лечение начато",
-        description: "Рабочие не назначены — лечение будет идти по таймеру.",
+        title: "Нет рабочих",
+        description: "Назначьте рабочих в медпункт, чтобы начать лечение.",
+        variant: "destructive"
       });
+      return;
     }
 
     // Проверяем, есть ли активное подземелье через Zustand store
