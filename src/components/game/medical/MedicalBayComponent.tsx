@@ -627,9 +627,11 @@ export const MedicalBayComponent = () => {
             )}
           </div>
           <CardDescription>
-            {canStartHealing 
-              ? "Выберите раненую карту для лечения (мёртвые карты нельзя лечить)"
-              : "Нет свободных слотов в медпункте"
+            {!hasWorkersInMedical
+              ? "⚠️ Назначьте рабочих в медпункт, чтобы начать лечение"
+              : canStartHealing 
+                ? "Выберите раненую карту для лечения (мёртвые карты нельзя лечить)"
+                : "Нет свободных слотов в медпункте"
             }
           </CardDescription>
         </CardHeader>
