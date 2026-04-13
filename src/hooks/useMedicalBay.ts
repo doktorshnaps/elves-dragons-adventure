@@ -136,8 +136,15 @@ export const useMedicalBay = () => {
     await refetch();
   }, [refetch]);
 
+  const isSubmittingRef = useRef(false);
+
   const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     console.log('🏥 [MEDICAL BAY] placeCardInMedicalBay called with:', cardInstanceIdOrTemplateId);
+    
+    if (isSubmittingRef.current) {
+      console.log('🏥 [WARN] Already submitting, ignoring');
+      return;
+    }
     
     if (!accountId) {
       console.log('🏥 [ERROR] No accountId!');
