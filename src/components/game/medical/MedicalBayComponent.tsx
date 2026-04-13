@@ -619,7 +619,7 @@ export const MedicalBayComponent = () => {
             {selectedCard && (
               <Button 
                 onClick={handleStartHealing}
-                disabled={loading || !canStartHealing}
+                disabled={loading || !canStartHealing || !hasWorkersInMedical}
                 className="bg-red-600 hover:bg-red-700"
               >
                 Начать лечение
