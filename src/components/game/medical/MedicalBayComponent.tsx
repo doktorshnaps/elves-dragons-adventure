@@ -340,6 +340,11 @@ export const MedicalBayComponent = () => {
   const canStartHealing = getAvailableSlots() > 0;
   const playerBalance = gameState?.balance ?? 0;
   const canAffordResurrection = playerBalance >= RESURRECTION_COST;
+  
+  // Check if workers are assigned to medical bay
+  const workers = Array.isArray(gameState?.activeWorkers) ? gameState.activeWorkers : [];
+  const now = Date.now();
+  const hasWorkersInMedical = workers.some((w: any) => w.building === 'medical' && (w.startTime + w.duration) > now);
 
   return (
     <div className="space-y-6">
@@ -614,7 +619,7 @@ export const MedicalBayComponent = () => {
             {selectedCard && (
               <Button 
                 onClick={handleStartHealing}
-                disabled={loading || !canStartHealing}
+                disabled={loading || !canStartHealing || !hasWorkersInMedical}
                 className="bg-red-600 hover:bg-red-700"
               >
                 Начать лечение
@@ -622,9 +627,11 @@ export const MedicalBayComponent = () => {
             )}
           </div>
           <CardDescription>
-            {canStartHealing 
-              ? "Выберите раненую карту для лечения (мёртвые карты нельзя лечить)"
-              : "Нет свободных слотов в медпункте"
+            {!hasWorkersInMedical
+              ? "⚠️ Назначьте рабочих в медпункт, чтобы начать лечение"
+              : canStartHealing 
+                ? "Выберите раненую карту для лечения (мёртвые карты нельзя лечить)"
+                : "Нет свободных слотов в медпункте"
             }
           </CardDescription>
         </CardHeader>

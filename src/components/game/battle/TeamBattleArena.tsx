@@ -677,7 +677,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                           {(() => {
                             const heroImage = resolveCardImageSync(pair.hero) || pair.hero.image;
                             return heroImage ? (
-                              <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" />
+                              <img src={heroImage} alt={pair.hero.name} className="w-full h-full object-contain" loading="eager" fetchPriority="high" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-white">
                                 <span className="text-lg sm:text-xl md:text-2xl">⚔️</span>
@@ -691,7 +691,7 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
                             {(() => {
                               const dragonImage = resolveCardImageSync(pair.dragon) || pair.dragon.image;
                               return dragonImage ? (
-                                <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" />
+                                <img src={dragonImage} alt={pair.dragon.name} className="w-full h-full object-contain" loading="eager" fetchPriority="high" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-white">
                                   <span className="text-base sm:text-lg md:text-xl">🐲</span>

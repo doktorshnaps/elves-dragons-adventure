@@ -136,8 +136,15 @@ export const useMedicalBay = () => {
     await refetch();
   }, [refetch]);
 
+  const isSubmittingRef = useRef(false);
+
   const placeCardInMedicalBay = useCallback(async (cardInstanceIdOrTemplateId: string) => {
     console.log('🏥 [MEDICAL BAY] placeCardInMedicalBay called with:', cardInstanceIdOrTemplateId);
+    
+    if (isSubmittingRef.current) {
+      console.log('🏥 [WARN] Already submitting, ignoring');
+      return;
+    }
     
     if (!accountId) {
       console.log('🏥 [ERROR] No accountId!');
@@ -151,9 +158,11 @@ export const useMedicalBay = () => {
     
     if (!hasWorkersInMedical) {
       toast({
-        title: "Лечение начато",
-        description: "Рабочие не назначены — лечение будет идти по таймеру.",
+        title: "Нет рабочих",
+        description: "Назначьте рабочих в медпункт, чтобы начать лечение.",
+        variant: "destructive"
       });
+      return;
     }
 
     // Проверяем, есть ли активное подземелье через Zustand store
@@ -165,6 +174,8 @@ export const useMedicalBay = () => {
         description: "Идёт бой. Лечение будет начато, карта будет исключена из команды.",
       });
     }
+
+    isSubmittingRef.current = true;
 
     try {
       // Пытаемся найти экземпляр карты
@@ -191,20 +202,6 @@ export const useMedicalBay = () => {
       
       // Защита от дубликатов
       if ((instance as any)?.is_in_medical_bay) {
-        toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
-        return;
-      }
-
-      // Проверка активной записи в БД
-      const { data: existing } = await supabase
-        .from('medical_bay')
-        .select('id')
-        .eq('wallet_address', accountId)
-        .eq('card_instance_id', actualInstanceId)
-        .eq('is_completed', false)
-        .limit(1);
-
-      if (existing && existing.length > 0) {
         toast({ title: "Уже лечится", description: "Эта карта уже находится в медпункте." });
         return;
       }
@@ -246,6 +243,8 @@ export const useMedicalBay = () => {
         description: error.message || "Не удалось поместить карту в медпункт",
         variant: "destructive"
       });
+    } finally {
+      isSubmittingRef.current = false;
     }
   }, [accountId, toast, gameData.selectedTeam, updateGameData, gameData]);
 
