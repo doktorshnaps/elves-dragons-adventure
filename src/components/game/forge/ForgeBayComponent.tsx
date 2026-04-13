@@ -197,6 +197,11 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
   const damagedCards = getDamagedCards();
   const canStartRepair = getAvailableSlots() > 0;
   const maxSlots = forgeLevel + 1;
+  
+  // Check if workers are assigned to forge
+  const forgeWorkers = Array.isArray(gameState?.activeWorkers) ? gameState.activeWorkers : [];
+  const nowMs = Date.now();
+  const hasWorkersInForge = forgeWorkers.some((w: any) => w.building === 'forge' && (w.startTime + w.duration) > nowMs);
 
   return (
     <div className="space-y-6">
@@ -343,7 +348,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
               {selectedCard && (
                 <Button 
                   onClick={handleStartRepair}
-                  disabled={loading || !canStartRepair}
+                  disabled={loading || !canStartRepair || !hasWorkersInForge}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   Начать ремонт
@@ -351,7 +356,9 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
               )}
             </div>
             <CardDescription>
-              {canStartRepair ? "Выберите карту для ремонта" : "Нет доступных слотов для ремонта"}
+              {!hasWorkersInForge
+                ? "⚠️ Назначьте рабочих в кузницу, чтобы начать ремонт"
+                : canStartRepair ? "Выберите карту для ремонта" : "Нет доступных слотов для ремонта"}
             </CardDescription>
           </CardHeader>
           <CardContent>
