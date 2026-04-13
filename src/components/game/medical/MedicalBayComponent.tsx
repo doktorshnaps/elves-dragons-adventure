@@ -340,6 +340,11 @@ export const MedicalBayComponent = () => {
   const canStartHealing = getAvailableSlots() > 0;
   const playerBalance = gameState?.balance ?? 0;
   const canAffordResurrection = playerBalance >= RESURRECTION_COST;
+  
+  // Check if workers are assigned to medical bay
+  const workers = Array.isArray(gameState?.activeWorkers) ? gameState.activeWorkers : [];
+  const now = Date.now();
+  const hasWorkersInMedical = workers.some((w: any) => w.building === 'medical' && (w.startTime + w.duration) > now);
 
   return (
     <div className="space-y-6">
