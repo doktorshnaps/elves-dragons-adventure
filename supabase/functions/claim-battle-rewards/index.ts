@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_KILLED_MONSTERS_PER_CLAIM = 1000;
+
 const KilledMonsterSchema = z.object({
   monster_name: z.string().max(200),
   level: z.number().min(1).max(100)
@@ -16,7 +18,7 @@ const ClaimBodySchema = z.object({
   nonce: z.string().min(1),
   dungeon_type: z.string(),
   level: z.number().min(1).max(100),
-  killed_monsters: z.array(KilledMonsterSchema).max(300),
+  killed_monsters: z.array(KilledMonsterSchema).max(MAX_KILLED_MONSTERS_PER_CLAIM),
   card_kills: z.array(z.object({
     card_template_id: z.string(),
     kills: z.number().min(1)
