@@ -348,7 +348,7 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
               {selectedCard && (
                 <Button 
                   onClick={handleStartRepair}
-                  disabled={loading || !canStartRepair}
+                  disabled={loading || !canStartRepair || !hasWorkersInForge}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   Начать ремонт
@@ -356,7 +356,9 @@ export const ForgeBayComponent = ({ forgeLevel }: ForgeBayComponentProps) => {
               )}
             </div>
             <CardDescription>
-              {canStartRepair ? "Выберите карту для ремонта" : "Нет доступных слотов для ремонта"}
+              {!hasWorkersInForge
+                ? "⚠️ Назначьте рабочих в кузницу, чтобы начать ремонт"
+                : canStartRepair ? "Выберите карту для ремонта" : "Нет доступных слотов для ремонта"}
             </CardDescription>
           </CardHeader>
           <CardContent>
