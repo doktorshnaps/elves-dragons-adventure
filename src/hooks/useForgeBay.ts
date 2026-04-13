@@ -126,7 +126,8 @@ export const useForgeBay = () => {
       ? (gameData as any).activeWorkers 
       : [];
     
-    const hasForgeWorkers = activeWorkers.some((worker: any) => worker.building === 'forge');
+    const now = Date.now();
+    const hasForgeWorkers = activeWorkers.some((worker: any) => worker.building === 'forge' && (worker.startTime + worker.duration) > now);
 
     if (!hasForgeWorkers) {
       toast({
