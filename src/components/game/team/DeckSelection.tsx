@@ -61,10 +61,18 @@ export const DeckSelection = ({
     cardInstances
   } = useCardInstancesContext();
 
+  // NFT контракты, которые НЕ являются боевыми картами и должны быть скрыты
+  const HIDDEN_NFT_CONTRACTS = ['golden_ticket.nfts.tg'];
+
   // Создаем карты НАПРЯМУЮ из card_instances - каждый instance = уникальная карта
   const localCards = useMemo(() => {
     // Карты из cardInstances (каждый instance - отдельная карта с уникальным UUID)
-    const instanceCards = cardInstances.filter(ci => ci.card_type === 'hero' || ci.card_type === 'dragon').map(instance => {
+    const instanceCards = cardInstances.filter(ci => {
+      if (ci.card_type !== 'hero' && ci.card_type !== 'dragon') return false;
+      // Скрываем NFT из контрактов, которые не являются боевыми картами
+      if (ci.nft_contract_id && HIDDEN_NFT_CONTRACTS.includes(ci.nft_contract_id)) return false;
+      return true;
+    }).map(instance => {
       const cardData = instance.card_data as any;
       // Normalize DB types (hero/dragon) to app types (character/pet)
       const rawType = cardData.type || instance.card_type || 'character';
