@@ -234,7 +234,10 @@ export const useMedicalBay = () => {
         description: "Карта помещена в медпункт и удалена из команды",
       });
 
-      // Кэш обновится автоматически через Real-time
+      // Немедленная инвалидация кэша для мгновенного обновления UI
+      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
       return data;
     } catch (error: any) {
       console.error('Error placing card in medical bay:', error);
@@ -269,7 +272,9 @@ export const useMedicalBay = () => {
 
       // Notification is now sent via real-time subscription on is_completed transition
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
     } catch (error: any) {
       console.error('Error removing card from medical bay:', error);
       toast({
@@ -296,7 +301,9 @@ export const useMedicalBay = () => {
         description: "Карта удалена из медпункта без восстановления здоровья",
       });
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
     } catch (error: any) {
       console.error('Error stopping healing:', error);
       toast({
@@ -348,7 +355,9 @@ export const useMedicalBay = () => {
         await updateGameData({ balance: result.new_balance });
       }
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
       return result;
     } catch (error: any) {
       console.error('🏥 [RESURRECTION] Error:', error);
@@ -388,7 +397,9 @@ export const useMedicalBay = () => {
         description: `Здоровье восстановлено до ${result.new_health}/${result.max_health} (50%)`,
       });
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
       return result;
     } catch (error: any) {
       console.error('🏥 [RESURRECTION] Error completing:', error);
