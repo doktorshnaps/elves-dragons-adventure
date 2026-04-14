@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.resurrect_card_in_medical_bay(UUID, TEXT);

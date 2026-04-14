@@ -4972,15 +4972,10 @@ export type Database = {
         }
         Returns: Json
       }
-      resurrect_card_in_medical_bay:
-        | {
-            Args: { p_card_instance_id: string; p_wallet_address: string }
-            Returns: Json
-          }
-        | {
-            Args: { p_card_instance_id: string; p_wallet_address: string }
-            Returns: Json
-          }
+      resurrect_card_in_medical_bay: {
+        Args: { p_card_instance_id: string; p_wallet_address: string }
+        Returns: Json
+      }
       review_join_request: {
         Args: { p_accept: boolean; p_request_id: string; p_wallet: string }
         Returns: Json
