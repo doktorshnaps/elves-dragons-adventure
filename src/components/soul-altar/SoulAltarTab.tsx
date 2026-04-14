@@ -34,6 +34,7 @@ export const SoulAltarTab = () => {
   const [donationAmount, setDonationAmount] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [donating, setDonating] = useState(false);
+  const donatingRef = useRef(false);
 
   // Считаем кристаллы из item_instances для точности
   const soulCrystals = itemInstances.filter(inst => 
