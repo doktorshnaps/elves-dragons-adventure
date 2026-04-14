@@ -78,6 +78,9 @@ export const SoulAltarTab = () => {
   };
 
   const handleDonate = async () => {
+    if (donatingRef.current) return;
+    donatingRef.current = true;
+    
     if (!accountId) {
       toast({
         title: "Ошибка",
