@@ -48,7 +48,7 @@ export async function reportError(
       }
     }
 
-    await supabase.from('client_error_logs').insert({
+    await supabase.from('client_error_logs').insert([{
       wallet_address: getWalletAddress(),
       error_message: message.substring(0, 2000),
       error_stack: stack?.substring(0, 5000) || null,
@@ -56,7 +56,7 @@ export async function reportError(
       page_url: window.location.href,
       user_agent: navigator.userAgent.substring(0, 500),
       metadata: metadata || {},
-    });
+    }]);
   } catch {
     // Silent fail - don't create error loops
   }
