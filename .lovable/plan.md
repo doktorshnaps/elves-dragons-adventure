@@ -1,38 +1,48 @@
 
 
-## Диагностика и план исправления трёх проблем
+## Problem Analysis
 
-### Проблема 1: Изображения карточек не отображаются при переходе между уровнями
+The monster kill counter has two bugs in quick battle mode:
 
-**Причина**: Компонент `OptimizedImage` использует `opacity: 0` при загрузке (`!isLoaded && !hasError`). При переходе на новый уровень компонент `TeamBattleArena` ре-рендерится, и `OptimizedImage` сбрасывает `isLoaded` в `false`, карточки становятся невидимыми до повторной загрузки изображений. Хотя изображения уже в кэше браузера, `onLoad` может не сработать быстро, создавая заметную задержку.
+### Bug 1: Level 1 shows 0 kills
+The kill-detection `useEffect` (line 820) initializes `prevOpponentsRef` only when `!battleStarted`. But opponents are generated at the same time `battleStarted` becomes `true`, so `prevOpponentsRef` never captures the initial opponents. When quick battle kills them, the detection has no "before" snapshot to compare against — resulting in 0 detected kills.
 
-**Исправление**: В `OptimizedImage` — если `src` не меняется при ре-рендере, не сбрасывать `isLoaded`. Также для карточек в бою ставить `priority={true}` для `eager` загрузки вместо `lazy`.
+### Bug 2: Levels 2+ show double the expected kills
+`handleQuickBattle` (lines 435-440) explicitly adds kills to `monstersKilledRef` and `setMonstersKilled`. Then, when `setBattleState` updates opponents to dead, the kill-detection `useEffect` (line 820) fires and detects the same kills again — doubling the count.
 
-### Проблема 2: Ошибка `duplicate key value violates unique constraint "idx_medical_bay_active_card"`
-
-**Причина**: Race condition — фронтенд проверяет `is_in_medical_bay` и `medical_bay` таблицу, но между проверкой и вставкой другой запрос (или двойной клик) успевает вставить запись. RPC `add_card_to_medical_bay` тоже проверяет через `IF EXISTS`, но без `SELECT FOR UPDATE` — это не атомарно. Вставка падает на unique index.
-
-**Исправление**:
-1. В RPC `add_card_to_medical_bay` — добавить `SELECT FOR UPDATE` на `card_instances` для блокировки и использовать `INSERT ... ON CONFLICT (card_instance_id) WHERE is_completed = false DO NOTHING` вместо простого `INSERT`. Если вставка не произошла — вернуть существующий ID.
-2. На фронтенде — добавить debounce/disable кнопки после первого нажатия.
-
-### Проблема 3: Карта ставится на лечение без назначенных рабочих
-
-**Причина**: Текущий код в `useMedicalBay.ts` (строки 148-157) только показывает toast-уведомление если рабочих нет, но **не блокирует** постановку карты на лечение. Карта всё равно отправляется в медпункт.
-
-**Исправление**: Заблокировать постановку на лечение если нет рабочих — показать ошибку и сделать `return` вместо продолжения выполнения. Также проверять рабочих на стороне сервера (опционально).
+**User's numbers confirm this:**
+- Expected cumulative: 1, 3, 6, 10
+- Double of expected: 2, 6, 12, 20
+- Actual shown: 0, 6, 12, 20 (level 1 is 0 due to Bug 1, rest are doubled due to Bug 2)
 
 ---
 
-### Файлы для изменения
+## Fix Plan
 
-1. **`src/components/ui/optimized-image.tsx`** — не сбрасывать `isLoaded` при ре-рендере если `src` не менялся; для боевого контекста использовать `priority={true}`
+### File: `src/components/game/battle/TeamBattlePage.tsx`
 
-2. **`src/components/game/battle/TeamBattleArena.tsx`** — передавать `priority={true}` или заменить `<img>` на `<OptimizedImage>` с `priority` для карточек игрока
+**Change 1: Remove duplicate kill tracking from `handleQuickBattle`** (lines 434-441)
 
-3. **Новая миграция SQL** — пересоздать `add_card_to_medical_bay` с `SELECT ... FOR UPDATE` на card_instances и `INSERT ... ON CONFLICT DO NOTHING` для атомарности
+Remove the manual kill addition block (`monstersKilledRef.current = ...` and `setMonstersKilled`). Let the existing kill-detection `useEffect` handle all counting — this eliminates the double-counting.
 
-4. **`src/hooks/useMedicalBay.ts`** — изменить проверку рабочих: блокировать лечение если рабочих нет (return после toast с ошибкой), добавить флаг `isSubmitting` для предотвращения двойных кликов
+**Change 2: Fix `prevOpponentsRef` initialization in kill-detection `useEffect`** (around line 820)
 
-5. **`src/components/game/medical/MedicalBayComponent.tsx`** — disable кнопки "Отправить на лечение" если нет рабочих в медпункте
+The effect currently only initializes `prevOpponentsRef` when `!battleStarted`. Add logic so that when `battleStarted` is true and `prevOpponentsRef.current` is empty (or has different opponents than current), it initializes the ref with the current alive opponents before checking for kills. This ensures level 1 has a proper "before" snapshot.
+
+Specifically:
+```typescript
+// After the !battleStarted early return, add:
+if (prevOpponentsRef.current.length === 0 && aliveOpponents.length > 0) {
+  prevOpponentsRef.current = aliveOpponents.map(opp => ({
+    id: opp.id, name: opp.name, health: opp.health
+  }));
+  prevAliveOpponentsRef.current = aliveOpponents.length;
+  return; // First snapshot — don't detect kills yet
+}
+```
+
+These two changes together ensure:
+- Kills are counted exactly once (by the kill-detection effect only)
+- Level 1 properly initializes the opponent snapshot before detecting kills
+- Cumulative counts across levels remain correct
 
