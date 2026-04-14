@@ -2,47 +2,38 @@
 
 ## Problem Analysis
 
-The monster kill counter has two bugs in quick battle mode:
+The Level 1 quick battle still shows 0 kills because of a race condition in the snapshot initialization. Here's the exact sequence:
 
-### Bug 1: Level 1 shows 0 kills
-The kill-detection `useEffect` (line 820) initializes `prevOpponentsRef` only when `!battleStarted`. But opponents are generated at the same time `battleStarted` becomes `true`, so `prevOpponentsRef` never captures the initial opponents. When quick battle kills them, the detection has no "before" snapshot to compare against — resulting in 0 detected kills.
+1. `setBattleStarted(true)` is called
+2. `useTeamBattle` generates opponents **asynchronously**
+3. The kill-detection `useEffect` fires multiple times during opponent loading — with `prevOpponentsRef = []` and `aliveOpponents = []`
+4. Eventually opponents load → effect fires → `prevOpponentsRef = []`, `aliveOpponents > 0` → **initializes snapshot, returns**
+5. User clicks Quick Battle → 1.5s → opponents set to dead
+6. Effect should detect kills, BUT there's a timing gap where the snapshot may not be ready
 
-### Bug 2: Levels 2+ show double the expected kills
-`handleQuickBattle` (lines 435-440) explicitly adds kills to `monstersKilledRef` and `setMonstersKilled`. Then, when `setBattleState` updates opponents to dead, the kill-detection `useEffect` (line 820) fires and detects the same kills again — doubling the count.
+The fix at line 828 relies on the effect firing *between* opponent generation and quick battle execution. But if the user clicks Quick Battle immediately when the button appears, the effect may not have run yet to take the snapshot.
 
-**User's numbers confirm this:**
-- Expected cumulative: 1, 3, 6, 10
-- Double of expected: 2, 6, 12, 20
-- Actual shown: 0, 6, 12, 20 (level 1 is 0 due to Bug 1, rest are doubled due to Bug 2)
-
----
-
-## Fix Plan
+## Fix
 
 ### File: `src/components/game/battle/TeamBattlePage.tsx`
 
-**Change 1: Remove duplicate kill tracking from `handleQuickBattle`** (lines 434-441)
+**Single change in `handleQuickBattle`** (around line 434):
 
-Remove the manual kill addition block (`monstersKilledRef.current = ...` and `setMonstersKilled`). Let the existing kill-detection `useEffect` handle all counting — this eliminates the double-counting.
+Before the setTimeout, force-initialize `prevOpponentsRef` with the current alive opponents. This guarantees the "before" snapshot exists regardless of whether the useEffect has run:
 
-**Change 2: Fix `prevOpponentsRef` initialization in kill-detection `useEffect`** (around line 820)
-
-The effect currently only initializes `prevOpponentsRef` when `!battleStarted`. Add logic so that when `battleStarted` is true and `prevOpponentsRef.current` is empty (or has different opponents than current), it initializes the ref with the current alive opponents before checking for kills. This ensures level 1 has a proper "before" snapshot.
-
-Specifically:
 ```typescript
-// After the !battleStarted early return, add:
-if (prevOpponentsRef.current.length === 0 && aliveOpponents.length > 0) {
-  prevOpponentsRef.current = aliveOpponents.map(opp => ({
+// Force-initialize snapshot for kill detection (fixes Level 1 = 0 kills)
+const currentAlive = battleState.opponents.filter(o => o.health > 0);
+if (prevOpponentsRef.current.length === 0 && currentAlive.length > 0) {
+  prevOpponentsRef.current = currentAlive.map(opp => ({
     id: opp.id, name: opp.name, health: opp.health
   }));
-  prevAliveOpponentsRef.current = aliveOpponents.length;
-  return; // First snapshot — don't detect kills yet
+  prevAliveOpponentsRef.current = currentAlive.length;
 }
 ```
 
-These two changes together ensure:
-- Kills are counted exactly once (by the kill-detection effect only)
-- Level 1 properly initializes the opponent snapshot before detecting kills
-- Cumulative counts across levels remain correct
+This is safe because:
+- It only runs when the snapshot is empty (won't interfere with normal battles)
+- The kill-detection effect will still do the actual counting when state updates
+- No double-counting since we're not adding kills here, just ensuring the snapshot exists
 
