@@ -1,31 +1,62 @@
+<final-text>
+Проблема подтверждена и причина уже найдена точнее.
 
+Что я проверил:
+- В базе у `mr_bruts.tg` реально записались дубликаты:
+  - `10` и `10` в `21:45:07.830508` / `21:45:07.830569`
+  - раньше так же были пары `26+26` и `5+5`
+- Значит ошибка не в отображении рейтинга, а в самой записи донатов.
+- Текущая версия RPC `donate_soul_crystals` уже содержит `FOR UPDATE SKIP LOCKED`, но этого недостаточно.
 
-## Fix: Soul Crystal Donation Duplication
+Точная причина:
+- `FOR UPDATE SKIP LOCKED` защищает только от повторного захвата одних и тех же строк.
+- Если у игрока кристаллов много, второй параллельный запрос просто пропускает уже залоченные 10 кристаллов и берет следующие 10.
+- В итоге оба запроса успешно удаляют разные кристаллы и оба вставляют запись в `soul_donations`.
+- Поэтому после доната 10 у тебя рейтинг вырос на 20.
+- Фронтовый `useRef`-лок полезен, но на него нельзя опираться как на единственную защиту.
 
-### Root Cause
-Every donation creates **exactly 2 rows** with sub-millisecond timestamps (e.g., `21:34:00.594075` and `21:34:00.594364`). The `donating` state flag uses `useState`, which is asynchronous — if the click handler fires twice before React re-renders (double-click, touch event doubling), both calls pass the `donating === false` check and execute the RPC simultaneously.
+План исправления
 
-### Fix (2 layers)
+1. Переделать RPC `donate_soul_crystals` в реально идемпотентную операцию
+- Убрать текущую логику “SKIP LOCKED и если хватает — продолжаем” как основную защиту.
+- Добавить `p_request_id uuid` в RPC.
+- Добавить уникальную защиту на уровне БД:
+  - либо `request_id` в `soul_donations` + unique index,
+  - либо отдельную таблицу запросов доната с unique `(wallet_address, request_id)`.
+- Внутри RPC:
+  - брать `pg_advisory_xact_lock` по кошельку,
+  - проверять, не был ли уже обработан этот `request_id`,
+  - только потом списывать кристаллы и писать донат.
+- Это гарантирует: один пользовательский клик = один донат, даже если браузер отправит 2 запроса.
 
-#### 1. Frontend: `useRef` lock in `SoulAltarTab.tsx`
-Add a `useRef(false)` lock that synchronously blocks duplicate calls:
-```typescript
-const donatingRef = useRef(false);
+2. Обновить фронтенд `/soul-archive`
+- Оставить текущий `donatingRef`.
+- Генерировать `crypto.randomUUID()` на каждый submit.
+- Передавать `p_request_id` в `donate_soul_crystals`.
+- Не создавать новый request id при повторном срабатывании того же клика.
+- При ошибке логировать request id для быстрой диагностики.
 
-const handleDonate = async () => {
-  if (donatingRef.current) return; // synchronous guard
-  donatingRef.current = true;
-  // ... existing logic ...
-  donatingRef.current = false; // in finally block
-};
-```
+3. Починить уже испорченные данные
+- Найти дубли по шаблону:
+  - один и тот же `wallet_address`
+  - одинаковый `amount`
+  - разница во времени в пределах нескольких миллисекунд
+- Удалить лишние строки из `soul_donations`.
+- Вернуть игрокам лишне списанные `Кристаллы Жизни` в `item_instances`.
+- По текущим данным уже точно затронуты:
+  - `mr_bruts.tg` — лишние `41`
+  - `s6aek3r.tg` — лишние `7`
 
-#### 2. Database: Row-level lock in `donate_soul_crystals`
-Add `FOR UPDATE` on the crystal rows to serialize concurrent calls, and add a deduplication check:
-- Lock the `item_instances` rows with `FOR UPDATE SKIP LOCKED`
-- This ensures that if two identical calls arrive simultaneously, the second one gets fewer rows and fails the count check
+4. Проверка после фикса
+- Сделать двойной клик / быстрый тап по кнопке пожертвования.
+- Проверить:
+  - в `soul_donations` появляется только одна запись,
+  - в инвентаре списывается ровно нужное количество,
+  - рейтинг растет ровно на сумму доната,
+  - повтор с тем же `request_id` не проходит второй раз.
 
-### Files
-1. **`src/components/soul-altar/SoulAltarTab.tsx`** — Add `useRef` synchronous lock
-2. **New SQL migration** — Recreate `donate_soul_crystals` with `FOR UPDATE` locking on the crystal selection query
-
+Технически будут изменены:
+- `src/components/soul-altar/SoulAltarTab.tsx`
+- новая SQL migration для `donate_soul_crystals` и unique/idempotency-защиты
+- отдельная data-fix операция для очистки уже созданных дублей и возврата кристаллов
+</final-text>
