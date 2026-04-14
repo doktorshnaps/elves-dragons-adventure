@@ -431,14 +431,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       alivePairs: result.resultPairs.filter(p => p.health > 0).length,
     });
 
-    // Track killed monsters
-    if (result.monstersKilled > 0) {
-      const newKills = result.resultOpponents
-        .filter(o => o.health <= 0)
-        .map(o => ({ level: battleState.level, dungeonType, name: o.name }));
-      monstersKilledRef.current = [...monstersKilledRef.current, ...newKills];
-      setMonstersKilled(prev => [...prev, ...newKills]);
-    }
+    // Kill tracking is handled by the kill-detection useEffect below
+    // Do NOT manually add kills here to avoid double-counting
 
     // Show loading overlay for 1.5s, then apply results
     setTimeout(() => {
