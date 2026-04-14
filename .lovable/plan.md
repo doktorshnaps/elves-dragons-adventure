@@ -1,42 +1,44 @@
 
 
-## Two Bugs Found
+## Problem
 
-### Bug 1: `resurrect_card_in_medical_bay` — Function Overloading
+When resurrecting a card, the RPC function `resurrect_card_in_medical_bay` fails with "duplicate key value violates unique constraint idx_medical_bay_active_card" because:
 
-**Error**: "Could not choose the best candidate function"
+1. The function checks `is_in_medical_bay` flag on `card_instances` (line 178)
+2. But if the card already has an active (non-completed) row in `medical_bay`, the INSERT at line 202 fails
+3. Before the INSERT, the function already deducted ELL and set `is_in_medical_bay = true` — so on failure, the user loses ELL but gets an error
 
-**Cause**: Two versions of the function exist in the database:
-- Original (migration `20251202`): `p_card_instance_id UUID`
-- Updated (migration `20260412`): `p_card_instance_id TEXT`
+This can happen due to race conditions or stale state where `is_in_medical_bay` was `false` but a `medical_bay` row still existed.
 
-PostgREST cannot resolve which to call when both have the same name. Per the project's memory on `database-rpc-standardization`, overloading is prohibited.
+## Fix
 
-**Fix**: Create a new migration that:
-1. Drops the old UUID-signature version: `DROP FUNCTION IF EXISTS public.resurrect_card_in_medical_bay(UUID, TEXT);`
-2. Keeps only the TEXT version (which internally casts to UUID)
+**New SQL migration** — Update the `resurrect_card_in_medical_bay` function to:
 
-### Bug 2: `open-elleonor-box` — Invalid Auth Method (`getClaims`)
+1. Add an explicit check: if a non-completed `medical_bay` row already exists for this card, return early with a friendly error (no ELL deducted)
+2. Add `ON CONFLICT (card_instance_id) WHERE is_completed = false DO NOTHING` to the INSERT as a safety net
+3. After the INSERT, check if `v_medical_bay_id` is NULL (conflict occurred) — if so, rollback the ELL deduction by re-adding it
 
-**Error**: "Edge Function returned a non-2xx status code"
+```sql
+-- Before the ELL deduction, add:
+IF EXISTS (SELECT 1 FROM medical_bay WHERE card_instance_id = p_card_instance_id::UUID AND is_completed = false) THEN
+  RETURN json_build_object('success', false, 'error', 'Карточка уже воскрешается');
+END IF;
 
-**Cause**: The edge function uses `userClient.auth.getClaims(token)` which does not exist in the Supabase JS v2 client. This causes a runtime error, returning a 500 to the frontend.
+-- Change INSERT to use ON CONFLICT:
+INSERT INTO medical_bay (...)
+VALUES (...)
+ON CONFLICT (card_instance_id) WHERE is_completed = false DO NOTHING
+RETURNING id INTO v_medical_bay_id;
 
-**Fix**: Replace `getClaims` with `getUser()` in `open-elleonor-box/index.ts`:
-
-```typescript
-const { data: { user }, error: authError } = await userClient.auth.getUser();
-if (authError || !user) {
-  return json({ success: false, error: "Invalid token" }, 401);
-}
-const userId = user.id;
+-- After INSERT, check for conflict:
+IF v_medical_bay_id IS NULL THEN
+  -- Rollback: restore balance and card flag
+  UPDATE game_data SET balance = balance + v_resurrection_cost WHERE wallet_address = p_wallet_address;
+  UPDATE card_instances SET is_in_medical_bay = false WHERE id = p_card_instance_id::UUID;
+  RETURN json_build_object('success', false, 'error', 'Карточка уже воскрешается');
+END IF;
 ```
 
-Same fix needed in `sell-item/index.ts` (same pattern, same bug). Then redeploy both edge functions.
-
-### Files to Change
-1. **New SQL migration** — Drop the overloaded `resurrect_card_in_medical_bay(UUID, TEXT)` signature
-2. **`supabase/functions/open-elleonor-box/index.ts`** — Replace `getClaims` with `getUser()`
-3. **`supabase/functions/sell-item/index.ts`** — Replace `getClaims` with `getUser()`
-4. Deploy both edge functions
+### Files
+1. **New SQL migration** — Recreate `resurrect_card_in_medical_bay` with the duplicate protection
 
