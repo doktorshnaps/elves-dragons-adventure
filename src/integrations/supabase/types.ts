@@ -2654,6 +2654,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          request_id: string | null
           updated_at: string
           user_id: string | null
           wallet_address: string
@@ -2662,6 +2663,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          request_id?: string | null
           updated_at?: string
           user_id?: string | null
           wallet_address: string
@@ -2670,6 +2672,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          request_id?: string | null
           updated_at?: string
           user_id?: string | null
           wallet_address?: string
@@ -4270,10 +4273,12 @@ export type Database = {
         Returns: number
       }
       disband_clan: { Args: { p_wallet: string }; Returns: Json }
-      donate_soul_crystals: {
-        Args: { p_amount: number; p_wallet: string }
-        Returns: undefined
-      }
+      donate_soul_crystals:
+        | { Args: { p_amount: number; p_wallet: string }; Returns: undefined }
+        | {
+            Args: { p_amount: number; p_request_id?: string; p_wallet: string }
+            Returns: undefined
+          }
       ensure_game_data_exists: {
         Args: { p_wallet_address: string }
         Returns: string
