@@ -2,38 +2,70 @@
 
 ## Problem Analysis
 
-The Level 1 quick battle still shows 0 kills because of a race condition in the snapshot initialization. Here's the exact sequence:
+The team page shows all 5 heroes with dragons, but the dungeon pre-battle page shows only 2 with dragons. The root cause is in `useTeamBattle.ts` — the team initialization effect.
 
-1. `setBattleStarted(true)` is called
-2. `useTeamBattle` generates opponents **asynchronously**
-3. The kill-detection `useEffect` fires multiple times during opponent loading — with `prevOpponentsRef = []` and `aliveOpponents = []`
-4. Eventually opponents load → effect fires → `prevOpponentsRef = []`, `aliveOpponents > 0` → **initializes snapshot, returns**
-5. User clicks Quick Battle → 1.5s → opponents set to dead
-6. Effect should detect kills, BUT there's a timing gap where the snapshot may not be ready
+### Root Cause: Stale state guard prevents rebuild
 
-The fix at line 828 relies on the effect firing *between* opponent generation and quick battle execution. But if the user clicks Quick Battle immediately when the button appears, the effect may not have run yet to take the snapshot.
+In `src/hooks/team/useTeamBattle.ts`, the init effect (line 83-86) has this guard:
 
-## Fix
-
-### File: `src/components/game/battle/TeamBattlePage.tsx`
-
-**Single change in `handleQuickBattle`** (around line 434):
-
-Before the setTimeout, force-initialize `prevOpponentsRef` with the current alive opponents. This guarantees the "before" snapshot exists regardless of whether the useEffect has run:
-
-```typescript
-// Force-initialize snapshot for kill detection (fixes Level 1 = 0 kills)
-const currentAlive = battleState.opponents.filter(o => o.health > 0);
-if (prevOpponentsRef.current.length === 0 && currentAlive.length > 0) {
-  prevOpponentsRef.current = currentAlive.map(opp => ({
-    id: opp.id, name: opp.name, health: opp.health
-  }));
-  prevAliveOpponentsRef.current = currentAlive.length;
-}
+```text
+if (battleState.playerPairs.length > 0) return; // Already initialized
 ```
 
-This is safe because:
-- It only runs when the snapshot is empty (won't interfere with normal battles)
-- The kill-detection effect will still do the actual counting when state updates
-- No double-counting since we're not adding kills here, just ensuring the snapshot exists
+Two scenarios cause desync:
+
+1. **Zustand restoration**: `battleState` is initialized from Zustand saved state (line 25-46). If any previous battle for the same dungeon had modified dragons (died, removed), those stale `playerPairs` are restored — and the guard prevents rebuilding from the current team (`selectedPairs`).
+
+2. **Race condition**: If `selectedPairs` loads with incomplete dragon data first (e.g., `useCards` finishes and the medical bay filter removes some dragons temporarily), the effect builds playerPairs once. When `selectedPairs` later updates with correct data, the guard blocks the rebuild.
+
+### Why team page is correct
+The team page reads `selectedPairs` directly (always current from `player_teams` DB). The dungeon page reads `battleState.playerPairs` which is a one-time snapshot that may be stale.
+
+---
+
+## Fix Plan
+
+### File: `src/hooks/team/useTeamBattle.ts`
+
+**Change 1: Only restore playerPairs from Zustand if battle is actually active** (lines 25-58)
+
+Add check for `activeBattleInProgress` when restoring from Zustand. If no active battle, start with empty `playerPairs` so the init effect can build from current `selectedPairs`.
+
+```typescript
+const savedBattleState = useGameStore.getState().teamBattleState;
+const isMatchingDungeon = savedBattleState?.dungeonType === dungeonType;
+const isActiveBattle = useGameStore.getState().activeBattleInProgress;
+
+if (isMatchingDungeon && savedBattleState && isActiveBattle) {
+  // Restore full state only during active battle
+  return { playerPairs: savedBattleState.playerPairs || [], ... };
+}
+return { playerPairs: [], ... }; // Fresh start
+```
+
+**Change 2: Rebuild playerPairs when selectedPairs changes (pre-battle only)** (lines 83-86)
+
+Replace the simple guard with a smarter check: skip rebuild only during active battle (opponents generated). Otherwise, always rebuild from current `selectedPairs`.
+
+```typescript
+useEffect(() => {
+  if (cardInstancesLoading) return;
+  if (selectedPairs.length === 0) return;
+  
+  // Only skip rebuild during active battle (opponents already generated)
+  const isActiveBattle = useGameStore.getState().activeBattleInProgress;
+  if (isActiveBattle && battleState.opponents.length > 0) return;
+  
+  // Build/rebuild playerPairs from current selectedPairs
+  const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
+    // ... existing build logic ...
+  });
+  // ... existing setState logic ...
+}, [selectedPairs, cardInstancesLoading, cardInstances, dungeonType]);
+```
+
+This ensures:
+- Pre-battle screen always shows the current team from `player_teams` DB
+- Active battles are not disrupted by team changes
+- No stale Zustand data pollutes the pre-battle display
 
