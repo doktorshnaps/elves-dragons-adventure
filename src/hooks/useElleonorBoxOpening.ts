@@ -86,6 +86,16 @@ export const useElleonorBoxOpening = () => {
       return reward;
     } catch (error) {
       console.error('Error opening Elleonor Box:', error);
+      
+      // Log to client_error_logs
+      import('@/utils/errorReporter').then(({ reportError }) => {
+        reportError(
+          error instanceof Error ? error : new Error(String(error)),
+          'api_error',
+          { context: 'openElleonorBox', boxId: boxItem.id, wallet: accountId }
+        );
+      }).catch(() => {});
+
       toast({
         title: "Ошибка",
         description: error instanceof Error ? error.message : "Не удалось открыть сундук",
@@ -154,6 +164,13 @@ export const useElleonorBoxOpening = () => {
         }
       } catch (e) {
         console.error('Error opening remaining boxes:', e);
+        import('@/utils/errorReporter').then(({ reportError }) => {
+          reportError(
+            e instanceof Error ? e : new Error(String(e)),
+            'api_error',
+            { context: 'openRemainingBoxes', wallet: accountId }
+          );
+        }).catch(() => {});
       }
     }
     
