@@ -226,7 +226,9 @@ export const useForgeBay = () => {
         description: "Ремонт брони начался",
       });
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.forgeBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
       return entryId;
     } catch (error: any) {
       console.error('⚒️ Error placing card in forge bay:', error);
@@ -257,7 +259,9 @@ export const useForgeBay = () => {
         description: result.was_completed ? "Броня восстановлена" : "Ремонт отменен",
       });
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.forgeBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
     } catch (error: any) {
       console.error('Error removing card from forge bay:', error);
       toast({
@@ -285,7 +289,9 @@ export const useForgeBay = () => {
         description: "Карта удалена из кузницы без восстановления брони",
       });
 
-      // Кэш обновится автоматически через Real-time
+      queryClient.invalidateQueries({ queryKey: queryKeys.forgeBay(accountId) });
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['gameData'] });
     } catch (error: any) {
       console.error('Error stopping repair:', error);
       toast({
