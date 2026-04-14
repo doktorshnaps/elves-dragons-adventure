@@ -55,7 +55,7 @@ export async function reportError(
       error_source: source,
       page_url: window.location.href,
       user_agent: navigator.userAgent.substring(0, 500),
-      metadata: metadata || {},
+      metadata: (metadata || {}) as any,
     }]);
   } catch {
     // Silent fail - don't create error loops
