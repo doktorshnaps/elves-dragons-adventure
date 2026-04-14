@@ -27,8 +27,10 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
     const savedBattleState = useGameStore.getState().teamBattleState;
     const isMatchingDungeon = savedBattleState?.dungeonType === dungeonType;
     
-    if (isMatchingDungeon && savedBattleState) {
-      console.log('🔄 [useTeamBattle] Restoring FULL battle state from Zustand:', {
+    const isActiveBattle = useGameStore.getState().activeBattleInProgress;
+    
+    if (isMatchingDungeon && savedBattleState && isActiveBattle) {
+      console.log('🔄 [useTeamBattle] Restoring FULL battle state from Zustand (active battle):', {
         level: savedBattleState.level,
         opponentsCount: savedBattleState.opponents?.length || 0,
         playerPairsCount: savedBattleState.playerPairs?.length || 0,
@@ -83,7 +85,9 @@ export const useTeamBattle = (dungeonType: DungeonType, initialLevel: number = 1
   useEffect(() => {
     if (cardInstancesLoading) return;
     if (selectedPairs.length === 0) return;
-    if (battleState.playerPairs.length > 0) return; // Уже инициализировано
+    // Only skip rebuild during active battle (opponents already generated)
+    const isActiveBattle = useGameStore.getState().activeBattleInProgress;
+    if (isActiveBattle && battleState.opponents.length > 0) return;
     
     const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
       console.log(`🎯 [useTeamBattle] Building pair ${index} from card_instances context`);
