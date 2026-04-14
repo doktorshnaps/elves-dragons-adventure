@@ -866,7 +866,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       }));
       
       console.log('🎯 KILL DEBUG: New kills data:', JSON.stringify(newKills, null, 2));
-      setMonstersKilled(prev => [...prev, ...newKills]);
+      setMonstersKilled(prev => {
+        const updatedKills = [...prev, ...newKills];
+        // КРИТИЧНО: синхронизируем ref сразу в том же тике,
+        // чтобы экран завершения уровня не прочитал устаревший 0 на 1 уровне.
+        monstersKilledRef.current = updatedKills;
+        return updatedKills;
+      });
       console.log(`💀 Убито монстров: ${killedMonsters.map(m => m.name).join(', ')} на уровне ${battleState.level}`);
     }
 
