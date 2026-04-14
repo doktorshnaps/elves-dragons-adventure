@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { reportError } from '@/utils/errorReporter';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,7 @@ const clearBattleFromZustand = () => {
 
 export class ErrorBoundary extends Component<Props, State> {
   private unhandledRejectionHandler: ((e: PromiseRejectionEvent) => void) | null = null;
+  private windowErrorHandler: ((e: ErrorEvent) => void) | null = null;
 
   constructor(props: Props) {
     super(props);
@@ -39,13 +41,29 @@ export class ErrorBoundary extends Component<Props, State> {
         console.warn('⚠️ Suppressed HotConnector "No wallet selected" rejection');
         return;
       }
+      reportError(
+        e.reason instanceof Error ? e.reason : new Error(msg),
+        'unhandled_rejection'
+      );
     };
     window.addEventListener('unhandledrejection', this.unhandledRejectionHandler);
+
+    this.windowErrorHandler = (e: ErrorEvent) => {
+      reportError(
+        e.error instanceof Error ? e.error : new Error(e.message || 'Unknown window error'),
+        'window_error',
+        { filename: e.filename, lineno: e.lineno, colno: e.colno }
+      );
+    };
+    window.addEventListener('error', this.windowErrorHandler);
   }
 
   componentWillUnmount() {
     if (this.unhandledRejectionHandler) {
       window.removeEventListener('unhandledrejection', this.unhandledRejectionHandler);
+    }
+    if (this.windowErrorHandler) {
+      window.removeEventListener('error', this.windowErrorHandler as any);
     }
   }
 
@@ -55,6 +73,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    reportError(error, 'error_boundary', {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   render() {

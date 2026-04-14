@@ -32,6 +32,7 @@ import { TelegramNotificationSender } from "@/components/admin/TelegramNotificat
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { ErrorLogsViewer } from "@/components/admin/ErrorLogsViewer";
 
 const AdminSettingsContent = () => {
   usePageMeta({ title: 'Админ панель', description: 'Панель управления игрой ElleonorAI для администраторов.' });
