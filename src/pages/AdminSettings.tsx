@@ -201,6 +201,10 @@ const AdminSettingsContent = () => {
               <TabsContent value="tg-notify" className="space-y-4">
                 <TelegramNotificationSender />
               </TabsContent>
+
+              <TabsContent value="error-logs" className="space-y-4">
+                <ErrorLogsViewer />
+              </TabsContent>
             </>
           )}
 
