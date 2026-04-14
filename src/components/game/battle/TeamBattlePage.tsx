@@ -434,6 +434,15 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
     // Kill tracking is handled by the kill-detection useEffect below
     // Do NOT manually add kills here to avoid double-counting
 
+    // Force-initialize snapshot for kill detection (fixes Level 1 = 0 kills race condition)
+    const currentAlive = battleState.opponents.filter(o => o.health > 0);
+    if (prevOpponentsRef.current.length === 0 && currentAlive.length > 0) {
+      prevOpponentsRef.current = currentAlive.map(opp => ({
+        id: opp.id, name: opp.name, health: opp.health
+      }));
+      prevAliveOpponentsRef.current = currentAlive.length;
+    }
+
     // Show loading overlay for 1.5s, then apply results
     setTimeout(() => {
       // Apply final battle state — triggers isBattleOver effect
