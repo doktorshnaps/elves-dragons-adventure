@@ -116,10 +116,12 @@ export const SoulAltarTab = () => {
     try {
       setDonating(true);
 
-      // Атомарное пожертвование через RPC
+      // Атомарное пожертвование через RPC с идемпотентностью
+      const requestId = crypto.randomUUID();
       const { error } = await supabase.rpc('donate_soul_crystals', {
         p_wallet: accountId,
         p_amount: amount,
+        p_request_id: requestId,
       });
 
       if (error) throw error;
