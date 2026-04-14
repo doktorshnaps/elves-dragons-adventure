@@ -87,6 +87,7 @@ export const SoulAltarTab = () => {
         description: "Подключите кошелек",
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -98,6 +99,7 @@ export const SoulAltarTab = () => {
         description: "Введите корректное количество (минимум 1)",
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -107,6 +109,7 @@ export const SoulAltarTab = () => {
         description: `У вас есть только ${soulCrystals} Кристаллов Жизни`,
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -138,6 +141,7 @@ export const SoulAltarTab = () => {
       });
     } finally {
       setDonating(false);
+      donatingRef.current = false;
     }
   };
 
