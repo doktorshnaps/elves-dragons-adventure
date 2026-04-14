@@ -1,71 +1,42 @@
 
 
-## Problem Analysis
+## Two Bugs Found
 
-The team page shows all 5 heroes with dragons, but the dungeon pre-battle page shows only 2 with dragons. The root cause is in `useTeamBattle.ts` — the team initialization effect.
+### Bug 1: `resurrect_card_in_medical_bay` — Function Overloading
 
-### Root Cause: Stale state guard prevents rebuild
+**Error**: "Could not choose the best candidate function"
 
-In `src/hooks/team/useTeamBattle.ts`, the init effect (line 83-86) has this guard:
+**Cause**: Two versions of the function exist in the database:
+- Original (migration `20251202`): `p_card_instance_id UUID`
+- Updated (migration `20260412`): `p_card_instance_id TEXT`
 
-```text
-if (battleState.playerPairs.length > 0) return; // Already initialized
-```
+PostgREST cannot resolve which to call when both have the same name. Per the project's memory on `database-rpc-standardization`, overloading is prohibited.
 
-Two scenarios cause desync:
+**Fix**: Create a new migration that:
+1. Drops the old UUID-signature version: `DROP FUNCTION IF EXISTS public.resurrect_card_in_medical_bay(UUID, TEXT);`
+2. Keeps only the TEXT version (which internally casts to UUID)
 
-1. **Zustand restoration**: `battleState` is initialized from Zustand saved state (line 25-46). If any previous battle for the same dungeon had modified dragons (died, removed), those stale `playerPairs` are restored — and the guard prevents rebuilding from the current team (`selectedPairs`).
+### Bug 2: `open-elleonor-box` — Invalid Auth Method (`getClaims`)
 
-2. **Race condition**: If `selectedPairs` loads with incomplete dragon data first (e.g., `useCards` finishes and the medical bay filter removes some dragons temporarily), the effect builds playerPairs once. When `selectedPairs` later updates with correct data, the guard blocks the rebuild.
+**Error**: "Edge Function returned a non-2xx status code"
 
-### Why team page is correct
-The team page reads `selectedPairs` directly (always current from `player_teams` DB). The dungeon page reads `battleState.playerPairs` which is a one-time snapshot that may be stale.
+**Cause**: The edge function uses `userClient.auth.getClaims(token)` which does not exist in the Supabase JS v2 client. This causes a runtime error, returning a 500 to the frontend.
 
----
-
-## Fix Plan
-
-### File: `src/hooks/team/useTeamBattle.ts`
-
-**Change 1: Only restore playerPairs from Zustand if battle is actually active** (lines 25-58)
-
-Add check for `activeBattleInProgress` when restoring from Zustand. If no active battle, start with empty `playerPairs` so the init effect can build from current `selectedPairs`.
+**Fix**: Replace `getClaims` with `getUser()` in `open-elleonor-box/index.ts`:
 
 ```typescript
-const savedBattleState = useGameStore.getState().teamBattleState;
-const isMatchingDungeon = savedBattleState?.dungeonType === dungeonType;
-const isActiveBattle = useGameStore.getState().activeBattleInProgress;
-
-if (isMatchingDungeon && savedBattleState && isActiveBattle) {
-  // Restore full state only during active battle
-  return { playerPairs: savedBattleState.playerPairs || [], ... };
+const { data: { user }, error: authError } = await userClient.auth.getUser();
+if (authError || !user) {
+  return json({ success: false, error: "Invalid token" }, 401);
 }
-return { playerPairs: [], ... }; // Fresh start
+const userId = user.id;
 ```
 
-**Change 2: Rebuild playerPairs when selectedPairs changes (pre-battle only)** (lines 83-86)
+Same fix needed in `sell-item/index.ts` (same pattern, same bug). Then redeploy both edge functions.
 
-Replace the simple guard with a smarter check: skip rebuild only during active battle (opponents generated). Otherwise, always rebuild from current `selectedPairs`.
-
-```typescript
-useEffect(() => {
-  if (cardInstancesLoading) return;
-  if (selectedPairs.length === 0) return;
-  
-  // Only skip rebuild during active battle (opponents already generated)
-  const isActiveBattle = useGameStore.getState().activeBattleInProgress;
-  if (isActiveBattle && battleState.opponents.length > 0) return;
-  
-  // Build/rebuild playerPairs from current selectedPairs
-  const teamPairs: TeamPair[] = selectedPairs.map((pair, index) => {
-    // ... existing build logic ...
-  });
-  // ... existing setState logic ...
-}, [selectedPairs, cardInstancesLoading, cardInstances, dungeonType]);
-```
-
-This ensures:
-- Pre-battle screen always shows the current team from `player_teams` DB
-- Active battles are not disrupted by team changes
-- No stale Zustand data pollutes the pre-battle display
+### Files to Change
+1. **New SQL migration** — Drop the overloaded `resurrect_card_in_medical_bay(UUID, TEXT)` signature
+2. **`supabase/functions/open-elleonor-box/index.ts`** — Replace `getClaims` with `getUser()`
+3. **`supabase/functions/sell-item/index.ts`** — Replace `getClaims` with `getUser()`
+4. Deploy both edge functions
 
