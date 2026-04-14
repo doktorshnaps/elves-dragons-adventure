@@ -854,6 +854,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_error_logs: {
+        Row: {
+          created_at: string
+          error_message: string
+          error_source: string | null
+          error_stack: string | null
+          id: string
+          metadata: Json | null
+          page_url: string | null
+          user_agent: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          error_source?: string | null
+          error_stack?: string | null
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          user_agent?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          error_source?: string | null
+          error_stack?: string | null
+          id?: string
+          metadata?: Json | null
+          page_url?: string | null
+          user_agent?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       crafting_recipes: {
         Row: {
           category: string | null
