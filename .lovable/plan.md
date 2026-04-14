@@ -1,74 +1,34 @@
 
 
-## Error Logging System for Admin Panel
+## Fix: Box Opening Error & Error Logging Not Capturing API Errors
 
-### Overview
-Create a client-side error reporting system that captures errors from players' browsers and stores them in the database, with a new admin panel tab to view and manage them.
+### Problem 1: Box Opening Fails with 401
+The `open-elleonor-box` Edge Function requires JWT authentication via `userClient.auth.getUser()` and then looks up `profiles.wallet_address` by `user_id`. NEAR wallet users don't have a Supabase Auth session, so the function returns 401 ("Unauthorized" or "Invalid token") before any processing occurs. The logs confirm: the function boots but never reaches the "Opening Elleonor Box" log line.
 
-### 1. Database Table: `client_error_logs`
+**Fix**: Add a dual-auth fallback — try JWT first, and if it fails, accept `wallet_address` from the request body (same pattern used by other edge functions in this project). Validate the wallet exists in `game_data` to prevent spoofing.
 
-New migration to create the table:
+### Problem 2: Errors Not Logged to `client_error_logs`
+The `reportError` function is only called from `ErrorBoundary` for: component crashes, unhandled rejections, and window errors. But the box opening error is **caught and handled** in `useElleonorBoxOpening.ts` — it shows a toast but never calls `reportError`. So API/edge function errors are silently swallowed.
 
-```sql
-CREATE TABLE public.client_error_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  wallet_address TEXT,
-  error_message TEXT NOT NULL,
-  error_stack TEXT,
-  error_source TEXT, -- 'error_boundary', 'unhandled_rejection', 'window_error', 'api_error'
-  page_url TEXT,
-  user_agent TEXT,
-  metadata JSONB DEFAULT '{}'
-);
+**Fix**: Add `reportError` calls in the catch blocks of `useElleonorBoxOpening.ts` and also in `useErrorHandler.ts` (the centralized error handler) so all handled API errors get logged too.
 
-ALTER TABLE public.client_error_logs ENABLE ROW LEVEL SECURITY;
+### Changes
 
--- Anyone can insert errors (even unauthenticated)
-CREATE POLICY "Anyone can insert errors" ON public.client_error_logs FOR INSERT WITH CHECK (true);
+#### 1. `supabase/functions/open-elleonor-box/index.ts`
+Replace the strict JWT-only auth with a dual strategy:
+- Try JWT auth first (existing logic)
+- If JWT fails (no token or invalid), fall back to `wallet_address` from request body
+- Validate the wallet exists in `game_data` table to prevent spoofing
+- Keep rate limiting and all other security checks
 
--- Only admins can read
-CREATE POLICY "Admins can read errors" ON public.client_error_logs FOR SELECT TO authenticated
-  USING (public.has_role(auth.uid(), 'admin'));
+#### 2. `src/hooks/useElleonorBoxOpening.ts`
+Add `reportError` calls in both catch blocks (single box and multi-box) to log API errors to `client_error_logs`.
 
--- Auto-cleanup: delete errors older than 30 days
-CREATE INDEX idx_client_error_logs_created ON public.client_error_logs(created_at DESC);
-```
+#### 3. `src/hooks/useErrorHandler.ts`
+Add `reportError` call inside `handleError` so any component using `useErrorHandler` automatically logs errors to the database.
 
-### 2. Error Reporter Utility: `src/utils/errorReporter.ts`
-
-A lightweight module that sends errors to `client_error_logs` via Supabase. Includes:
-- Deduplication (same error message within 10 seconds is skipped)
-- Rate limiting (max 5 reports per minute per session)
-- `reportError(error, source, metadata?)` function
-
-### 3. Update `ErrorBoundary.tsx`
-
-In `componentDidCatch`, call `reportError()` to log the error with source `'error_boundary'` and `errorInfo.componentStack` in metadata.
-
-In the `unhandledrejection` handler, also call `reportError()` for non-suppressed rejections with source `'unhandled_rejection'`.
-
-### 4. Global Window Error Handler
-
-Add a `window.onerror` listener in `ErrorBoundary.componentDidMount` to capture uncaught JS errors with source `'window_error'`.
-
-### 5. Admin Component: `src/components/admin/ErrorLogsViewer.tsx`
-
-A new tab in AdminSettings showing:
-- Table of recent errors (last 200) with columns: time, wallet, source, message, page
-- Expandable rows to see full stack trace and metadata
-- Auto-refresh every 30 seconds
-- Filter by source type and search by message
-- Button to clear old errors (> 7 days)
-
-### 6. Add Tab to `AdminSettings.tsx`
-
-Add a new `TabsTrigger` "🐛 Ошибки" and `TabsContent` with the `ErrorLogsViewer` component, visible only for super admins.
-
-### Files to Change
-1. **New SQL migration** — `client_error_logs` table with RLS
-2. **New `src/utils/errorReporter.ts`** — error reporting utility
-3. **Edit `src/components/common/ErrorBoundary.tsx`** — integrate error reporting
-4. **New `src/components/admin/ErrorLogsViewer.tsx`** — admin viewer component
-5. **Edit `src/pages/AdminSettings.tsx`** — add the new tab
+### Files
+1. **`supabase/functions/open-elleonor-box/index.ts`** — Dual auth (JWT + wallet fallback)
+2. **`src/hooks/useElleonorBoxOpening.ts`** — Add `reportError` for API errors
+3. **`src/hooks/useErrorHandler.ts`** — Add `reportError` for centralized error logging
 
