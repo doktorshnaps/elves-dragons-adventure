@@ -32,6 +32,7 @@ import { TelegramNotificationSender } from "@/components/admin/TelegramNotificat
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { useSuperAdminCheck } from "@/hooks/useSuperAdminCheck";
+import { ErrorLogsViewer } from "@/components/admin/ErrorLogsViewer";
 
 const AdminSettingsContent = () => {
   usePageMeta({ title: 'Админ панель', description: 'Панель управления игрой ElleonorAI для администраторов.' });
@@ -98,7 +99,7 @@ const AdminSettingsContent = () => {
         </div>
 
         <Tabs defaultValue={isSuperAdmin ? "metrics" : "management"} className="w-full">
-          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-18' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
+          <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-19' : 'grid-cols-1'} bg-black/50 border-2 border-white backdrop-blur-sm rounded-3xl mb-6`} style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}>
             {isSuperAdmin && (
               <>
                 <TabsTrigger value="metrics" className="text-white data-[state=active]:bg-white/20 rounded-3xl">📊 Метрики</TabsTrigger>
@@ -119,6 +120,7 @@ const AdminSettingsContent = () => {
                 <TabsTrigger value="pvp-seasons" className="text-white data-[state=active]:bg-white/20 rounded-3xl">⚔️ PvP Сезоны</TabsTrigger>
                 <TabsTrigger value="exchanges" className="text-white data-[state=active]:bg-white/20 rounded-3xl">🔄 Обмен</TabsTrigger>
                 <TabsTrigger value="tg-notify" className="text-white data-[state=active]:bg-white/20 rounded-3xl">📨 Рассылка</TabsTrigger>
+                <TabsTrigger value="error-logs" className="text-white data-[state=active]:bg-white/20 rounded-3xl">🐛 Ошибки</TabsTrigger>
               </>
             )}
             <TabsTrigger value="management" className="text-white data-[state=active]:bg-white/20 rounded-3xl">{t(language, 'admin.management')}</TabsTrigger>
@@ -198,6 +200,10 @@ const AdminSettingsContent = () => {
 
               <TabsContent value="tg-notify" className="space-y-4">
                 <TelegramNotificationSender />
+              </TabsContent>
+
+              <TabsContent value="error-logs" className="space-y-4">
+                <ErrorLogsViewer />
               </TabsContent>
             </>
           )}
