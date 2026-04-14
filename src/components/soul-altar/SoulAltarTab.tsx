@@ -34,6 +34,7 @@ export const SoulAltarTab = () => {
   const [donationAmount, setDonationAmount] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [donating, setDonating] = useState(false);
+  const donatingRef = useRef(false);
 
   // Считаем кристаллы из item_instances для точности
   const soulCrystals = itemInstances.filter(inst => 
@@ -77,12 +78,16 @@ export const SoulAltarTab = () => {
   };
 
   const handleDonate = async () => {
+    if (donatingRef.current) return;
+    donatingRef.current = true;
+    
     if (!accountId) {
       toast({
         title: "Ошибка",
         description: "Подключите кошелек",
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -94,6 +99,7 @@ export const SoulAltarTab = () => {
         description: "Введите корректное количество (минимум 1)",
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -103,6 +109,7 @@ export const SoulAltarTab = () => {
         description: `У вас есть только ${soulCrystals} Кристаллов Жизни`,
         variant: "destructive",
       });
+      donatingRef.current = false;
       return;
     }
 
@@ -134,6 +141,7 @@ export const SoulAltarTab = () => {
       });
     } finally {
       setDonating(false);
+      donatingRef.current = false;
     }
   };
 
