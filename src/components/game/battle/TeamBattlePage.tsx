@@ -831,6 +831,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       return;
     }
 
+    // Fix: Initialize snapshot if empty (e.g. quick battle on level 1)
+    if (prevOpponentsRef.current.length === 0 && aliveOpponents.length > 0) {
+      prevOpponentsRef.current = aliveOpponents.map(opp => ({
+        id: opp.id,
+        name: opp.name,
+        health: opp.health
+      }));
+      prevAliveOpponentsRef.current = aliveOpponents.length;
+      return;
+    }
+
     const prevOpponents = prevOpponentsRef.current;
     const currentOpponents = aliveOpponents.map(opp => ({
       id: opp.id,
