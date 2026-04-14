@@ -431,14 +431,8 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       alivePairs: result.resultPairs.filter(p => p.health > 0).length,
     });
 
-    // Track killed monsters
-    if (result.monstersKilled > 0) {
-      const newKills = result.resultOpponents
-        .filter(o => o.health <= 0)
-        .map(o => ({ level: battleState.level, dungeonType, name: o.name }));
-      monstersKilledRef.current = [...monstersKilledRef.current, ...newKills];
-      setMonstersKilled(prev => [...prev, ...newKills]);
-    }
+    // Kill tracking is handled by the kill-detection useEffect below
+    // Do NOT manually add kills here to avoid double-counting
 
     // Show loading overlay for 1.5s, then apply results
     setTimeout(() => {
@@ -828,6 +822,17 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       }));
       prevAliveOpponentsRef.current = aliveOpponents.length;
       processedLevelRef.current = null; // Сброс при старте нового боя
+      return;
+    }
+
+    // Fix: Initialize snapshot if empty (e.g. quick battle on level 1)
+    if (prevOpponentsRef.current.length === 0 && aliveOpponents.length > 0) {
+      prevOpponentsRef.current = aliveOpponents.map(opp => ({
+        id: opp.id,
+        name: opp.name,
+        health: opp.health
+      }));
+      prevAliveOpponentsRef.current = aliveOpponents.length;
       return;
     }
 
