@@ -7,18 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// 🔒 Input validation schema
 const OpenBoxSchema = z.object({
-  wallet_address: z.string().min(3).max(100), // now set server-side from JWT
+  wallet_address: z.string().min(3).max(100).optional(),
   box_instance_id: z.string().optional(),
   count: z.number().int().min(1).max(10).default(1),
 });
 
-// Rate limiting configuration
 const RATE_LIMIT_WINDOW_SECONDS = 60;
-const RATE_LIMIT_MAX_REQUESTS = 10; // Max 10 box openings per minute
+const RATE_LIMIT_MAX_REQUESTS = 10;
 
-// Possible reward amounts with their weights (total = 100%)
 const REWARD_CONFIG = [
   { amount: 1, weight: 70 },
   { amount: 5, weight: 20 },
@@ -31,18 +28,13 @@ const REWARD_CONFIG = [
   { amount: 6666, weight: 0.05 },
 ];
 
-// Calculate reward based on weighted random
 function calculateReward(): number {
   const totalWeight = REWARD_CONFIG.reduce((sum, r) => sum + r.weight, 0);
   let random = Math.random() * totalWeight;
-  
   for (const reward of REWARD_CONFIG) {
     random -= reward.weight;
-    if (random <= 0) {
-      return reward.amount;
-    }
+    if (random <= 0) return reward.amount;
   }
-  
   return REWARD_CONFIG[0].amount;
 }
 
@@ -53,68 +45,85 @@ const json = (data: unknown, status = 200) =>
   });
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // 🔒 JWT verification — resolve wallet server-side
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return json({ success: false, error: "Unauthorized" }, 401);
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      return json({ success: false, error: "Invalid token" }, 401);
-    }
-
-    const userId = user.id;
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
     });
 
-    // Resolve wallet from profiles
-    const { data: profile, error: profileErr } = await supabaseAdmin
-      .from("profiles")
-      .select("wallet_address")
-      .eq("user_id", userId)
-      .single();
-
-    if (profileErr || !profile?.wallet_address) {
-      return json({ success: false, error: "No wallet linked" }, 403);
-    }
-
-    const wallet_address = profile.wallet_address;
-
-    // 🔒 Parse and validate input (wallet_address no longer from body)
-    let body: unknown;
+    // Parse body first
+    let body: any;
     try {
       body = await req.json();
     } catch {
       body = {};
     }
 
-    const parseResult = OpenBoxSchema.safeParse({ ...((body as any) || {}), wallet_address });
+    const parseResult = OpenBoxSchema.safeParse(body);
     if (!parseResult.success) {
       console.error("❌ Validation error:", parseResult.error.flatten());
       return json({ success: false, error: "Invalid request parameters" }, 400);
     }
 
     const { count } = parseResult.data;
+
+    // Dual auth: try JWT first, fall back to wallet_address from body
+    let wallet_address: string | null = null;
+
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data: { user }, error: authError } = await userClient.auth.getUser();
+        if (!authError && user) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("wallet_address")
+            .eq("user_id", user.id)
+            .single();
+          if (profile?.wallet_address) {
+            wallet_address = profile.wallet_address;
+          }
+        }
+      } catch (e) {
+        console.warn("JWT auth failed, trying wallet fallback:", e);
+      }
+    }
+
+    // Fallback: use wallet_address from body, validate it exists in game_data
+    if (!wallet_address && parseResult.data.wallet_address) {
+      const candidateWallet = parseResult.data.wallet_address;
+      const { data: gameCheck } = await supabaseAdmin
+        .from("game_data")
+        .select("wallet_address")
+        .eq("wallet_address", candidateWallet)
+        .maybeSingle();
+
+      if (gameCheck?.wallet_address) {
+        wallet_address = gameCheck.wallet_address;
+        console.log(`✅ Wallet fallback auth OK: ${wallet_address}`);
+      } else {
+        console.warn(`🚫 Wallet fallback rejected - not found in game_data: ${candidateWallet}`);
+        return json({ success: false, error: "Wallet not found" }, 403);
+      }
+    }
+
+    if (!wallet_address) {
+      return json({ success: false, error: "Unauthorized - no valid auth" }, 401);
+    }
+
     console.log(`📦 Opening Elleonor Box for wallet: ${wallet_address}, count: ${count}`);
 
-    // 🔒 SECURITY: Check rate limiting
+    // Rate limiting
     const { data: rateLimitOk } = await supabaseAdmin.rpc('check_api_rate_limit', {
       p_identifier: wallet_address,
       p_endpoint: 'open-elleonor-box',
@@ -129,13 +138,10 @@ serve(async (req) => {
         wallet_address,
         details: { count }
       });
-      return json({ 
-        success: false, 
-        error: 'Too many requests. Please wait a moment.' 
-      }, 429);
+      return json({ success: false, error: 'Too many requests. Please wait a moment.' }, 429);
     }
 
-    // Find consumable boxes for this wallet
+    // Find consumable boxes
     const { data: boxes, error: fetchError } = await supabaseAdmin
       .from('item_instances')
       .select('id, name, template_id, wallet_address')
@@ -158,13 +164,11 @@ serve(async (req) => {
     let totalReward = 0;
     const rewards: number[] = [];
 
-    // Delete boxes and calculate rewards
     for (const box of boxesToOpen) {
       const reward = calculateReward();
       totalReward += reward;
       rewards.push(reward);
 
-      // Delete the box
       const { error: deleteError } = await supabaseAdmin
         .from('item_instances')
         .delete()
@@ -172,10 +176,8 @@ serve(async (req) => {
 
       if (deleteError) {
         console.error(`Error deleting box ${box.id}:`, deleteError);
-        // Continue with other boxes
       }
 
-      // Log the claim
       await supabaseAdmin
         .from('mgt_claims')
         .insert({
@@ -186,7 +188,6 @@ serve(async (req) => {
         });
     }
 
-    // Get current mGT balance AFTER processing all boxes
     const { data: gameData, error: gameDataError } = await supabaseAdmin
       .from('game_data')
       .select('mgt_balance')
@@ -207,7 +208,7 @@ serve(async (req) => {
         .from('game_data')
         .update({ mgt_balance: newBalance })
         .eq('wallet_address', wallet_address);
-      
+
       if (updateError) {
         console.error('Error updating mgt_balance:', updateError);
       }

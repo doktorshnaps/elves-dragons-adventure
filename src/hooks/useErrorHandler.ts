@@ -1,11 +1,19 @@
 import { useToast } from '@/hooks/use-toast';
 import { ERROR_MESSAGES, ERROR_TYPES } from '@/utils/constants';
+import { reportError } from '@/utils/errorReporter';
 
 export const useErrorHandler = () => {
   const { toast } = useToast();
 
   const handleError = (error: any, context?: string) => {
     console.error(`Error in ${context || 'unknown context'}:`, error);
+
+    // Log to client_error_logs
+    try {
+      const err = error instanceof Error ? error : new Error(error?.message || String(error));
+      reportError(err, 'api_error', { context: context || 'unknown' });
+    } catch {}
+
     
     let message = 'Произошла неожиданная ошибка';
     let title = 'Ошибка';
