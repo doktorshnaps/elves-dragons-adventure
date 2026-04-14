@@ -1,34 +1,31 @@
 
 
-## Fix: Box Opening Error & Error Logging Not Capturing API Errors
+## Fix: Soul Crystal Donation Duplication
 
-### Problem 1: Box Opening Fails with 401
-The `open-elleonor-box` Edge Function requires JWT authentication via `userClient.auth.getUser()` and then looks up `profiles.wallet_address` by `user_id`. NEAR wallet users don't have a Supabase Auth session, so the function returns 401 ("Unauthorized" or "Invalid token") before any processing occurs. The logs confirm: the function boots but never reaches the "Opening Elleonor Box" log line.
+### Root Cause
+Every donation creates **exactly 2 rows** with sub-millisecond timestamps (e.g., `21:34:00.594075` and `21:34:00.594364`). The `donating` state flag uses `useState`, which is asynchronous — if the click handler fires twice before React re-renders (double-click, touch event doubling), both calls pass the `donating === false` check and execute the RPC simultaneously.
 
-**Fix**: Add a dual-auth fallback — try JWT first, and if it fails, accept `wallet_address` from the request body (same pattern used by other edge functions in this project). Validate the wallet exists in `game_data` to prevent spoofing.
+### Fix (2 layers)
 
-### Problem 2: Errors Not Logged to `client_error_logs`
-The `reportError` function is only called from `ErrorBoundary` for: component crashes, unhandled rejections, and window errors. But the box opening error is **caught and handled** in `useElleonorBoxOpening.ts` — it shows a toast but never calls `reportError`. So API/edge function errors are silently swallowed.
+#### 1. Frontend: `useRef` lock in `SoulAltarTab.tsx`
+Add a `useRef(false)` lock that synchronously blocks duplicate calls:
+```typescript
+const donatingRef = useRef(false);
 
-**Fix**: Add `reportError` calls in the catch blocks of `useElleonorBoxOpening.ts` and also in `useErrorHandler.ts` (the centralized error handler) so all handled API errors get logged too.
+const handleDonate = async () => {
+  if (donatingRef.current) return; // synchronous guard
+  donatingRef.current = true;
+  // ... existing logic ...
+  donatingRef.current = false; // in finally block
+};
+```
 
-### Changes
-
-#### 1. `supabase/functions/open-elleonor-box/index.ts`
-Replace the strict JWT-only auth with a dual strategy:
-- Try JWT auth first (existing logic)
-- If JWT fails (no token or invalid), fall back to `wallet_address` from request body
-- Validate the wallet exists in `game_data` table to prevent spoofing
-- Keep rate limiting and all other security checks
-
-#### 2. `src/hooks/useElleonorBoxOpening.ts`
-Add `reportError` calls in both catch blocks (single box and multi-box) to log API errors to `client_error_logs`.
-
-#### 3. `src/hooks/useErrorHandler.ts`
-Add `reportError` call inside `handleError` so any component using `useErrorHandler` automatically logs errors to the database.
+#### 2. Database: Row-level lock in `donate_soul_crystals`
+Add `FOR UPDATE` on the crystal rows to serialize concurrent calls, and add a deduplication check:
+- Lock the `item_instances` rows with `FOR UPDATE SKIP LOCKED`
+- This ensures that if two identical calls arrive simultaneously, the second one gets fewer rows and fails the count check
 
 ### Files
-1. **`supabase/functions/open-elleonor-box/index.ts`** — Dual auth (JWT + wallet fallback)
-2. **`src/hooks/useElleonorBoxOpening.ts`** — Add `reportError` for API errors
-3. **`src/hooks/useErrorHandler.ts`** — Add `reportError` for centralized error logging
+1. **`src/components/soul-altar/SoulAltarTab.tsx`** — Add `useRef` synchronous lock
+2. **New SQL migration** — Recreate `donate_soul_crystals` with `FOR UPDATE` locking on the crystal selection query
 
