@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { usePvP, PvPPair } from '@/hooks/usePvP';
-import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { PvPBattleArena } from './PvPBattleArena';
