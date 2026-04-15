@@ -263,9 +263,14 @@ return (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-white">{translateShopItemName(language, displayItem.name)}</h3>
-                    <div className="flex items-center gap-1 text-white text-sm">
-                      <Package className="w-3 h-3" />
-                      <span>{quantity}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-900/40 px-2 py-0.5 rounded-full border border-amber-500/30">
+                        <span>🎒 {displayItem.type === 'cardPack' ? totalCardsOwned : (ownedCountByTemplateId[displayItem.id] ?? 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-white text-sm">
+                        <Package className="w-3 h-3" />
+                        <span>{quantity}</span>
+                      </div>
                     </div>
                   </div>
                   <p className="text-white/70 text-sm">{translateShopItemDescription(language, displayItem.description)}</p>
