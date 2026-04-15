@@ -8,7 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
 import { ArrowLeft, Clock, Package } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidationPresets } from "@/utils/selectiveInvalidation";
@@ -42,6 +42,23 @@ export const Shop = ({ onClose }: ShopProps) => {
   const displayBalance = shopData?.user_balance ?? 0;
   const shopInventory = shopData?.shop_inventory ?? [];
   const cardPackPrice = shopData?.item_templates?.find(t => t.item_id === 'card_pack')?.value ?? null;
+
+  // Get owned item counts from cache
+  const itemInstances: any[] = queryClient.getQueryData(['itemInstances', accountId]) ?? [];
+  const cardInstances: any[] = queryClient.getQueryData(['cardInstances', accountId]) ?? [];
+  
+  const ownedCountByTemplateId = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const item of itemInstances) {
+      const tid = item.template_id;
+      if (tid != null) {
+        counts[tid] = (counts[tid] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [itemInstances]);
+
+  const totalCardsOwned = cardInstances.length;
 
   if (shopDataLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
@@ -246,9 +263,14 @@ return (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-white">{translateShopItemName(language, displayItem.name)}</h3>
-                    <div className="flex items-center gap-1 text-white text-sm">
-                      <Package className="w-3 h-3" />
-                      <span>{quantity}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-900/40 px-2 py-0.5 rounded-full border border-amber-500/30">
+                        <span>🎒 {displayItem.type === 'cardPack' ? totalCardsOwned : (ownedCountByTemplateId[displayItem.id] ?? 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-white text-sm">
+                        <Package className="w-3 h-3" />
+                        <span>{quantity}</span>
+                      </div>
                     </div>
                   </div>
                   <p className="text-white/70 text-sm">{translateShopItemDescription(language, displayItem.description)}</p>
