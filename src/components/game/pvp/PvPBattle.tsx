@@ -7,6 +7,7 @@ import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { PvPBattleArena } from './PvPBattleArena';
+import { PvPBattleResult } from './PvPBattleResult';
 import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 
 const PvPBattleContent: React.FC = () => {
