@@ -279,7 +279,7 @@ return (
                     <h3 className="font-semibold text-white">{translateShopItemName(language, displayItem.name)}</h3>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1 text-amber-400 text-xs bg-amber-900/40 px-2 py-0.5 rounded-full border border-amber-500/30">
-                        <span>🎒 {displayItem.type === 'cardPack' ? totalCardsOwned : (ownedCountByTemplateId[displayItem.id] ?? 0)}</span>
+                        <span>🎒 {displayItem.type === 'worker' ? (workerCountByTemplateId[displayItem.id] ?? 0) : (ownedCountByTemplateId[displayItem.id] ?? 0)}</span>
                       </div>
                       <div className="flex items-center gap-1 text-white text-sm">
                         <Package className="w-3 h-3" />
