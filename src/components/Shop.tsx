@@ -8,7 +8,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { translateShopItemName, translateShopItemDescription } from "@/utils/shopTranslations";
 import { ArrowLeft, Clock, Package } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidationPresets } from "@/utils/selectiveInvalidation";
