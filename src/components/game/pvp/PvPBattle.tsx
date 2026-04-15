@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Trophy } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
 import { PvPBattleArena } from './PvPBattleArena';
+import { PvPBattleResult } from './PvPBattleResult';
 import { BattleSpeedProvider } from '@/contexts/BattleSpeedContext';
 
 const PvPBattleContent: React.FC = () => {
@@ -295,33 +294,7 @@ const PvPBattleContent: React.FC = () => {
 
   // Match completed
   if (matchData.status === 'completed') {
-    const isWinner = matchData.winner === walletAddress;
-    
-    return (
-      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <Trophy className={`w-16 h-16 mx-auto ${isWinner ? 'text-yellow-500' : 'text-muted-foreground'}`} />
-            <CardTitle className={isWinner ? 'text-green-500' : 'text-red-500'}>
-              {isWinner ? 'Победа!' : 'Поражение'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-center">
-            <div className="text-lg">
-              {isWinner 
-                ? `Вы получили ${matchData.reward || 0} ELL` 
-                : 'Удачи в следующем бою!'}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Изменение рейтинга: {isWinner ? '+' : '-'}{matchData.elo_change || 0}
-            </div>
-            <Button onClick={() => navigate('/pvp')} className="w-full">
-              Вернуться в арену
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <PvPBattleResult matchData={matchData} walletAddress={walletAddress} />;
   }
 
   // Determine my and opponent pairs
