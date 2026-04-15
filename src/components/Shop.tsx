@@ -43,6 +43,23 @@ export const Shop = ({ onClose }: ShopProps) => {
   const shopInventory = shopData?.shop_inventory ?? [];
   const cardPackPrice = shopData?.item_templates?.find(t => t.item_id === 'card_pack')?.value ?? null;
 
+  // Get owned item counts from cache
+  const itemInstances: any[] = queryClient.getQueryData(['itemInstances', accountId]) ?? [];
+  const cardInstances: any[] = queryClient.getQueryData(['cardInstances', accountId]) ?? [];
+  
+  const ownedCountByTemplateId = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const item of itemInstances) {
+      const tid = item.template_id;
+      if (tid != null) {
+        counts[tid] = (counts[tid] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [itemInstances]);
+
+  const totalCardsOwned = cardInstances.length;
+
   if (shopDataLoading) {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
