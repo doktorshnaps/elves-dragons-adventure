@@ -4642,6 +4642,7 @@ export type Database = {
         Args: { p_wallet_address: string }
         Returns: string
       }
+      get_pvp_dice_stats: { Args: { p_days?: number }; Returns: Json }
       get_pvp_leaderboard: {
         Args: { p_limit?: number; p_offset?: number; p_tier_filter?: string }
         Returns: {
