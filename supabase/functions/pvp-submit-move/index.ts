@@ -306,17 +306,15 @@ Deno.serve(async (req) => {
       
       let botCounterDamage = 0;
       if (botResult.isCounterAttack) {
-        const counterRoll = rollD6();
+        // Fixed counterattack: 50% of defender's power minus attacker's defense
         const targetPower = botTargetPair.totalPower || 
           (botTargetPair.hero?.power || 0) + (botTargetPair.dragon?.power || 0);
         const botDefense = botAttackerPair.currentDefense || 0;
+        const fixedCounterDamage = Math.max(1, Math.floor(targetPower * 0.5) - botDefense);
         
-        const counterResult = calculateDamageByRoll(counterRoll, targetPower, botDefense);
-        if (counterResult.damage > 0) {
-          const updatedBotPair = applyDamageToPair(botAttackerPair, counterResult.damage);
-          updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
-          botCounterDamage = counterResult.damage;
-        }
+        const updatedBotPair = applyDamageToPair(botAttackerPair, fixedCounterDamage);
+        updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
+        botCounterDamage = fixedCounterDamage;
       }
       
       const newTurnNumber = (battleState.turn_number || 1) + 1;
@@ -548,22 +546,15 @@ Deno.serve(async (req) => {
 
     let counterAttackDamage = 0;
     if (attackResult.isCounterAttack) {
-      const counterRoll = rollD6();
+      // Fixed counterattack: 50% of defender's power minus attacker's defense
       const targetTotalPower = targetPair.totalPower || 
         (targetPair.hero?.power || 0) + (targetPair.dragon?.power || 0);
       const attackerTotalDefense = attackerPair.currentDefense || 0;
+      const fixedCounterDamage = Math.max(1, Math.floor(targetTotalPower * 0.5) - attackerTotalDefense);
       
-      const counterResult = calculateDamageByRoll(
-        counterRoll,
-        targetTotalPower,
-        attackerTotalDefense
-      );
-      
-      if (counterResult.damage > 0) {
-        const updatedAttackerPair = applyDamageToPair(attackerPair, counterResult.damage);
-        updatedPlayerPairs[attacker_pair_index] = updatedAttackerPair;
-        counterAttackDamage = counterResult.damage;
-      }
+      const updatedAttackerPair = applyDamageToPair(attackerPair, fixedCounterDamage);
+      updatedPlayerPairs[attacker_pair_index] = updatedAttackerPair;
+      counterAttackDamage = fixedCounterDamage;
     }
 
     const newTurnNumber = (battleState.turn_number || 1) + 1;
@@ -781,17 +772,15 @@ Deno.serve(async (req) => {
 
         let botCounterDamage = 0;
         if (botResult.isCounterAttack) {
-          const counterRoll = rollD6();
+          // Fixed counterattack: 50% of defender's power minus attacker's defense
           const targetPower = botTargetPair.totalPower || 
             (botTargetPair.hero?.power || 0) + (botTargetPair.dragon?.power || 0);
           const botDefense = botAttackerPair.currentDefense || 0;
+          const fixedCounterDamage = Math.max(1, Math.floor(targetPower * 0.5) - botDefense);
           
-          const counterResult = calculateDamageByRoll(counterRoll, targetPower, botDefense);
-          if (counterResult.damage > 0) {
-            const updatedBotPair = applyDamageToPair(botAttackerPair, counterResult.damage);
-            updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
-            botCounterDamage = counterResult.damage;
-          }
+          const updatedBotPair = applyDamageToPair(botAttackerPair, fixedCounterDamage);
+          updatedBotPairs[aliveBotPairIndex] = updatedBotPair;
+          botCounterDamage = fixedCounterDamage;
         }
 
         const botBattleState = {
