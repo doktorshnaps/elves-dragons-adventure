@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, Trophy } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { usePvP, PvPPair } from '@/hooks/usePvP';
 import { useWalletContext } from '@/contexts/WalletConnectContext';
 import { useToast } from '@/hooks/use-toast';
