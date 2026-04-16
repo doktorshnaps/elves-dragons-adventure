@@ -1,30 +1,37 @@
 
+## Добавить выбор количества при покупке в магазине (до 50)
 
-## Fix: Shop owned item count showing wrong values
+### Текущее состояние
+- В `/shop` покупка идёт по 1 штуке за клик (кнопка "Купить").
+- Уже существует `CardPackQuantityModal` — модалка выбора количества для колод карт.
+- Edge function `create-shop-session` уже принимает `quantity` (1–100), а в магазине используется `shop_inventory.available_quantity` для проверки наличия.
 
-### Root Cause
+### Что меняем
 
-Two bugs in `src/components/Shop.tsx` line 268:
+1. **Создать универсальную модалку количества** `ShopQuantityModal.tsx` (на базе `CardPackQuantityModal`):
+   - Показывает: название товара, цена за 1 шт, итоговая цена, баланс игрока, доступно в магазине.
+   - Поле ввода: 1–50 (или меньше, если в магазине/балансе хватает на меньшее).
+   - Быстрые кнопки: 1 / 5 / 10 / 25 / Макс.
+   - Кнопка "Купить N за X ELL" — disabled, если не хватает баланса или товара в магазине.
+   - Лимит: `Math.min(50, available_quantity, floor(balance / price))`.
 
-1. **Card packs show `totalCardsOwned` (1287)** — this is `cardInstances.length`, i.e. ALL cards (heroes + dragons + workers). Should show count of unopened card packs from `item_instances` with `template_id` matching the card pack template.
+2. **Изменить `src/components/Shop.tsx`**:
+   - При клике на "Купить" для покупаемых предметов (колоды, рабочие, зелья и т.д.) — открывать `ShopQuantityModal` вместо мгновенной покупки.
+   - После подтверждения вызывать существующий поток покупки с выбранным `quantity`.
+   - Передавать `quantity` в `create-shop-session` (это уже поддерживается).
+   - Передавать `quantity` в RPC/edge-функцию подтверждения покупки.
 
-2. **Workers show 0** — code looks in `ownedCountByTemplateId` which counts `item_instances` by `template_id`. But workers are stored in `card_instances` with `card_type: 'workers'`, not in `item_instances`. So the count is always 0.
+3. **Проверить серверную сторону**:
+   - `create-shop-session` уже валидирует `quantity` (1–100) и проверяет баланс/наличие → менять не нужно.
+   - Проверить, что функция подтверждения покупки (`confirm-shop-purchase` или аналог) корректно обрабатывает `quantity > 1` (списывает `price * quantity`, выдаёт N предметов). Если нет — починить.
 
-### Fix (single file: `src/components/Shop.tsx`)
+4. **Удалить дублирование**: старый `CardPackQuantityModal` заменить на `ShopQuantityModal` (или оставить как тонкую обёртку), чтобы логика покупки была единой для всех типов товаров.
 
-1. **Remove the special `cardPack` branch** — card packs are items in `item_instances`, so `ownedCountByTemplateId[displayItem.id]` already works for them (template_id=1 for card_pack). No special case needed.
+### Файлы
+- **Новый**: `src/components/game/dialogs/ShopQuantityModal.tsx`
+- **Изменить**: `src/components/Shop.tsx` — открытие модалки + передача quantity
+- **Проверить/изменить**: edge function подтверждения покупки (если не поддерживает `quantity > 1`)
 
-2. **Add worker count from `cardInstances`** — compute `workerCountByTemplateId` from the cached `cardInstances` data:
-   - Filter `card_type === 'workers'`
-   - Extract the template number from `card_template_id` (format: `worker_2_timestamp_random_0` → template id `2`)
-   - Count by extracted template id
-
-3. **Update display logic** — for worker-type items, use `workerCountByTemplateId[displayItem.id]`; for everything else use `ownedCountByTemplateId[displayItem.id]`.
-
-### Changes
-
-**`src/components/Shop.tsx`**:
-- Add `workerCountByTemplateId` useMemo that parses `cardInstances` where `card_type === 'workers'`
-- Remove `totalCardsOwned` variable
-- Change line 268 display: use a helper that picks the right count source based on item type (`worker` → workerCount, everything else → itemInstanceCount)
-
+### Ограничения
+- Жёсткий максимум: **50 шт за одну покупку** (по запросу).
+- Реальный лимит динамический: min(50, наличие в магазине, что игрок может позволить по балансу).
