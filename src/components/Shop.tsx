@@ -351,7 +351,7 @@ return (
                     variant="menu"
                     className="w-full disabled:opacity-50"
                     style={{ boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)' }}
-                    onClick={() => handleBuyItem(displayItem)}
+                    onClick={() => openQuantityModal(displayItem)}
                     disabled={!canBuy || purchasing}
                   >
                     {!available ? t(language, 'shop.soldOutButton') : 
@@ -364,6 +364,18 @@ return (
           })}
         </div>
       </div>
+
+      {quantityModalItem && (
+        <ShopQuantityModal
+          isOpen={true}
+          onClose={() => setQuantityModalItem(null)}
+          onConfirm={(qty) => handleBuyItem(quantityModalItem, qty)}
+          itemName={quantityModalItem.name}
+          pricePerUnit={quantityModalItem.price}
+          availableInShop={quantityModalItem.availableInShop}
+          playerBalance={displayBalance}
+        />
+      )}
     </div>
   );
 };
