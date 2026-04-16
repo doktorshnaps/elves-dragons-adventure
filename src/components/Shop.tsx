@@ -12,6 +12,7 @@ import { useState, useMemo } from "react";
 import { PurchaseEffect } from "./shop/PurchaseEffect";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidationPresets } from "@/utils/selectiveInvalidation";
+import { ShopQuantityModal } from "./game/dialogs/ShopQuantityModal";
 
 interface ShopProps {
   onClose: () => void;
@@ -37,6 +38,14 @@ export const Shop = ({ onClose }: ShopProps) => {
   const [showEffect, setShowEffect] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [lastPurchaseTime, setLastPurchaseTime] = useState(0);
+  const [quantityModalItem, setQuantityModalItem] = useState<{
+    id: number;
+    name: string;
+    price: number;
+    type?: string;
+    image?: string;
+    availableInShop: number;
+  } | null>(null);
 
   // Extract data from single shop data response
   const displayBalance = shopData?.user_balance ?? 0;
