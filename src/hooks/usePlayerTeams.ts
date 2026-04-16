@@ -58,6 +58,15 @@ export const usePlayerTeams = () => {
     loadTeams();
   }, [loadTeams]);
 
+  // Listen for external triggers to reload teams (e.g. after sending card to medical/forge bay)
+  useEffect(() => {
+    const handler = () => {
+      loadTeams();
+    };
+    window.addEventListener('player_teams_updated', handler);
+    return () => window.removeEventListener('player_teams_updated', handler);
+  }, [loadTeams]);
+
   // Get team for specific type/tier
   const getTeam = useCallback((teamType: TeamType, tier: number | null = null): TeamPair[] => {
     const team = teams.find(t => 

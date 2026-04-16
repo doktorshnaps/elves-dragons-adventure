@@ -229,6 +229,9 @@ export const useForgeBay = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.forgeBay(accountId) });
       queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       queryClient.invalidateQueries({ queryKey: ['gameData'] });
+      // ✅ Удаление из player_teams выполняется DB-триггером trg_forge_bay_remove_from_teams.
+      // Триггерим перезагрузку UI команд.
+      window.dispatchEvent(new CustomEvent('player_teams_updated'));
       return entryId;
     } catch (error: any) {
       console.error('⚒️ Error placing card in forge bay:', error);
