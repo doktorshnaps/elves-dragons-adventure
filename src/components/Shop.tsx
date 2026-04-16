@@ -87,25 +87,6 @@ export const Shop = ({ onClose }: ShopProps) => {
     return <div className="flex justify-center items-center h-64">{t(language, 'shop.loading')}</div>;
   }
 
-  const handleBuyItem = async (item: { id: number; name: string; price: number; type?: string; image?: string }) => {
-    if (!accountId) {
-      toast({
-        title: t(language, 'shop.error'),
-        description: t(language, 'shop.connectWallet'),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isItemAvailable(item.id)) {
-      toast({
-        title: t(language, 'shop.itemSoldOut'),
-        description: t(language, 'shop.itemSoldOutDescription'),
-        variant: "destructive",
-      });
-      return;
-    }
-
   const handleBuyItem = async (
     item: { id: number; name: string; price: number; type?: string; image?: string },
     quantity: number = 1
