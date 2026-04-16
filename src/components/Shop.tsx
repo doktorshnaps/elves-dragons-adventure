@@ -106,7 +106,30 @@ export const Shop = ({ onClose }: ShopProps) => {
       return;
     }
 
-    if (displayBalance < item.price) {
+  const handleBuyItem = async (
+    item: { id: number; name: string; price: number; type?: string; image?: string },
+    quantity: number = 1
+  ) => {
+    if (!accountId) {
+      toast({
+        title: t(language, 'shop.error'),
+        description: t(language, 'shop.connectWallet'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isItemAvailable(item.id)) {
+      toast({
+        title: t(language, 'shop.itemSoldOut'),
+        description: t(language, 'shop.itemSoldOutDescription'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const totalCost = item.price * quantity;
+    if (displayBalance < totalCost) {
       toast({
         title: t(language, 'shop.insufficientFunds'),
         description: t(language, 'shop.insufficientFundsDescription'),
@@ -133,12 +156,12 @@ export const Shop = ({ onClose }: ShopProps) => {
       setPurchasing(true);
       
       // Purchase item via edge function
-      const purchaseResult = await purchaseItem(item.id, accountId, 1);
+      const purchaseResult = await purchaseItem(item.id, accountId, quantity);
       
-      console.log('✅ [Shop] Purchase complete, using optimistic update...');
+      console.log(`✅ [Shop] Purchase complete (qty=${quantity}), using optimistic update...`);
 
       // ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ: обновляем кеш напрямую без refetch
-      const newBalance = displayBalance - item.price;
+      const newBalance = displayBalance - totalCost;
       
       // 1. Обновляем shopDataComplete
       queryClient.setQueryData(['shopDataComplete', accountId], (oldData: any) => {
@@ -148,7 +171,7 @@ export const Shop = ({ onClose }: ShopProps) => {
           user_balance: newBalance,
           shop_inventory: oldData.shop_inventory.map((inv: any) =>
             inv.item_id === item.id
-              ? { ...inv, available_quantity: inv.available_quantity - 1 }
+              ? { ...inv, available_quantity: Math.max(0, inv.available_quantity - quantity) }
               : inv
           )
         };
@@ -157,19 +180,18 @@ export const Shop = ({ onClose }: ShopProps) => {
       // 2. Обновляем gameData для синхронизации с меню и инвентарем
       queryClient.setQueryData(['gameData', accountId], (oldData: any) => {
         if (!oldData) return oldData;
-        console.log('🔄 [Shop] Updating gameData balance:', { old: oldData.balance, new: newBalance });
         return {
           ...oldData,
           balance: newBalance
         };
       });
 
-      // Добавляем новый предмет в кеш itemInstances (включая колоды карт)
+      // Добавляем N новых предметов в кеш itemInstances (включая колоды карт)
       const template = shopData?.item_templates?.find(t => t.id === item.id);
-      queryClient.setQueryData(['itemInstances', accountId], (oldItems: any[] = []) => [
-        ...oldItems,
-        {
-          id: `temp-${Date.now()}`, // Временный ID до синхронизации
+      queryClient.setQueryData(['itemInstances', accountId], (oldItems: any[] = []) => {
+        const stamp = Date.now();
+        const additions = Array.from({ length: quantity }, (_, i) => ({
+          id: `temp-${stamp}-${i}`,
           wallet_address: accountId,
           template_id: item.id,
           item_id: template?.item_id,
@@ -177,8 +199,9 @@ export const Shop = ({ onClose }: ShopProps) => {
           type: template?.type,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }
-      ]);
+        }));
+        return [...oldItems, ...additions];
+      });
 
       // Селективная инвалидация вместо полной
       await invalidationPresets.afterShopPurchase(accountId);
@@ -188,7 +211,7 @@ export const Shop = ({ onClose }: ShopProps) => {
       setShowEffect(true);
       toast({
         title: item.type === 'cardPack' ? t(language, 'shop.cardPackBought') : t(language, 'shop.purchaseSuccess'),
-        description: item.type === 'cardPack' ? t(language, 'shop.cardPackDescription') : `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)}`,
+        description: `${t(language, 'shop.boughtItem')} ${translateShopItemName(language, item.name)} × ${quantity}`,
       });
 
     } catch (error) {
@@ -209,6 +232,19 @@ export const Shop = ({ onClose }: ShopProps) => {
     } finally {
       setPurchasing(false);
     }
+  };
+
+  const openQuantityModal = (item: {
+    id: number;
+    name: string;
+    price: number;
+    type?: string;
+    image?: string;
+  }) => {
+    setQuantityModalItem({
+      ...item,
+      availableInShop: getItemQuantity(item.id),
+    });
   };
 
 return (
