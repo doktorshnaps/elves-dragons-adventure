@@ -213,7 +213,9 @@ export const useMedicalBay = () => {
 
       if (error) throw error;
 
-      // Удаляем карту из команды
+      // ✅ Удаление карты из всех команд (player_teams: dungeon + pvp_*) теперь
+      // выполняется атомарно DB-триггером trg_medical_bay_remove_from_teams.
+      // Чистим только legacy gameData.selectedTeam как safety net.
       if (templateId && gameData.selectedTeam) {
         const updatedTeam = (gameData.selectedTeam as any[])
           .map((pair: any) => {
@@ -238,6 +240,8 @@ export const useMedicalBay = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
       queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
       queryClient.invalidateQueries({ queryKey: ['gameData'] });
+      // Триггерим перезагрузку player_teams (usePlayerTeams listener)
+      window.dispatchEvent(new CustomEvent('player_teams_updated'));
       return data;
     } catch (error: any) {
       console.error('Error placing card in medical bay:', error);
