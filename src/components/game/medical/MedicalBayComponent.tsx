@@ -128,18 +128,20 @@ export const MedicalBayComponent = () => {
     });
     
     // Фильтруем: здоровье > 0 И здоровье < max (раненые, но не мёртвые)
+    // ВАЖНО: orphan-карты (is_in_medical_bay=true, но БЕЗ активной записи в medical_bay)
+    // должны быть видимы, иначе они исчезают из UI навсегда.
     const injuredCards = Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
         const currentHealth = instance?.current_health ?? 0;
         const maxHealth = instance?.max_health ?? 0;
-        const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
         const hasRealInstance = Boolean(instanceId);
-        const isInjured = currentHealth > 0 && currentHealth < maxHealth; // > 0 означает НЕ мёртвая
-        const notInMedicalBay = !isInMedicalBay && instanceId && !cardsInMedicalBay.includes(instanceId);
+        const isInjured = currentHealth > 0 && currentHealth < maxHealth;
+        // Карта считается реально находящейся в медпункте ТОЛЬКО если есть активная запись
+        const hasActiveMedicalEntry = instanceId && cardsInMedicalBay.includes(instanceId);
         
-        return hasRealInstance && isInjured && notInMedicalBay;
+        return hasRealInstance && isInjured && !hasActiveMedicalEntry;
       })
       .map(({ card, instance }) => ({
         id: instance!.id,
@@ -195,17 +197,20 @@ export const MedicalBayComponent = () => {
     });
     
     // Фильтруем: здоровье = 0 (мёртвые)
+    // ВАЖНО: orphan-карты (is_in_medical_bay=true, но БЕЗ активной записи medical_bay)
+    // должны попадать сюда, иначе мёртвые драконы навсегда исчезают из списка воскрешения.
     const deadCards = Array.from(uniqueCardsMap.values())
       .filter(({ card, instance }) => {
         const currentHealth = instance?.current_health ?? 0;
-        const isInMedicalBay = instance?.is_in_medical_bay || (card as any).isInMedicalBay;
         const instanceId = instance?.id;
         
         const hasRealInstance = Boolean(instanceId);
         const isDead = currentHealth === 0;
-        const notInMedicalBay = !isInMedicalBay && instanceId && !cardsInMedicalBay.includes(instanceId);
+        // Активный процесс лечения/воскрешения определяем ТОЛЬКО по записи в medical_bay,
+        // флаг is_in_medical_bay может быть рассинхронизирован.
+        const hasActiveMedicalEntry = instanceId && cardsInMedicalBay.includes(instanceId);
         
-        return hasRealInstance && isDead && notInMedicalBay;
+        return hasRealInstance && isDead && !hasActiveMedicalEntry;
       })
       .map(({ card, instance }) => ({
         id: instance!.id,
