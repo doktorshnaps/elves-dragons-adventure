@@ -31,6 +31,8 @@ export interface CardInstance {
   nft_token_id?: string;
 }
 
+const DEV = import.meta.env.DEV;
+
 export const useCardInstances = () => {
   const { accountId, selector, isLoading: walletLoading } = useWalletContext();
   const isConnected = !!accountId;
@@ -38,10 +40,10 @@ export const useCardInstances = () => {
   const queryClient = useQueryClient();
 
   // Загрузка всех экземпляров карт пользователя через React Query
-  const { 
-    data: cardInstances = [], 
+  const {
+    data: cardInstances = [],
     isLoading: loading,
-    refetch: loadCardInstances 
+    refetch: loadCardInstances
   } = useQuery({
     queryKey: ['cardInstances', accountId],
     queryFn: async () => {
@@ -49,12 +51,12 @@ export const useCardInstances = () => {
         return [];
       }
 
-      console.log('🃏 [useCardInstances] Fetching from DB for:', accountId);
+      if (DEV) console.log('🃏 [useCardInstances] Fetching for:', accountId);
       const { data, error } = await supabase
         .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) {
-        console.error('❌ Error loading card instances:', error);
+        if (DEV) console.error('❌ [useCardInstances]', error?.message || 'load failed');
         toast({
           title: 'Ошибка загрузки карт',
           description: 'Не удалось загрузить экземпляры карт',
@@ -63,13 +65,13 @@ export const useCardInstances = () => {
         throw error;
       }
 
-      console.log('✅ [useCardInstances] Loaded', data?.length || 0, 'card instances');
+      if (DEV) console.log('✅ [useCardInstances] Loaded', data?.length || 0);
       return (data || []) as unknown as CardInstance[];
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
-    staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 5 мин)
-    gcTime: 60 * 60 * 1000, // 60 минут (было 10 мин)
-    refetchOnMount: true, // Перезагружать при монтировании если данные stale (после invalidation)
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
