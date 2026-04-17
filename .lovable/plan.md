@@ -1,68 +1,46 @@
 
 
-## Карты пропадают после воскрешения — диагностика и фикс
+## Ошибка загрузки изображений клана: "new row violates row-level security policy"
 
-### Что нужно понять
-Игрок воскрешает карту (revive в медпункте/морге), после чего карта исчезает совсем — её нет ни в команде, ни в списке карт, ни в медпункте.
+### Что происходит
+При загрузке эмблемы/фона/центральной панели клана toast показывает: **"new row violates row-level security policy"**. Ошибка приходит от Supabase Storage (бакет `clan-assets`) — RLS на `storage.objects` отклоняет INSERT.
 
-### Гипотезы
+### Причина
+В `ClanCustomization.tsx` загрузка идёт напрямую через `supabase.storage.from('clan-assets').upload(...)`. Это требует, чтобы у пользователя:
+1. Была активная Supabase auth-сессия (`auth.uid()` не NULL).
+2. RLS-политика на `storage.objects` для бакета `clan-assets` разрешала INSERT для роли клан-лидера.
 
-**1. revive RPC случайно удаляет card_instance вместо обновления currentHealth.**
-Если в `revive_card` или `revive_dead_card` вместо `UPDATE card_instances SET current_health = max_health WHERE id = ...` стоит `DELETE FROM card_instances`, карта пропадёт безвозвратно.
+Но в проекте используется **NEAR-кошелёк** для аутентификации, а не email/password Supabase Auth. По memory `near-wallet-auth-rls-strategy-v3` критичные операции идут через Edge Functions с `SECURITY DEFINER` или service_role, потому что `auth.uid()` не отражает реального игрока. Поэтому direct upload в storage от анонимной сессии падает на RLS.
 
-**2. Триггер sync_card_medical_bay_flag сносит карту.**
-По memory `medical-bay-orphan-cards-fix` есть триггер, который при несоответствии флага `is_in_medical_bay` и записи в `medical_bay` чинит состояние. Если revive удаляет запись из `medical_bay`, но не сбрасывает флаг — триггер может оставить карту в неконсистентном состоянии (orphan), и UI её отфильтрует.
+Дополнительно: даже если сессия есть, RLS-политика бакета `clan-assets` скорее всего проверяет `auth.uid() = clans.leader_wallet`, что работает только с email-юзерами, а не с NEAR-кошельками.
 
-**3. Frontend оптимистично удаляет карту из state и не возвращает.**
-В `useMedicalBay.reviveCard` или аналоге может быть `setCards(prev => prev.filter(c => c.id !== cardId))` без последующего refetch — карта пропадает из UI, в БД остаётся живой, но не видна.
+### План фикса
 
-**4. card_instance_id vs card_template_id путаница.**
-По memory `batch-card-updates-card-instance-id-pattern` все апдейты должны идти через `card_instance_id`. Если revive ищет по `card_template_id`, может удалить/обновить не ту карту (или ничего не сделать, оставив игрока в подвисшем состоянии).
+**1. Перенести загрузку через Edge Function `upload-clan-asset`** (по аналогии с `upload-item-image` из memory `image-upload-authorization-workaround`):
+- Клиент конвертирует WEBP в base64 и шлёт в функцию вместе с `wallet_address`, `clan_id`, `asset_type` (`emblem` | `background` | `header_background`).
+- Функция:
+  - Проверяет, что `wallet_address` — лидер/заместитель клана через RPC (например, `is_clan_leader_or_deputy`).
+  - Использует `service_role` для обхода RLS storage и заливает файл `clan-assets/{clan_id}/{asset_type}.webp` с `upsert: true`.
+  - Возвращает публичный URL.
+- Клиент после успеха вызывает существующий RPC `update_clan_customization` (он уже работает и сохраняет URL в БД).
 
-**5. Карта удаляется из `player_teams` при отправке в морг и не возвращается после revive — но это ожидаемо. Проверить, что после revive карта появляется в общем пуле и доступна для добавления в команду.**
+**2. Лимиты валидации** (как сейчас): WEBP only, ≤2 МБ. Дублируем проверку на сервере на случай обхода клиента.
 
-**6. `is_dead` или `current_health = 0` остаётся после revive.**
-Если revive обновил `current_health`, но не сбросил `is_dead`/флаг "в морге" — UI фильтрует мёртвых из всех списков.
+**3. Не трогаем RLS бакета** — оставляем закрытым, всё пишется через service_role в Edge Function. Чтение публичное (бакет уже public для отображения).
 
-### План расследования (read-only)
+### Файлы под изменение
+- **Создать** `supabase/functions/upload-clan-asset/index.ts` — Edge Function (validate auth → check leadership via RPC → upload via service_role).
+- **Создать** `supabase/config.toml` запись для функции (verify_jwt = false, авторизация через wallet_address как в `upload-item-image`).
+- **Изменить** `src/components/game/clan/ClanCustomization.tsx` — заменить direct `storage.upload` на `supabase.functions.invoke('upload-clan-asset', { body: { ... } })`. Добавить хелпер `fileToBase64`.
+- **Migration**: добавить RPC `is_clan_leader_or_deputy(p_wallet text, p_clan_id uuid) returns boolean` (SECURITY DEFINER), если такой ещё нет — проверю в default mode.
 
-1. Прочитать revive-функции:
-   - Поиск `revive` в `supabase/functions/` и `src/hooks/`.
-   - Прочитать SQL функцию `revive_card` / `revive_dead_card` через `supabase--read_query`: `SELECT prosrc FROM pg_proc WHERE proname ILIKE '%revive%'`.
-   - Прочитать триггеры на `card_instances` и `medical_bay`.
-
-2. Прочитать клиентскую логику:
-   - `src/hooks/useMedicalBay.ts` (revive handler).
-   - `src/hooks/useCardInstances.ts` (фильтры мёртвых карт).
-   - Любые компоненты "Морг"/"Кладбище"/"Воскресить".
-
-3. Проверить данные в БД:
-   - `SELECT id, name, current_health, max_health, is_in_medical_bay, is_dead FROM card_instances WHERE wallet_address = '...' AND (current_health = 0 OR is_dead = true)` — посмотреть, есть ли orphan-карты.
-   - Проверить `medical_bay` на orphan-записи без соответствующих `card_instances`.
-
-4. Проверить логи Edge Functions (если revive — Edge Function), особенно поиск ошибок и DELETE-операций.
-
-### План фикса (точные изменения формулируются после диагностики)
-
-Скорее всего понадобится один из вариантов:
-
-**Вариант A — фикс RPC**: revive должен делать только `UPDATE card_instances SET current_health = max_health, current_defense = max_defense, is_in_medical_bay = false` + `DELETE FROM medical_bay WHERE card_instance_id = ...`. Никаких `DELETE FROM card_instances`.
-
-**Вариант B — фикс клиента**: после revive вызвать `queryClient.invalidateQueries(['cardInstances'])` + НЕ удалять карту локально. Карта вернётся в общий пул через refetch.
-
-**Вариант C — фикс orphan-state**: если карта в неконсистентном состоянии (флаг есть, записи нет), запустить one-time SQL чистку + триггер уже есть по memory.
-
-**Вариант D — восстановление потерянных карт игрока**: если данные ушли в DELETE, попытаться восстановить из бэкапа/логов (если возможно). Если нет — компенсация админ-RPC (выдать карты заново).
-
-### Что сделаю в default mode после одобрения
-1. Прочитаю revive-логику (RPC + клиент + триггеры).
-2. Запрошу данные игрока в БД, найду пропавшие карты.
-3. Если карта в orphan-state — починю флаги, она вернётся в UI.
-4. Если RPC удаляет — перепишу на UPDATE.
-5. Если клиент удаляет — добавлю invalidateQueries вместо local filter.
-6. Добавлю memory-rule о правильном поведении revive.
-7. По возможности восстановлю карты пострадавшего игрока (нужен его wallet — спрошу при необходимости).
+### Memory update
+Дополнить `mem://features/clan-system-customization` правилом: загрузка ассетов клана идёт ТОЛЬКО через Edge Function `upload-clan-asset`, никаких direct storage.upload из клиента.
 
 ### Что НЕ делаю
-Не трогаю combat/dungeon/PvP, не меняю общую архитектуру card_instances, не лезу в RLS.
+Не меняю RLS storage напрямую, не переписываю систему кланов, не трогаю NEAR-аутентификацию.
+
+### Проверка
+- Зайти лидером клана на /clan → загрузить эмблему/фон/панель → toast «обновлено», изображение появляется.
+- Не-лидер пробует тот же запрос напрямую → 403 от Edge Function.
 
