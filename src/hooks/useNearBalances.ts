@@ -102,20 +102,24 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
         if (cached[targetId].ft?.['gt-1733.meme-cooking.near']) {
           setGtBalance(cached[targetId].ft['gt-1733.meme-cooking.near']);
         }
-        console.log('💾 Loaded cached balances:', cached[targetId]);
+        if (DEV) console.log('💾 Loaded cached balances');
       }
-    } catch (e) {
-      console.warn('Failed to load cached balances:', e);
+    } catch (e: any) {
+      if (DEV) console.warn('Failed to load cached balances:', e?.message || e);
     }
 
+    let cancelled = false;
+
     const fetchBalances = async () => {
+      if (cancelled) return;
       setLoading(true);
       setError(null);
 
       try {
-        console.log('🔄 Fetching balances for account:', targetId);
+        if (DEV) console.log('🔄 Fetching balances for:', targetId);
 
         const provider = await createProviderWithFallback();
+        if (cancelled) return;
 
         // NEAR balance via RPC view_account
         try {
@@ -124,26 +128,27 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             request_type: 'view_account',
             account_id: targetId,
             finality: 'final',
-          }), 30000);
+          }), 8000);
+          if (cancelled) return;
           const totalNear = yoctoToNear(view.amount);
           formattedNear = parseFloat(totalNear).toFixed(3);
-          console.log('✅ NEAR balance:', formattedNear, '(raw yoctoNEAR:', view.amount, ')');
+          if (DEV) console.log('✅ NEAR balance:', formattedNear);
           setNearBalance(formattedNear);
           try {
             const key = 'walletBalances';
             const current = JSON.parse(localStorage.getItem(key) || '{}');
             localStorage.setItem(key, JSON.stringify({ ...current, [targetId]: { ...(current?.[targetId]||{}), near: formattedNear } }));
           } catch {}
-        } catch (err) {
-          console.warn('Error fetching NEAR balance:', err);
-          // Don't reset to 0 if we have cached value
+        } catch (err: any) {
+          if (DEV) console.warn('NEAR balance fetch failed:', err?.message || 'unknown');
           if (nearBalance === '0') setNearBalance('0');
         }
+
+        if (cancelled) return;
 
         // GT token balance (gt-1733.meme-cooking.near, decimals: 18)
         try {
           const gtContract = 'gt-1733.meme-cooking.near';
-
           const args = JSON.stringify({ account_id: targetId });
           const response: any = await withTimeout(provider.query({
             request_type: 'call_function',
@@ -151,16 +156,16 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             method_name: 'ft_balance_of',
             args_base64: btoa(args),
             finality: 'final',
-          }), 30000);
+          }), 8000);
+          if (cancelled) return;
 
-          // response.result is a Uint8Array/array of bytes → decode to string → JSON.parse
           const decoder = new TextDecoder();
           const text = decoder.decode(Uint8Array.from(response.result));
-          const parsed = JSON.parse(text); // returns the raw balance as string
+          const parsed = JSON.parse(text);
 
           const raw = typeof parsed === 'string' ? parsed : String(parsed);
           const gt = formatTokenBalance(raw, 18, 2);
-          console.log('✅ GT balance:', gt);
+          if (DEV) console.log('✅ GT balance:', gt);
           setGtBalance(gt);
 
           try {
@@ -169,26 +174,42 @@ export const useNearBalances = (accountId: string | null): NearBalances => {
             const prev = current?.[targetId] || {};
             localStorage.setItem(key, JSON.stringify({ ...current, [targetId]: { ...prev, ft: { ...(prev.ft||{}), [gtContract]: gt } } }));
           } catch {}
-        } catch (err) {
-          console.warn('Error fetching GT balance:', err);
-          // Don't reset to 0 if we have cached value
+        } catch (err: any) {
+          if (DEV) console.warn('GT balance fetch failed:', err?.message || 'unknown');
           if (gtBalance === '0') setGtBalance('0');
         }
-      } catch (err) {
-        console.error('Error fetching NEAR balances:', err);
+      } catch (err: any) {
+        if (DEV) console.error('NEAR balances error:', err?.message || 'unknown');
         setError('Ошибка загрузки балансов');
-        // Don't reset cached values on error
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchBalances();
+    // Defer the fetch to idle time so it doesn't compete with the initial
+    // render and React hydration on iOS WKWebView. Prevents the 3-5s
+    // "buttons don't respond" period after page load.
+    const ric: any = (typeof window !== 'undefined' && (window as any).requestIdleCallback) || null;
+    let idleHandle: any = null;
+    let timeoutHandle: any = null;
+    if (ric) {
+      idleHandle = ric(() => fetchBalances(), { timeout: 2000 });
+    } else {
+      timeoutHandle = setTimeout(fetchBalances, 800);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleHandle && (window as any).cancelIdleCallback) {
+        (window as any).cancelIdleCallback(idleHandle);
+      }
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    };
   }, [accountId, refreshNonce]);
 
   // Refresh balances on wallet events via GameEventsContext
   useGameEvent('walletChanged', (payload) => {
-    console.log('🔄 Wallet changed event received for NEAR balances:', payload);
+    if (DEV) console.log('🔄 Wallet changed event for NEAR balances');
     setRefreshNonce((n) => n + 1);
   }, []);
 
