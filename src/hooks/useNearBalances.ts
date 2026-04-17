@@ -39,8 +39,9 @@ const formatTokenBalance = (
   }
 };
 
-// Timeout helper for RPC calls
-const withTimeout = async <T>(promise: Promise<T>, ms = 30000): Promise<T> => {
+// Timeout helper for RPC calls. Default reduced from 30s -> 8s and probe 2s
+// to avoid blocking the iOS event loop with long pending Error promises.
+const withTimeout = async <T>(promise: Promise<T>, ms = 8000): Promise<T> => {
   return (await Promise.race([
     promise,
     new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), ms)),
@@ -54,22 +55,27 @@ const NEAR_RPC_ENDPOINTS = [
   'https://rpc.mainnet.pagoda.co'
 ];
 
-// Try multiple RPC endpoints with fallback
+const DEV = import.meta.env.DEV;
+
+// Try multiple RPC endpoints with fallback. Probe call uses a short 2s
+// timeout — synchronous Error stack serialisation on mobile Safari is heavy,
+// so we keep messages short and never log the full error object.
 const createProviderWithFallback = async () => {
   for (const url of NEAR_RPC_ENDPOINTS) {
     try {
       const provider = new JsonRpcProvider({ url });
-      // Test the provider with a quick call
-      await withTimeout(provider.query({ request_type: 'view_account', account_id: 'system', finality: 'final' }), 5000);
-      console.log(`✅ Using NEAR RPC: ${url}`);
+      await withTimeout(
+        provider.query({ request_type: 'view_account', account_id: 'system', finality: 'final' }),
+        2000,
+      );
+      if (DEV) console.log(`✅ Using NEAR RPC: ${url}`);
       return provider;
-    } catch (err) {
-      console.warn(`❌ Failed to connect to ${url}:`, err);
+    } catch (err: any) {
+      if (DEV) console.warn(`❌ NEAR RPC ${url}: ${err?.message || 'failed'}`);
       continue;
     }
   }
-  // Fallback to first endpoint if all fail
-  console.warn('⚠️ All RPC endpoints failed, using default');
+  if (DEV) console.warn('⚠️ All RPC endpoints failed, using default');
   return new JsonRpcProvider({ url: NEAR_RPC_ENDPOINTS[0] });
 };
 
