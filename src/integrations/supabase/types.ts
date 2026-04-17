@@ -4886,6 +4886,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin_wallet: { Args: { p_wallet_address?: string }; Returns: boolean }
+      is_clan_leader_or_deputy: {
+        Args: { p_clan_id: string; p_wallet: string }
+        Returns: boolean
+      }
       is_quest_admin: { Args: never; Returns: boolean }
       is_super_admin_wallet: {
         Args: { p_wallet_address: string }

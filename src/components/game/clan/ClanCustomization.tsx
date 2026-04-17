@@ -30,6 +30,18 @@ export const ClanCustomization = ({
   const bgRef = useRef<HTMLInputElement>(null);
   const headerBgRef = useRef<HTMLInputElement>(null);
 
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.includes(',') ? result.split(',')[1] : result;
+        resolve(base64);
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
   const uploadFile = async (
     file: File,
     type: AssetType
@@ -44,19 +56,28 @@ export const ClanCustomization = ({
       return null;
     }
 
-    const path = `${clanId}/${type}.${ext}`;
+    const image_base64 = await fileToBase64(file);
 
-    const { error } = await supabase.storage
-      .from('clan-assets')
-      .upload(path, file, { upsert: true, contentType: file.type });
+    const { data, error } = await supabase.functions.invoke('upload-clan-asset', {
+      body: {
+        wallet_address: accountId,
+        clan_id: clanId,
+        asset_type: type,
+        image_base64,
+        content_type: file.type || 'image/webp',
+      },
+    });
 
     if (error) {
-      console.error('Upload error:', error);
+      console.error('Upload invoke error:', error);
       toast({ title: 'Ошибка загрузки', description: error.message, variant: 'destructive' });
       return null;
     }
-
-    return `${SUPABASE_URL}/storage/v1/object/public/clan-assets/${path}?t=${Date.now()}`;
+    if (!data?.success || !data?.url) {
+      toast({ title: 'Ошибка загрузки', description: data?.error || 'Неизвестная ошибка', variant: 'destructive' });
+      return null;
+    }
+    return data.url as string;
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: AssetType) => {
