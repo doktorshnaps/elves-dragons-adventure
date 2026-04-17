@@ -331,8 +331,7 @@ export const MedicalBayComponent = () => {
     return Math.min(Math.max((elapsed / total) * 100, 0), 100);
   };
 
-  const injuredCards = getInjuredCards();
-  const deadCards = getDeadCards();
+  // injuredCards / deadCards вычисляются через useMemo выше
   const canStartHealing = getAvailableSlots() > 0;
   const playerBalance = gameState?.balance ?? 0;
   const canAffordResurrection = playerBalance >= RESURRECTION_COST;
