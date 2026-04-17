@@ -145,7 +145,9 @@
 
   /* iOS tap optimization: убирает 300ms задержку и подсветку при тапе.
      Критично для WKWebView (Safari iPhone + Telegram WebApp), где без этого
-     кнопки требуют 2-3 нажатия для срабатывания. */
+     кнопки требуют 2-3 нажатия для срабатывания.
+     -webkit-touch-callout / user-select отключают long-press меню и
+     системное выделение, которые "крадут" первый тап. */
   button,
   a,
   [role="button"],
@@ -156,6 +158,9 @@
   summary {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   html {

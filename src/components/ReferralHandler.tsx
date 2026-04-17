@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+const DEV = import.meta.env.DEV;
+
 /**
  * Global referral parameter handler
  * Captures 'ref' parameter from URL on ANY page and saves to localStorage
@@ -11,21 +13,12 @@ export const ReferralHandler = () => {
 
   useEffect(() => {
     const refParam = searchParams.get('ref');
-    const existingRef = localStorage.getItem('pendingReferrer');
-    
-    console.log('🔗 [ReferralHandler] Mounted:', {
-      refParam,
-      existingRef,
-      allParams: Object.fromEntries(searchParams.entries()),
-      href: window.location.href
-    });
-    
-    if (refParam) {
-      localStorage.setItem('pendingReferrer', refParam);
-      console.log('✅ [ReferralHandler] Saved ref to localStorage:', refParam);
-    } else {
-      console.log('⚠️ [ReferralHandler] No ref parameter found');
+    if (!refParam) {
+      if (DEV) console.log('⚠️ [ReferralHandler] No ref parameter');
+      return;
     }
+    localStorage.setItem('pendingReferrer', refParam);
+    if (DEV) console.log('✅ [ReferralHandler] Saved ref:', refParam);
   }, [searchParams]);
 
   return null;

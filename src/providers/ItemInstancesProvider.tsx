@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useRef } from 'react';
 import { useItemInstances, ItemInstance } from '@/hooks/useItemInstances';
 
 interface ItemInstancesContextType {
@@ -13,8 +13,14 @@ interface ItemInstancesContextType {
 
 const ItemInstancesContext = createContext<ItemInstancesContextType | undefined>(undefined);
 
+const DEV = import.meta.env.DEV;
+
 export const ItemInstancesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  console.log('🔄 [ItemInstancesProvider] Initializing centralized item instances provider');
+  const loggedOnce = useRef(false);
+  if (DEV && !loggedOnce.current) {
+    loggedOnce.current = true;
+    console.log('🔄 [ItemInstancesProvider] mount');
+  }
   const itemInstancesData = useItemInstances();
 
   return (
