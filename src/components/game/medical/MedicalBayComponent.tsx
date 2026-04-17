@@ -93,14 +93,14 @@ export const MedicalBayComponent = () => {
     return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Получаем раненые карты (здоровье > 0, но < max)
-  const getInjuredCards = () => {
-    console.log('🏥 Getting injured cards...');
-    
+  // Memoized: фильтрация 1000+ карт на каждом рендере убивала iOS WebView.
+  // Один раз пересчитываем при изменении cardInstances / medicalBayEntries.
+  const injuredCards = useMemo(() => {
+    if (import.meta.env.DEV) console.log('🏥 Getting injured cards...');
+
     const cardsInMedicalBay = Array.from(new Set(medicalBayEntries.map(entry => entry.card_instance_id)));
-    
     const uniqueCardsMap = new Map();
-    
+
     cardInstances.forEach(instance => {
       if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
         const instanceId = instance.id;
@@ -128,21 +128,17 @@ export const MedicalBayComponent = () => {
         }
       }
     });
-    
-    // Фильтруем: здоровье > 0 И здоровье < max (раненые, но не мёртвые)
-    // ВАЖНО: orphan-карты (is_in_medical_bay=true, но БЕЗ активной записи в medical_bay)
-    // должны быть видимы, иначе они исчезают из UI навсегда.
-    const injuredCards = Array.from(uniqueCardsMap.values())
-      .filter(({ card, instance }) => {
+
+    const result = Array.from(uniqueCardsMap.values())
+      .filter(({ instance }) => {
         const currentHealth = instance?.current_health ?? 0;
         const maxHealth = instance?.max_health ?? 0;
         const instanceId = instance?.id;
-        
+
         const hasRealInstance = Boolean(instanceId);
         const isInjured = currentHealth > 0 && currentHealth < maxHealth;
-        // Карта считается реально находящейся в медпункте ТОЛЬКО если есть активная запись
         const hasActiveMedicalEntry = instanceId && cardsInMedicalBay.includes(instanceId);
-        
+
         return hasRealInstance && isInjured && !hasActiveMedicalEntry;
       })
       .map(({ card, instance }) => ({
@@ -157,19 +153,17 @@ export const MedicalBayComponent = () => {
         card_data: card,
         wallet_address: instance.wallet_address
       }));
-    
-    console.log('🏥 Found injured cards:', injuredCards.length);
-    return injuredCards;
-  };
 
-  // Получаем мёртвые карты (здоровье = 0)
-  const getDeadCards = () => {
-    console.log('🏥 Getting dead cards...');
-    
+    if (import.meta.env.DEV) console.log('🏥 Found injured cards:', result.length);
+    return result;
+  }, [cardInstances, medicalBayEntries]);
+
+  const deadCards = useMemo(() => {
+    if (import.meta.env.DEV) console.log('🏥 Getting dead cards...');
+
     const cardsInMedicalBay = Array.from(new Set(medicalBayEntries.map(entry => entry.card_instance_id)));
-    
     const uniqueCardsMap = new Map();
-    
+
     cardInstances.forEach(instance => {
       if (instance.card_type === 'hero' || instance.card_type === 'dragon') {
         const instanceId = instance.id;
@@ -197,21 +191,16 @@ export const MedicalBayComponent = () => {
         }
       }
     });
-    
-    // Фильтруем: здоровье = 0 (мёртвые)
-    // ВАЖНО: orphan-карты (is_in_medical_bay=true, но БЕЗ активной записи medical_bay)
-    // должны попадать сюда, иначе мёртвые драконы навсегда исчезают из списка воскрешения.
-    const deadCards = Array.from(uniqueCardsMap.values())
-      .filter(({ card, instance }) => {
+
+    const result = Array.from(uniqueCardsMap.values())
+      .filter(({ instance }) => {
         const currentHealth = instance?.current_health ?? 0;
         const instanceId = instance?.id;
-        
+
         const hasRealInstance = Boolean(instanceId);
         const isDead = currentHealth === 0;
-        // Активный процесс лечения/воскрешения определяем ТОЛЬКО по записи в medical_bay,
-        // флаг is_in_medical_bay может быть рассинхронизирован.
         const hasActiveMedicalEntry = instanceId && cardsInMedicalBay.includes(instanceId);
-        
+
         return hasRealInstance && isDead && !hasActiveMedicalEntry;
       })
       .map(({ card, instance }) => ({
@@ -226,10 +215,10 @@ export const MedicalBayComponent = () => {
         card_data: card,
         wallet_address: instance.wallet_address
       }));
-    
-    console.log('🏥 Found dead cards:', deadCards.length);
-    return deadCards;
-  };
+
+    if (import.meta.env.DEV) console.log('🏥 Found dead cards:', result.length);
+    return result;
+  }, [cardInstances, medicalBayEntries]);
 
   const getAvailableSlots = () => {
     return 3 - medicalBayEntries.length;
