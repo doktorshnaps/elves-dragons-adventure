@@ -369,7 +369,7 @@ export const DeckSelection = ({
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
-            {heroes.map(hero => {
+            {heroes.slice(0, heroVisibleCount).map(hero => {
               const isSelected = isHeroSelected(hero);
               const isDead = (hero.currentHealth ?? hero.health) <= 0;
               const teamFull = selectedPairs.length >= 5;
@@ -394,6 +394,18 @@ export const DeckSelection = ({
                  </div>;
             })}
             </div>
+            {heroes.length > heroVisibleCount && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHeroVisibleCount(c => c + PAGE_SIZE)}
+                >
+                  Показать ещё ({heroes.length - heroVisibleCount})
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
