@@ -1,36 +1,67 @@
 
-## Карта не удаляется из команды при отправке на лечение
 
-### Проблема
-Игрок отправил карту (Этернал ледяной дракон) на лечение в медпункт — лечение запустилось (видно в "Лечение в процессе"), но карта осталась в команде на странице /team. Должно: при отправке на лечение/ремонт карта автоматически удаляется из всех команд.
+## Оптимизация iOS: тапы не реагируют, приложение перезагружается (браузер + Telegram WebApp)
 
-### Что нужно проверить
-1. **`useMedicalBay.placeCardInMedicalBay`** уже содержит логику удаления из команды, но:
-   - Удаляет только из `gameData.selectedTeam` (legacy), а **SSOT — `player_teams`** (memory `dungeon-team-source-of-truth-v2`, `multi-team-management-system`).
-   - Удаляет по `templateId`, а в `player_teams` команды могут хранить `card_instance_id`.
-   - Не трогает PvP-команды (8 шт.) — карта может остаться там же.
+### Подтверждено
+- Проблема и в Safari iPhone, и в Telegram WebApp на iPhone (одинаковый WKWebView под капотом — значит причина общая, фикс один).
+- В рантайме уже есть симптомы: `Failed to fetch dynamically imported module: /src/pages/Shelter.tsx` → ErrorBoundary → "Ошибка загрузки" → пользователь жмёт "Повторить" по 2-3 раза. Это и есть «не реагирует с первого раза + перезагружается».
+- `⚠️ [ProtectedRoute] Loading timeout, forcing render` — форсированный ре-рендер маскирует реальное состояние загрузки.
+- Memory pressure: `useCardInstances Loaded 1000 card instances`, сотни логов `getTemplate` в hot-path → WKWebView Jetsam kill на iPhone.
 
-2. **Forge (ремонт)** — судя по словам игрока, та же проблема. Скорее всего `useForgeBay`/RPC ремонта вообще не удаляет карту из команд.
+### Корневые причины (приоритет по влиянию)
 
-### План фикса
+**1. Lazy chunk fetch fail (главная причина «перезагрузок» и «не реагирует»)**
+Vite разбивает страницы на динамические чанки. На iOS WKWebView в Telegram сеть нестабильная, чанк не догружается → `TypeError: Failed to fetch dynamically imported module` → весь экран падает в ErrorBoundary. Игроку кажется, что «приложение перезагрузилось». Нужен авто-retry для динамических импортов + soft reload при провале.
 
-**Серверная сторона (миграция, основной фикс):**
-- Создать триггер `remove_card_from_teams_on_bay_insert` на таблицах `medical_bay` и `forge_bay`:
-  - При INSERT записи (карта попала в лечение/ремонт) автоматически удалить `card_instance_id` из всех записей `player_teams` этого игрока (типы `dungeon` + все `pvp_*`).
-  - Если карта была лидером пары героя — удалить всю пару; если питомцем — обнулить только питомца.
-- Это гарантирует консистентность вне зависимости от того, через какую RPC карта попала в bay (UI, авто-битва, админ-операция).
+**2. iOS tap delay / двойные обработчики touch+mouse**
+В `GameControls` и других местах используется `onMouseDown` + `onTouchStart` одновременно. На iOS это даёт «съеденный» первый тап + 300ms задержку. Глобально нет `touch-action: manipulation` на кнопках.
 
-**Клиентская сторона:**
-- В `useMedicalBay.placeCardInMedicalBay` (и аналогично в forge): после успешного RPC инвалидировать кэш `player_teams` / `useTeams`, чтобы UI команды на /team моментально обновился.
-- Убрать устаревшую логику чистки `gameData.selectedTeam` (или оставить как safety net), т.к. SSOT теперь `player_teams` + триггер.
+**3. Memory pressure → Jetsam kill**
+1000 card_instances + сотни console.log `getTemplate` + рендер MedicalBay/Forge без виртуализации → iOS убивает вкладку. После kill WKWebView сам перезагружает страницу.
 
-### Файлы
-- **Новая миграция**: триггеры на `medical_bay` и `forge_bay` для очистки `player_teams`.
-- **Изменить**: `src/hooks/useMedicalBay.ts` — инвалидировать кэш команд после отправки в медпункт.
-- **Изменить**: `src/hooks/useForgeBay.ts` (или аналог) — то же самое для ремонта.
-- **Memory update**: добавить правило «карта в bay автоматически вычищается из всех player_teams через триггер» в `medical-bay-forge-system-standard`.
+**4. ProtectedRoute force-render loop**
+Каждый раз при таймауте форсируется render, тяжёлые провайдеры пере-инициализируются → лишние ресурсы.
+
+### План фикса (минимальный, прицельный)
+
+**A. Retry для lazy-импортов (критично, фиксит «перезагрузки»)**
+- Файл `src/utils/lazyLoading.tsx`: обернуть `lazy(() => import(...))` в helper `lazyWithRetry`, который при ошибке делает 2-3 retry с задержкой 300/800/1500ms. После исчерпания — soft reload текущего роута, а не падение в ErrorBoundary.
+- В ErrorBoundary при ошибке вида "Failed to fetch dynamically imported module" — автоматический `location.reload()` один раз (с защитой от цикла через sessionStorage flag).
+
+**B. iOS tap fix (критично, фиксит «не реагирует с первого раза»)**
+- `src/index.css`: глобально добавить
+  ```css
+  button, [role="button"], a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  ```
+- `src/components/game/adventures/components/GameControls.tsx`: заменить пары `onMouseDown/onTouchStart` на `onPointerDown/onPointerUp` (единый Pointer Events API, работает на touch и mouse одинаково на iOS 13+).
+
+**C. Снизить memory pressure**
+- Завернуть массовые отладочные `console.log` (`getTemplate`, `useFactionElements`, `useCardInstances Loaded`) в `if (import.meta.env.DEV)`. На проде логов быть не должно.
+- В `MedicalBayComponent` мемоизировать `injuredCards`/`deadCards` через `useMemo` с правильными зависимостями (сейчас на каждом рендере фильтрует 1000 карт).
+- Проверить, не пересоздаётся ли массив `cardsInMedicalBay` на каждом рендере (если да — мемоизировать).
+
+**D. ProtectedRoute**
+- `src/components/ProtectedRoute.tsx`: убрать `forcing render` после таймаута или повысить таймаут до 8-10s. Force-render должен быть единичным, не на каждом тике.
+
+**E. Telegram WebApp специфика**
+- В `useTelegram` вызывать `tg.expand()` и `tg.ready()` в самом начале (если ещё не вызывается) — это предотвращает collapse WebView и связанные с этим re-mount'ы.
+- Добавить `tg.disableVerticalSwipes?.()` на iOS, чтобы свайпы не закрывали окно случайно (восприни мается как «приложение пропало»).
+
+### Файлы под изменение
+- `src/utils/lazyLoading.tsx` — retry helper.
+- `src/components/common/ErrorBoundary.tsx` — авто-reload на chunk-load fail.
+- `src/index.css` — глобальный touch-action.
+- `src/components/game/adventures/components/GameControls.tsx` — pointer events.
+- `src/components/ProtectedRoute.tsx` — убрать force-render loop.
+- `src/components/game/medical/MedicalBayComponent.tsx` — useMemo для фильтров.
+- `src/hooks/useTelegram.ts` — ready/expand/disableVerticalSwipes.
+- Поиск+правка hot-path `console.log` (getTemplate, useFactionElements) — обернуть в DEV.
+
+### Что НЕ делаю
+- Не переписываю архитектуру, не меняю Service Worker (он уже decommissioned), не лезу в Supabase/RLS — проблема чисто клиентская iOS.
 
 ### Проверка после фикса
-- Отправить карту в медпункт → она исчезает из dungeon-команды и из всех PvP-команд на /team.
-- То же для forge.
-- Карта остаётся в общем списке карт (видна как «лечится»).
+- Открыть в Telegram на iPhone → перейти в /shelter, /team, /medical → кнопки реагируют с первого тапа, нет белого экрана/перезагрузки.
+- Прогнать сценарий «отправить карту на лечение → вернуться в команду» без glitch'ей.
+
