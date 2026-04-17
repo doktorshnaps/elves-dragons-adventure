@@ -40,32 +40,86 @@ const DefaultErrorFallback = ({ error, retry }: { error: Error; retry: () => voi
   </div>
 );
 
+/**
+ * Wraps a dynamic import() with retry logic for transient network failures.
+ * Critical for iOS WKWebView (Safari + Telegram WebApp) where chunks frequently
+ * fail to fetch on slow/flaky connections, causing the entire screen to crash.
+ *
+ * Strategy: 3 retries with backoff (300ms, 800ms, 1500ms). After exhaustion,
+ * triggers a one-time soft reload guarded by sessionStorage to avoid loops.
+ */
+function importWithRetry<T>(
+  importFunc: () => Promise<T>,
+  retriesLeft = 3,
+  delays = [300, 800, 1500]
+): Promise<T> {
+  return importFunc().catch((error: any) => {
+    const message = String(error?.message || error || '');
+    const isChunkError =
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('error loading dynamically imported module') ||
+      message.includes('ChunkLoadError');
+
+    if (!isChunkError || retriesLeft <= 0) {
+      // Final fallback: do a soft reload once per session to recover from
+      // stale build hashes / killed WKWebView state.
+      if (isChunkError && typeof window !== 'undefined') {
+        const flag = 'lazyChunkReloadAttempted';
+        try {
+          if (!sessionStorage.getItem(flag)) {
+            sessionStorage.setItem(flag, '1');
+            console.warn('🔄 [lazyLoading] Chunk load failed, performing soft reload');
+            window.location.reload();
+            // Return a never-resolving promise so the error doesn't propagate
+            return new Promise<T>(() => {});
+          }
+        } catch {
+          // sessionStorage may be unavailable (privacy mode) — just rethrow
+        }
+      }
+      throw error;
+    }
+
+    const delay = delays[delays.length - retriesLeft] ?? 1500;
+    console.warn(
+      `⚠️ [lazyLoading] Chunk load failed, retrying in ${delay}ms (${retriesLeft} left):`,
+      message
+    );
+    return new Promise<T>((resolve, reject) => {
+      setTimeout(() => {
+        importWithRetry(importFunc, retriesLeft - 1, delays).then(resolve, reject);
+      }, delay);
+    });
+  });
+}
+
 // Основная функция для создания lazy компонентов
 export function createLazyComponent<T = {}>(
   importFunc: () => Promise<{ default: ComponentType<T> }>,
   options: LazyLoadOptions = {}
 ): LazyComponent<T> {
   const {
-    fallback = <DefaultLoadingFallback />,
-    errorFallback: ErrorFallback = DefaultErrorFallback,
     preload = false,
-    delay = 0
+    delay = 0,
   } = options;
+
+  const wrappedImport = () => importWithRetry(importFunc);
 
   // Создаем lazy компонент с задержкой если нужно
   const LazyComp = lazy(() => {
     if (delay > 0) {
-      return new Promise(resolve => {
+      return new Promise<{ default: ComponentType<T> }>((resolve) => {
         setTimeout(() => {
-          importFunc().then(resolve);
+          wrappedImport().then(resolve);
         }, delay);
       });
     }
-    return importFunc();
+    return wrappedImport();
   }) as LazyComponent<T>;
 
-  // Добавляем метод preload
-  LazyComp.preload = importFunc;
+  // Добавляем метод preload (тоже с retry)
+  LazyComp.preload = wrappedImport;
 
   // Если preload = true, начинаем загрузку сразу
   if (preload) {
@@ -89,6 +143,10 @@ export function withLazyLoading<T = {}>(
     const [retryKey, setRetryKey] = React.useState(0);
 
     const retry = React.useCallback(() => {
+      // Clear chunk-reload guard so the next load can attempt a fresh fetch
+      try {
+        sessionStorage.removeItem('lazyChunkReloadAttempted');
+      } catch {}
       setRetryKey(prev => prev + 1);
     }, []);
 

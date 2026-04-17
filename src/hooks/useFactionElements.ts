@@ -23,11 +23,13 @@ export const useFactionElements = () => {
       if (fe.element_type) byElement.set(fe.element_type, fe);
     });
 
-    console.log('✅ [useFactionElements] Elements loaded:', {
-      byFactionSize: byFaction.size,
-      byElementSize: byElement.size,
-      totalCount: all.length
-    });
+    if (import.meta.env.DEV) {
+      console.log('✅ [useFactionElements] Elements loaded:', {
+        byFactionSize: byFaction.size,
+        byElementSize: byElement.size,
+        totalCount: all.length
+      });
+    }
 
     return { byFaction, byElement, all };
   }, [staticData?.faction_elements]);

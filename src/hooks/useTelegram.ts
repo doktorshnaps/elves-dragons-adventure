@@ -15,6 +15,11 @@ interface TelegramWebApp {
   expand: () => void;
   openTelegramLink: (url: string) => void;
   openLink: (url: string, options?: { try_instant_view: boolean }) => void;
+  disableVerticalSwipes?: () => void;
+  enableClosingConfirmation?: () => void;
+  isExpanded?: boolean;
+  platform?: string;
+  version?: string;
 }
 
 declare global {
@@ -38,6 +43,21 @@ export default function useTelegram() {
         !!tg.initDataUnsafe.user &&
         typeof tg.initDataUnsafe.user.id !== "undefined";
       setTgWebApp(tg);
+
+      if (isRealTelegram) {
+        try {
+          // Critical for iOS: signal ready and expand to full height ASAP
+          // to prevent the WebView from collapsing/remounting.
+          tg.ready?.();
+          if (!tg.isExpanded) tg.expand?.();
+
+          // On iOS, vertical swipes can accidentally close the WebApp
+          // (perceived by users as "the app crashed and reloaded").
+          tg.disableVerticalSwipes?.();
+        } catch (e) {
+          console.warn('⚠️ [useTelegram] init call failed:', e);
+        }
+      }
     }
     setIsTelegram(isRealTelegram);
   }, []);

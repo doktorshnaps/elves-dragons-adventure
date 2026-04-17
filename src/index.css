@@ -142,6 +142,26 @@
     max-width: 100%;
     height: auto;
   }
+
+  /* iOS tap optimization: убирает 300ms задержку и подсветку при тапе.
+     Критично для WKWebView (Safari iPhone + Telegram WebApp), где без этого
+     кнопки требуют 2-3 нажатия для срабатывания. */
+  button,
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  label[for],
+  summary {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 }
 
 /* Background utility classes for game pages */
