@@ -134,13 +134,15 @@
     box-sizing: border-box;
   }
 
-  /* Предотвращение выхода изображений за границы */
+  /* Предотвращение выхода изображений за границы.
+     ВАЖНО: НЕ задаём height: auto глобально — это ломает <img class="h-full">
+     внутри карточек (картинки исчезают, т.к. height:auto перебивает
+     родительские размеры из-за HTML width/height attributes). */
   img,
   video,
   canvas,
   svg {
     max-width: 100%;
-    height: auto;
   }
 
   /* iOS tap optimization: убирает 300ms задержку и подсветку при тапе.
