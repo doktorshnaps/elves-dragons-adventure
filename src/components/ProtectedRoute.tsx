@@ -34,19 +34,20 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     });
   }, [isConnected, isConnecting, lsConnected, isAdmin, adminLoading, isWhitelisted, whitelistLoading, maintenanceLoading, location.pathname]);
 
-  // Добавляем таймаут для предотвращения бесконечной загрузки
+  // Таймаут предотвращения бесконечной загрузки.
+  // Раньше timeout срабатывал каждый раз при изменении зависимостей и форсировал
+  // повторные рендеры → лишняя нагрузка на iOS WKWebView. Теперь — единичный
+  // таймер, который запускается один раз при монтировании.
   const [timedOut, setTimedOut] = useState(false);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (isConnecting || whitelistLoading || maintenanceLoading || adminLoading) {
-        console.warn('⚠️ [ProtectedRoute] Loading timeout, forcing render');
-        setTimedOut(true);
-      }
-    }, 5000); // 5 секунд таймаут
-    
+      console.warn('⚠️ [ProtectedRoute] Loading timeout (8s), forcing render');
+      setTimedOut(true);
+    }, 8000); // 8 секунд — достаточно для медленной мобильной сети
+
     return () => clearTimeout(timer);
-  }, []);
+  }, []); // только при монтировании
 
   const isStillLoading = !timedOut && (isConnecting || whitelistLoading || maintenanceLoading || adminLoading);
 

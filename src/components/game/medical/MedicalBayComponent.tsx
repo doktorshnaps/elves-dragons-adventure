@@ -8,7 +8,7 @@ import { useMedicalBay } from '@/hooks/useMedicalBay';
 import { useForgeBay } from '@/hooks/useForgeBay';
 import { useCardInstancesContext } from '@/providers/CardInstancesProvider';
 
-console.log('🏥 [MedicalBayComponent] Loaded - using centralized CardInstancesContext');
+if (import.meta.env.DEV) console.log('🏥 [MedicalBayComponent] Loaded - using centralized CardInstancesContext');
 import { useCardsWithHealth } from '@/hooks/useCardsWithHealth';
 import { useUnifiedGameState } from '@/hooks/useUnifiedGameState';
 import { CardDisplay } from '../CardDisplay';
@@ -34,11 +34,13 @@ export const MedicalBayComponent = () => {
   // КРИТИЧНО: Получаем данные ТОЛЬКО из провайдера
   const { cardInstances, loadCardInstances } = useCardInstancesContext();
   
-  console.log('🏥 [MedicalBayComponent] CardInstances from context:', {
-    total: cardInstances.length,
-    heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
-    dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
-  });
+  if (import.meta.env.DEV) {
+    console.log('🏥 [MedicalBayComponent] CardInstances from context:', {
+      total: cardInstances.length,
+      heroes: cardInstances.filter(ci => ci.card_type === 'hero').length,
+      dragons: cardInstances.filter(ci => ci.card_type === 'dragon').length
+    });
+  }
   const { cardsWithHealth, selectedTeamWithHealth } = useCardsWithHealth();
   const gameState = useUnifiedGameState();
   const [selectedCard, setSelectedCard] = useState<any>(null);

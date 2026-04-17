@@ -73,6 +73,30 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    // Auto-recover from chunk-load failures (common on iOS WKWebView /
+    // Telegram WebApp on flaky networks). Soft-reload once per session.
+    const message = String(error?.message || '');
+    const isChunkError =
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('error loading dynamically imported module') ||
+      message.includes('ChunkLoadError');
+
+    if (isChunkError && typeof window !== 'undefined') {
+      try {
+        const flag = 'lazyChunkReloadAttempted';
+        if (!sessionStorage.getItem(flag)) {
+          sessionStorage.setItem(flag, '1');
+          console.warn('🔄 [ErrorBoundary] Chunk load failure detected, reloading once');
+          setTimeout(() => window.location.reload(), 100);
+          return;
+        }
+      } catch {
+        // sessionStorage unavailable — fall through to normal error UI
+      }
+    }
+
     reportError(error, 'error_boundary', {
       componentStack: errorInfo.componentStack,
     });

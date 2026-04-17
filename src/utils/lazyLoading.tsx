@@ -24,7 +24,7 @@ const DefaultErrorFallback = ({ error, retry }: { error: Error; retry: () => voi
   <div className="flex flex-col items-center justify-center min-h-[200px] p-4">
     <div className="text-red-500 mb-4">
       <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecapName="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </div>
     <h3 className="text-lg font-semibold mb-2">Ошибка загрузки</h3>
