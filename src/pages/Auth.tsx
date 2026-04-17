@@ -11,10 +11,12 @@ import { Wallet } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { t } from "@/utils/translations";
 import { usePageMeta } from "@/hooks/usePageTitle";
+const DEV = import.meta.env.DEV;
+
 export const Auth = () => {
-  usePageMeta({ 
-    title: 'Войти в ElleonorAI', 
-    description: 'Войди в ElleonorAI через NEAR кошелек. Твой прогресс сохраняется в блокчейне. Нет паролей, полная безопасность твоих NFT.' 
+  usePageMeta({
+    title: 'Войти в ElleonorAI',
+    description: 'Войди в ElleonorAI через NEAR кошелек. Твой прогресс сохраняется в блокчейне. Нет паролей, полная безопасность твоих NFT.'
   });
   const { language } = useLanguage();
   const { toast } = useToast();
@@ -34,7 +36,7 @@ export const Auth = () => {
   // Initialize Telegram Web App
   useEffect(() => {
     if (isTelegram && tgWebApp) {
-      console.log('📱 Telegram Web App initialized');
+      if (DEV) console.log('📱 Telegram Web App initialized');
       tgWebApp.ready();
       tgWebApp.expand();
     }
@@ -44,50 +46,37 @@ export const Auth = () => {
   useEffect(() => {
     const savedReferrer = localStorage.getItem('pendingReferrer');
     const urlReferrer = searchParams.get('ref');
-    
-    console.log('🔍 [Auth] Mounted - checking referrers:', {
-      savedReferrer,
-      urlReferrer,
-      alreadyProcessed: referralProcessedRef.current,
-      href: window.location.href,
-      allParams: Object.fromEntries(searchParams.entries())
-    });
+
+    if (DEV) console.log('🔍 [Auth] Mount referrers:', { savedReferrer, urlReferrer });
 
     if (urlReferrer) {
       localStorage.setItem('pendingReferrer', urlReferrer);
       setReferrerId(urlReferrer);
-      console.log('✅ [Auth] Saved referrer from URL:', urlReferrer);
+      if (DEV) console.log('✅ [Auth] Saved referrer from URL');
     } else if (savedReferrer && !referralProcessedRef.current) {
       setReferrerId(savedReferrer);
-      console.log('✅ [Auth] Restored referrer from localStorage:', savedReferrer);
-    } else {
-      console.log('⚠️ [Auth] No referrer found anywhere');
+      if (DEV) console.log('✅ [Auth] Restored referrer from localStorage');
     }
   }, [searchParams]);
 
   // Process referral when wallet connects
   const handleReferral = useCallback(async (walletAddress: string, referrerAddress: string) => {
     if (referralProcessedRef.current) {
-      console.log('⏭️ [Auth] Referral already processed');
+      if (DEV) console.log('⏭️ [Auth] Referral already processed');
       return;
     }
 
     referralProcessedRef.current = true;
-    console.log('🔗 [Auth] Processing referral:', {
-      referrer: referrerAddress,
-      referred: walletAddress,
-      timestamp: Date.now()
-    });
+    if (DEV) console.log('🔗 [Auth] Processing referral');
 
     try {
-      console.log('📡 [Auth] Calling add_referral RPC...');
       const { data, error } = await supabase.rpc('add_referral', {
         p_referrer_wallet_address: referrerAddress,
         p_referred_wallet_address: walletAddress
       });
 
       if (error) {
-        console.error('❌ [Auth] Referral RPC error:', error);
+        if (DEV) console.error('❌ [Auth] Referral RPC error:', error?.message);
         toast({
           title: t(language, 'auth.referralError'),
           description: error.message,
@@ -95,51 +84,32 @@ export const Auth = () => {
         });
         referralProcessedRef.current = false;
       } else {
-        console.log('✅ [Auth] Referral RPC success:', data);
+        if (DEV) console.log('✅ [Auth] Referral RPC success');
         localStorage.removeItem('pendingReferrer');
-        console.log('🗑️ [Auth] Removed pendingReferrer from localStorage');
         toast({
           title: t(language, 'auth.referralAdded'),
           description: t(language, 'auth.referralAddedDesc')
         });
       }
-    } catch (error) {
-      console.error('❌ [Auth] Referral exception:', error);
+    } catch (error: any) {
+      if (DEV) console.error('❌ [Auth] Referral exception:', error?.message);
       referralProcessedRef.current = false;
     }
   }, [toast, language]);
 
   // Handle wallet connection
   useEffect(() => {
-    console.log('🔄 [Auth] Connection effect triggered:', {
-      isConnected,
-      accountId,
-      referrerId,
-      localStorage: localStorage.getItem('pendingReferrer'),
-      alreadyProcessed: referralProcessedRef.current
-    });
+    if (DEV) console.log('🔄 [Auth] Connection effect:', { isConnected, accountId });
 
     if (isConnected && accountId) {
-      console.log('✅ [Auth] Wallet connected:', accountId);
-      
-      // Check for pending referrer one more time
       const finalReferrer = referrerId || localStorage.getItem('pendingReferrer');
-      
-      console.log('🔍 [Auth] Final referrer check:', {
-        accountId,
-        referrerId,
-        finalReferrer,
-        alreadyProcessed: referralProcessedRef.current
-      });
 
       if (finalReferrer && !referralProcessedRef.current) {
-        console.log('🔗 [Auth] Processing referral before redirect...');
+        if (DEV) console.log('🔗 [Auth] Process referral before redirect');
         handleReferral(accountId, finalReferrer).then(() => {
-          console.log('🚀 [Auth] Redirecting to /menu');
           navigate("/menu", { replace: true });
         });
       } else {
-        console.log('⏭️ [Auth] No referral to process, redirecting immediately...');
         navigate("/menu", { replace: true });
       }
     }

@@ -15,6 +15,8 @@ export interface ItemInstance {
   updated_at: string;
 }
 
+const DEV = import.meta.env.DEV;
+
 export const useItemInstances = () => {
   const { accountId } = useWalletContext();
   const queryClient = useQueryClient();
@@ -25,75 +27,74 @@ export const useItemInstances = () => {
     queryFn: async () => {
       if (!accountId) return [];
 
-      console.log('🔄 [useItemInstances] Fetching item instances for:', accountId);
+      if (DEV) console.log('🔄 [useItemInstances] Fetching for:', accountId);
 
       const { data, error } = await supabase
         .rpc('get_item_instances_by_wallet', { p_wallet_address: accountId });
 
       if (error) {
-        console.error('❌ [useItemInstances] Error fetching items:', error);
+        if (DEV) console.error('❌ [useItemInstances] Error:', error?.message || error);
         throw error;
       }
-      
-      const totalItems = data?.length || 0;
-      const cardPacks = data?.filter(item => item.type === 'cardPack').length || 0;
-      const materials = data?.filter(item => item.type === 'material').length || 0;
-      
-      console.log('✅ [useItemInstances] Loaded', totalItems, 'items:', {
-        total: totalItems,
-        cardPacks,
-        materials,
-        other: totalItems - cardPacks - materials
-      });
-      
+
+      if (DEV) {
+        const totalItems = data?.length || 0;
+        console.log('✅ [useItemInstances] Loaded', totalItems, 'items');
+      }
+
       return (data as ItemInstance[]) || [];
     },
     enabled: !!accountId,
-    staleTime: 30 * 60 * 1000, // 30 минут - агрессивное кеширование (было 2 мин)
-    gcTime: 60 * 60 * 1000, // 60 минут (было 5 мин)
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: true, // Перезагружать при монтировании если данные stale (после invalidation)
+    refetchOnMount: true,
   });
 
   const refetch = useCallback(async () => {
-    console.log('🔄 [useItemInstances] Manual refetch requested');
+    if (DEV) console.log('🔄 [useItemInstances] Manual refetch');
     queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
     return await refetchQuery();
   }, [queryClient, accountId, refetchQuery]);
 
-  // Real-time subscription for INSERT/DELETE/UPDATE events in item_instances
+  // Real-time subscription with init-guard + 200ms debounce. Prevents the
+  // "double provider mount → double subscribe → 2x heavy refetch" pattern
+  // observed on iOS WKWebView and the burst of 10+ invalidations from
+  // batch UPDATEs during rewards.
   useEffect(() => {
     if (!accountId) return;
 
-    console.log('🔄 [useItemInstances] Setting up Real-time subscription for item_instances');
+    if (DEV) console.log('🔄 [useItemInstances] Subscribe realtime');
+
+    let pending: any = null;
+    const flush = () => {
+      pending = null;
+      queryClient.invalidateQueries({ queryKey: ['itemInstances', accountId] });
+    };
 
     const channel = supabase
-      .channel('item-instances-realtime')
+      .channel(`item-instances-${accountId}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'item_instances',
-          filter: `wallet_address=eq.${accountId}`
+          filter: `wallet_address=eq.${accountId}`,
         },
-        (payload) => {
-          console.log('🔔 [useItemInstances] Item change detected via Real-time:', payload.eventType, payload);
-          // Invalidate and refetch immediately for DELETE/UPDATE
-          queryClient.invalidateQueries({ 
-            queryKey: ['itemInstances', accountId]
-          });
+        () => {
+          if (pending) clearTimeout(pending);
+          pending = setTimeout(flush, 200);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('🔄 [useItemInstances] Cleaning up Real-time subscription');
+      if (DEV) console.log('🔄 [useItemInstances] Unsubscribe realtime');
+      if (pending) clearTimeout(pending);
       supabase.removeChannel(channel);
     };
   }, [accountId, queryClient]);
-
-  // Window events removed - Real-time subscription handles all updates
 
   /**
    * Add N new item instances to DB

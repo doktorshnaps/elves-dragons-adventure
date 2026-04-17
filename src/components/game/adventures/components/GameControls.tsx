@@ -30,12 +30,15 @@ export const GameControls = ({
   const makeHoldHandlers = (setter: (v: boolean) => void) => ({
     onPointerDown: (e: React.PointerEvent) => {
       if (disabled) return;
-      // Capture the pointer so we still get the up event if the finger leaves the button
+      // preventDefault on iOS suppresses the synthetic 300ms click + the
+      // double-fire that swallows the first tap inside WKWebView.
+      e.preventDefault();
       try { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); } catch {}
       setter(true);
     },
     onPointerUp: (e: React.PointerEvent) => {
       if (disabled) return;
+      e.preventDefault();
       try { (e.currentTarget as Element).releasePointerCapture?.(e.pointerId); } catch {}
       setter(false);
     },

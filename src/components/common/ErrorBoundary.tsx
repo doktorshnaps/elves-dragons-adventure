@@ -88,8 +88,30 @@ export class ErrorBoundary extends Component<Props, State> {
         const flag = 'lazyChunkReloadAttempted';
         if (!sessionStorage.getItem(flag)) {
           sessionStorage.setItem(flag, '1');
-          console.warn('🔄 [ErrorBoundary] Chunk load failure detected, reloading once');
-          setTimeout(() => window.location.reload(), 100);
+          console.warn('🔄 [ErrorBoundary] Chunk load failure detected, clearing caches and reloading');
+
+          // Best-effort: unregister any service workers and purge caches so
+          // the next reload pulls a fresh bundle. Critical for iOS WebKit /
+          // Telegram WebApp where stale chunks cause repeated reload loops.
+          const cleanupAndReload = async () => {
+            try {
+              if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map((r) => r.unregister().catch(() => {})));
+              }
+            } catch {}
+            try {
+              if (typeof caches !== 'undefined') {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+              }
+            } catch {}
+            window.location.reload();
+          };
+
+          cleanupAndReload();
+          // Hard fallback in case async cleanup hangs.
+          setTimeout(() => window.location.reload(), 1500);
           return;
         }
       } catch {

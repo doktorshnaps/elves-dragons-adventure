@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useRef } from 'react';
 import { useCardInstances, CardInstance } from '@/hooks/useCardInstances';
 
 interface CardInstancesContextType {
@@ -15,8 +15,15 @@ interface CardInstancesContextType {
 
 const CardInstancesContext = createContext<CardInstancesContextType | undefined>(undefined);
 
+const DEV = import.meta.env.DEV;
+
 export const CardInstancesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  console.log('🔄 [CardInstancesProvider] Initializing centralized card instances provider');
+  // Single mount-log only in DEV. The hook itself has its own init guards now.
+  const loggedOnce = useRef(false);
+  if (DEV && !loggedOnce.current) {
+    loggedOnce.current = true;
+    console.log('🔄 [CardInstancesProvider] mount');
+  }
   const cardInstancesData = useCardInstances();
 
   return (
