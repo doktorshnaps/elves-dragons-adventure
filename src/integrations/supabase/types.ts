@@ -5152,24 +5152,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_clan_customization:
-        | {
-            Args: {
-              p_background_image?: string
-              p_emblem?: string
-              p_wallet: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_background_image?: string
-              p_emblem?: string
-              p_header_background?: string
-              p_wallet: string
-            }
-            Returns: Json
-          }
+      update_clan_customization: {
+        Args: {
+          p_background_image?: string
+          p_emblem?: string
+          p_header_background?: string
+          p_wallet: string
+        }
+        Returns: Json
+      }
       update_clan_info: {
         Args: {
           p_description?: string

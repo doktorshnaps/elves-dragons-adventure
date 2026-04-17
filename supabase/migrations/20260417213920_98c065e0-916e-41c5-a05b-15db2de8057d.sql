@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.update_clan_customization(text, text, text);
