@@ -286,85 +286,45 @@ export const useCardInstances = () => {
 
   // Event listener for manual reload trigger via GameEventsContext
   useGameEvent('cardInstancesUpdate', () => {
-    console.log('🔄 Received cardInstancesUpdate event, invalidating card instances cache');
+    if (DEV) console.log('🔄 cardInstancesUpdate event → invalidate');
     queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
   }, [accountId, queryClient]);
 
-  // КРИТИЧНО: Подписка на обновления в реальном времени для автоматической синхронизации
-  // Особенно важно для рабочих, выдаваемых через админ-панель
-  // НО ОТКЛЮЧАЕМ ВО ВРЕМЯ БОЕВ для снижения нагрузки
+  // Real-time subscription with 200ms debounce on invalidations to avoid
+  // 10+ re-renders during batch UPDATE bursts (rewards, healing). One channel
+  // per accountId — channel name includes accountId so a re-mount can't
+  // duplicate the subscription.
   useEffect(() => {
     if (!isConnected || !accountId) return;
 
-    // Проверяем, идет ли бой
     const activeBattleInProgress = useGameStore.getState().activeBattleInProgress;
     if (activeBattleInProgress) {
-      console.log('⏸️ [useCardInstances] Skipping Real-time subscription during active battle');
+      if (DEV) console.log('⏸️ [useCardInstances] Skip realtime during battle');
       return;
     }
 
-    console.log('🔔 [useCardInstances] Setting up Real-time subscription for:', accountId);
+    if (DEV) console.log('🔔 [useCardInstances] Subscribe realtime for:', accountId);
+
+    let pending: any = null;
+    const flush = () => {
+      pending = null;
+      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+    };
+    const schedule = () => {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(flush, 200);
+    };
 
     const channel = supabase
-      .channel('card_instances_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('📥 [useCardInstances] INSERT via Real-time:', {
-            id: (payload.new as any)?.id?.substring(0, 8),
-            cardType: (payload.new as any)?.card_type,
-            health: (payload.new as any)?.current_health,
-            defense: (payload.new as any)?.current_defense
-          });
-          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('🔄 [useCardInstances] UPDATE via Real-time:', {
-            id: (payload.new as any)?.id?.substring(0, 8),
-            oldHealth: (payload.old as any)?.current_health,
-            newHealth: (payload.new as any)?.current_health,
-            oldDefense: (payload.old as any)?.current_defense,
-            newDefense: (payload.new as any)?.current_defense
-          });
-          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'card_instances',
-          filter: `wallet_address=eq.${accountId}`
-        },
-        (payload) => {
-          console.log('🗑️ [useCardInstances] DELETE via Real-time:', {
-            id: (payload.old as any)?.id?.substring(0, 8)
-          });
-          queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
-        }
-      )
+      .channel(`card_instances_${accountId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'card_instances', filter: `wallet_address=eq.${accountId}` }, schedule)
       .subscribe((status) => {
-        console.log('📡 [useCardInstances] Real-time subscription status:', status);
+        if (DEV) console.log('📡 [useCardInstances] status:', status);
       });
 
     return () => {
-      console.log('🔕 [useCardInstances] Cleaning up Real-time subscription');
+      if (DEV) console.log('🔕 [useCardInstances] Unsubscribe realtime');
+      if (pending) clearTimeout(pending);
       supabase.removeChannel(channel);
     };
   }, [accountId, isConnected, queryClient]);
