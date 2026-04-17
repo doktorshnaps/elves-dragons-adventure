@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Sword } from "lucide-react";
@@ -13,6 +12,12 @@ interface GameControlsProps {
   disabled?: boolean;
 }
 
+/**
+ * Use Pointer Events instead of separate mouse+touch handlers.
+ * On iOS WKWebView the dual mouse/touch handlers cause first-tap to be
+ * "swallowed" — Pointer Events unify both inputs and fire reliably on
+ * the first interaction.
+ */
 export const GameControls = ({
   onMoveLeft,
   onMoveRight,
@@ -22,6 +27,28 @@ export const GameControls = ({
   hasTarget,
   disabled = false
 }: GameControlsProps) => {
+  const makeHoldHandlers = (setter: (v: boolean) => void) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      if (disabled) return;
+      // Capture the pointer so we still get the up event if the finger leaves the button
+      try { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); } catch {}
+      setter(true);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (disabled) return;
+      try { (e.currentTarget as Element).releasePointerCapture?.(e.pointerId); } catch {}
+      setter(false);
+    },
+    onPointerCancel: () => {
+      if (disabled) return;
+      setter(false);
+    },
+    onPointerLeave: () => {
+      if (disabled) return;
+      setter(false);
+    },
+  });
+
   return (
     <>
       {/* Movement Controls - Left Side */}
@@ -29,12 +56,8 @@ export const GameControls = ({
         <Button
           variant="default"
           size="lg"
-          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50"
-          onMouseDown={() => !disabled && onMoveLeft(true)}
-          onMouseUp={() => !disabled && onMoveLeft(false)}
-          onMouseLeave={() => !disabled && onMoveLeft(false)}
-          onTouchStart={() => !disabled && onMoveLeft(true)}
-          onTouchEnd={() => !disabled && onMoveLeft(false)}
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50 touch-manipulation"
+          {...makeHoldHandlers(onMoveLeft)}
           disabled={disabled}
         >
           <ArrowLeft className="h-8 w-8" />
@@ -43,12 +66,8 @@ export const GameControls = ({
         <Button
           variant="default"
           size="lg"
-          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50"
-          onMouseDown={() => !disabled && onMoveRight(true)}
-          onMouseUp={() => !disabled && onMoveRight(false)}
-          onMouseLeave={() => !disabled && onMoveRight(false)}
-          onTouchStart={() => !disabled && onMoveRight(true)}
-          onTouchEnd={() => !disabled && onMoveRight(false)}
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50 touch-manipulation"
+          {...makeHoldHandlers(onMoveRight)}
           disabled={disabled}
         >
           <ArrowRight className="h-8 w-8" />
@@ -60,7 +79,7 @@ export const GameControls = ({
         <Button
           variant="default"
           size="lg"
-          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50"
+          className="h-16 w-16 rounded-full bg-game-accent hover:bg-game-accent/90 disabled:opacity-50 touch-manipulation"
           onClick={onJump}
           disabled={disabled}
         >
@@ -70,7 +89,7 @@ export const GameControls = ({
         <Button
           variant="default"
           size="lg"
-          className={`h-16 w-16 rounded-full ${
+          className={`h-16 w-16 rounded-full touch-manipulation ${
             hasTarget ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500'
           } disabled:opacity-50`}
           onClick={onAttack}

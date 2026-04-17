@@ -70,15 +70,19 @@ export const useItemTemplates = () => {
   const getTemplate = (idOrItemId: string): ItemTemplate | undefined => {
     const key = String(idOrItemId);
     const result = byItemId.get(key) || byNumericId.get(key) || byItemId.get(key.toLowerCase());
-    
-    console.log('🔍 [getTemplate] Looking for:', {
-      idOrItemId,
-      key,
-      foundInItemId: !!byItemId.get(key),
-      foundInNumericId: !!byNumericId.get(key),
-      result: result ? { id: result.id, name: result.name, image_url: result.image_url } : null
-    });
-    
+
+    // Hot-path: this runs hundreds of times per render. Only log in dev to
+    // prevent memory pressure / Jetsam kill on iOS WKWebView.
+    if (import.meta.env.DEV) {
+      console.log('🔍 [getTemplate] Looking for:', {
+        idOrItemId,
+        key,
+        foundInItemId: !!byItemId.get(key),
+        foundInNumericId: !!byNumericId.get(key),
+        result: result ? { id: result.id, name: result.name, image_url: result.image_url } : null
+      });
+    }
+
     return result;
   };
 
