@@ -37,6 +37,19 @@ export const DeckSelection = ({
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
   const [heroSortBy, setHeroSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
   const [dragonSortBy, setDragonSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
+  // Пагинация — рендер 60 карт за раз, чтобы не блокировать main thread на iOS
+  // (1000 CardDisplay одновременно = 5+ сек заморозки на iPhone WKWebView)
+  const PAGE_SIZE = 60;
+  const [heroVisibleCount, setHeroVisibleCount] = useState(PAGE_SIZE);
+  const [dragonVisibleCount, setDragonVisibleCount] = useState(PAGE_SIZE);
+
+  // Сброс пагинации при открытии модалок и смене сортировки
+  useEffect(() => {
+    if (showHeroDeck) setHeroVisibleCount(PAGE_SIZE);
+  }, [showHeroDeck, heroSortBy]);
+  useEffect(() => {
+    if (showDragonDeck) setDragonVisibleCount(PAGE_SIZE);
+  }, [showDragonDeck, dragonSortBy, activePairIndex]);
 
   const [previewAction, setPreviewAction] = useState<{
     label: string;
