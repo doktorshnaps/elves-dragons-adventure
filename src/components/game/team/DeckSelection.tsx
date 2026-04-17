@@ -37,6 +37,19 @@ export const DeckSelection = ({
   const [previewCard, setPreviewCard] = useState<CardType | null>(null);
   const [heroSortBy, setHeroSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
   const [dragonSortBy, setDragonSortBy] = useState<'none' | 'defense' | 'rarity'>('none');
+  // Пагинация — рендер 60 карт за раз, чтобы не блокировать main thread на iOS
+  // (1000 CardDisplay одновременно = 5+ сек заморозки на iPhone WKWebView)
+  const PAGE_SIZE = 60;
+  const [heroVisibleCount, setHeroVisibleCount] = useState(PAGE_SIZE);
+  const [dragonVisibleCount, setDragonVisibleCount] = useState(PAGE_SIZE);
+
+  // Сброс пагинации при открытии модалок и смене сортировки
+  useEffect(() => {
+    if (showHeroDeck) setHeroVisibleCount(PAGE_SIZE);
+  }, [showHeroDeck, heroSortBy]);
+  useEffect(() => {
+    if (showDragonDeck) setDragonVisibleCount(PAGE_SIZE);
+  }, [showDragonDeck, dragonSortBy, activePairIndex]);
 
   const [previewAction, setPreviewAction] = useState<{
     label: string;
@@ -356,7 +369,7 @@ export const DeckSelection = ({
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
-            {heroes.map(hero => {
+            {heroes.slice(0, heroVisibleCount).map(hero => {
               const isSelected = isHeroSelected(hero);
               const isDead = (hero.currentHealth ?? hero.health) <= 0;
               const teamFull = selectedPairs.length >= 5;
@@ -381,6 +394,18 @@ export const DeckSelection = ({
                  </div>;
             })}
             </div>
+            {heroes.length > heroVisibleCount && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setHeroVisibleCount(c => c + PAGE_SIZE)}
+                >
+                  Показать ещё ({heroes.length - heroVisibleCount})
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -409,35 +434,57 @@ export const DeckSelection = ({
             
           </div>
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
-            {(activePairIndex !== null ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity) : dragons).map(dragon => {
-              const isSelected = isDragonSelected(dragon);
-              const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
-              const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead : false;
-              return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} style={{ touchAction: 'manipulation' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canAssign && handleDragonSelect(dragon); }}>
-                  <CardDisplay card={dragon} showSellButton={false} onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setPreviewCard(dragon);
-                  const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead;
-                  setPreviewAction(canAssignHere ? {
-                    label: 'Назначить дракона',
-                    action: () => handleDragonSelect(dragon)
-                  } : null);
-                  setPreviewDeleteAction(null);
-                }} />
-                  {isDead && <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg pointer-events-none">
-                      <span className="text-red-500 font-bold text-lg sm:text-xl">Мертв</span>
+            {(() => {
+              const fullDragonList = activePairIndex !== null
+                ? getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity)
+                : dragons;
+              const visibleDragons = fullDragonList.slice(0, dragonVisibleCount);
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 justify-items-center w-full">
+                    {visibleDragons.map(dragon => {
+                      const isSelected = isDragonSelected(dragon);
+                      const isDead = (dragon.currentHealth ?? dragon.health) <= 0;
+                      const canAssign = activePairIndex !== null ? !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead : false;
+                      return <div key={dragon.id} className={`relative cursor-pointer transition-all ${activePairIndex !== null ? !canAssign ? 'opacity-50 pointer-events-none' : 'hover:scale-105' : isDead ? 'opacity-60' : 'hover:scale-105'}`} style={{ touchAction: 'manipulation' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); canAssign && handleDragonSelect(dragon); }}>
+                          <CardDisplay card={dragon} showSellButton={false} onClick={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPreviewCard(dragon);
+                          const canAssignHere = activePairIndex !== null && !!selectedPairs[activePairIndex] && !selectedPairs[activePairIndex]?.dragon && selectedPairs[activePairIndex]?.hero.faction === dragon.faction && (selectedPairs[activePairIndex]?.hero.rarity ?? 0) >= dragon.rarity && !isSelected && !isDead;
+                          setPreviewAction(canAssignHere ? {
+                            label: 'Назначить дракона',
+                            action: () => handleDragonSelect(dragon)
+                          } : null);
+                          setPreviewDeleteAction(null);
+                        }} />
+                          {isDead && <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg pointer-events-none">
+                              <span className="text-red-500 font-bold text-lg sm:text-xl">Мертв</span>
+                            </div>}
+                          <div className="text-center text-xs text-white font-medium mt-1">
+                            {isDead ? 'Мертв' : isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
+                          </div>
+                        </div>;
+                    })}
+                    {activePairIndex !== null && fullDragonList.length === 0 && <div className="col-span-full text-center text-white/60 text-sm">
+                      Нет доступных драконов для выбранного героя
                     </div>}
-                  <div className="text-center text-xs text-white font-medium mt-1">
-                    {isDead ? 'Мертв' : isSelected ? 'Выбран' : activePairIndex !== null ? selectedPairs[activePairIndex]?.hero.faction : 'Просмотр'}
                   </div>
-                </div>;
-            })}
-             {activePairIndex !== null && getAvailableDragons(selectedPairs[activePairIndex]?.hero.faction, selectedPairs[activePairIndex]?.hero.rarity).length === 0 && <div className="col-span-full text-center text-white/60 text-sm">
-                 Нет доступных драконов для выбранного героя
-               </div>}
-            </div>
+                  {fullDragonList.length > dragonVisibleCount && (
+                    <div className="flex justify-center mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDragonVisibleCount(c => c + PAGE_SIZE)}
+                      >
+                        Показать ещё ({fullDragonList.length - dragonVisibleCount})
+                      </Button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </DialogContent>
       </Dialog>
