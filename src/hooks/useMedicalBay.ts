@@ -86,7 +86,7 @@ export const useMedicalBay = () => {
     console.log('🏥 [Real-time] Setting up medical_bay subscription for:', accountId);
     
     const channel = supabase
-      .channel('medical-bay-changes')
+      .channel(`medical-bay-changes-${accountId}`)
       .on(
         'postgres_changes',
         {
@@ -401,8 +401,12 @@ export const useMedicalBay = () => {
         description: `Здоровье восстановлено до ${result.new_health}/${result.max_health} (50%)`,
       });
 
-      queryClient.invalidateQueries({ queryKey: queryKeys.medicalBay(accountId) });
-      queryClient.invalidateQueries({ queryKey: ['cardInstances', accountId] });
+      // CRITICAL: refetchQueries (не invalidate) — гарантирует, что карта вернётся
+      // в общий пул немедленно. invalidate с staleTime=30min не всегда триггерит refetch.
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: queryKeys.medicalBay(accountId) }),
+        queryClient.refetchQueries({ queryKey: ['cardInstances', accountId] }),
+      ]);
       queryClient.invalidateQueries({ queryKey: ['gameData'] });
       return result;
     } catch (error: any) {
