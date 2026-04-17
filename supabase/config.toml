@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.refresh-wallet-whitelist-access]
 verify_jwt = false
+
+[functions.upload-clan-asset]
+verify_jwt = false
