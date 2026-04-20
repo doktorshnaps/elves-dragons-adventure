@@ -4120,6 +4120,7 @@ export type Database = {
         }
         Returns: string
       }
+      auto_finalize_expired_treasure_hunts: { Args: never; Returns: number }
       backfill_item_instances_from_inventory: {
         Args: { p_wallet_address: string }
         Returns: number

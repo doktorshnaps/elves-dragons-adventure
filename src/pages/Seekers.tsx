@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,7 @@ export const Seekers = () => {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const finalizationTriggeredRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadActiveEvent();
@@ -53,16 +54,12 @@ export const Seekers = () => {
 
   const endEvent = useCallback(async () => {
     if (!activeEvent) return;
+    // Idempotent: only trigger once per event
+    if (finalizationTriggeredRef.current === activeEvent.id) return;
+    finalizationTriggeredRef.current = activeEvent.id;
 
     try {
-      const { error } = await supabase
-        .from('treasure_hunt_events')
-        .update({ 
-          is_active: false,
-          ended_at: new Date().toISOString()
-        })
-        .eq('id', activeEvent.id);
-
+      const { error } = await supabase.rpc('auto_finalize_expired_treasure_hunts');
       if (error) throw error;
 
       toast({
@@ -70,10 +67,12 @@ export const Seekers = () => {
         description: "Победители зафиксированы в таблице лидеров",
       });
 
-      // Обновляем локальное состояние события, не очищаем его
-      setActiveEvent(prev => prev ? { ...prev, is_active: false } : null);
+      // Reload to get the now-closed event + frozen leaderboard
+      await loadActiveEvent();
     } catch (error) {
-      console.error('Error ending event:', error);
+      console.error('Error finalizing event:', error);
+      // Allow retry on next tick if it failed
+      finalizationTriggeredRef.current = null;
     }
   }, [activeEvent, toast]);
 
