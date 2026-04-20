@@ -119,6 +119,17 @@ export const Seekers = () => {
 
       if (eventError) throw eventError;
 
+      // Если активное событие уже истекло — финализируем и перезагружаем
+      if (event?.ended_at && new Date(event.ended_at).getTime() <= Date.now()) {
+        await supabase.rpc('auto_finalize_expired_treasure_hunts');
+        const { data: refreshed } = await supabase
+          .from('treasure_hunt_events')
+          .select('*')
+          .eq('id', event.id)
+          .maybeSingle();
+        event = refreshed ?? event;
+      }
+
       // Если нет активного — ищем последнее завершённое (started_at не null)
       if (!event) {
         const { data: finishedEvent, error: finishedError } = await supabase
