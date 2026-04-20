@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,7 @@ export const Seekers = () => {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const finalizationTriggeredRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadActiveEvent();
@@ -53,16 +54,12 @@ export const Seekers = () => {
 
   const endEvent = useCallback(async () => {
     if (!activeEvent) return;
+    // Idempotent: only trigger once per event
+    if (finalizationTriggeredRef.current === activeEvent.id) return;
+    finalizationTriggeredRef.current = activeEvent.id;
 
     try {
-      const { error } = await supabase
-        .from('treasure_hunt_events')
-        .update({ 
-          is_active: false,
-          ended_at: new Date().toISOString()
-        })
-        .eq('id', activeEvent.id);
-
+      const { error } = await supabase.rpc('auto_finalize_expired_treasure_hunts');
       if (error) throw error;
 
       toast({
@@ -70,15 +67,20 @@ export const Seekers = () => {
         description: "Победители зафиксированы в таблице лидеров",
       });
 
-      // Обновляем локальное состояние события, не очищаем его
-      setActiveEvent(prev => prev ? { ...prev, is_active: false } : null);
+      // Reload to get the now-closed event + frozen leaderboard
+      await loadActiveEvent();
     } catch (error) {
-      console.error('Error ending event:', error);
+      console.error('Error finalizing event:', error);
+      // Allow retry on next tick if it failed
+      finalizationTriggeredRef.current = null;
     }
   }, [activeEvent, toast]);
 
   useEffect(() => {
     if (!activeEvent?.ended_at) return;
+    if (!activeEvent.is_active) return;
+
+    let interval: ReturnType<typeof setInterval> | null = null;
 
     const calculateTimeRemaining = () => {
       const endTime = new Date(activeEvent.ended_at!).getTime();
@@ -87,6 +89,7 @@ export const Seekers = () => {
 
       if (remaining <= 0) {
         setTimeRemaining(0);
+        if (interval) clearInterval(interval);
         endEvent();
         return;
       }
@@ -95,10 +98,12 @@ export const Seekers = () => {
     };
 
     calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
+    interval = setInterval(calculateTimeRemaining, 1000);
 
-    return () => clearInterval(interval);
-  }, [activeEvent?.ended_at, endEvent]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeEvent?.ended_at, activeEvent?.is_active, endEvent]);
 
   const loadActiveEvent = async () => {
     try {
@@ -113,6 +118,17 @@ export const Seekers = () => {
         .maybeSingle();
 
       if (eventError) throw eventError;
+
+      // Если активное событие уже истекло — финализируем и перезагружаем
+      if (event?.ended_at && new Date(event.ended_at).getTime() <= Date.now()) {
+        await supabase.rpc('auto_finalize_expired_treasure_hunts');
+        const { data: refreshed } = await supabase
+          .from('treasure_hunt_events')
+          .select('*')
+          .eq('id', event.id)
+          .maybeSingle();
+        event = refreshed ?? event;
+      }
 
       // Если нет активного — ищем последнее завершённое (started_at не null)
       if (!event) {
