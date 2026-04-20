@@ -78,6 +78,7 @@ export const Seekers = () => {
 
   useEffect(() => {
     if (!activeEvent?.ended_at) return;
+    if (!activeEvent.is_active) return;
 
     const calculateTimeRemaining = () => {
       const endTime = new Date(activeEvent.ended_at!).getTime();
@@ -86,6 +87,7 @@ export const Seekers = () => {
 
       if (remaining <= 0) {
         setTimeRemaining(0);
+        clearInterval(interval);
         endEvent();
         return;
       }
@@ -97,7 +99,7 @@ export const Seekers = () => {
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [activeEvent?.ended_at, endEvent]);
+  }, [activeEvent?.ended_at, activeEvent?.is_active, endEvent]);
 
   const loadActiveEvent = async () => {
     try {
