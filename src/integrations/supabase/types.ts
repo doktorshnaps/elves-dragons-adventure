@@ -2706,6 +2706,7 @@ export type Database = {
           created_by_wallet_address: string
           drop_chance: number | null
           dungeon_number: number | null
+          duration_seconds: number | null
           ended_at: string | null
           found_quantity: number | null
           id: string
@@ -2725,6 +2726,7 @@ export type Database = {
           created_by_wallet_address: string
           drop_chance?: number | null
           dungeon_number?: number | null
+          duration_seconds?: number | null
           ended_at?: string | null
           found_quantity?: number | null
           id?: string
@@ -2744,6 +2746,7 @@ export type Database = {
           created_by_wallet_address?: string
           drop_chance?: number | null
           dungeon_number?: number | null
+          duration_seconds?: number | null
           ended_at?: string | null
           found_quantity?: number | null
           id?: string
@@ -3315,38 +3318,24 @@ export type Database = {
             }
             Returns: string
           }
-      admin_create_treasure_hunt_event:
-        | {
-            Args: {
-              p_admin_wallet: string
-              p_drop_chance?: number
-              p_dungeon_number?: number
-              p_duration_days?: number
-              p_item_image_url?: string
-              p_item_name: string
-              p_item_template_id: number
-              p_max_winners?: number
-              p_reward_amount?: number
-              p_total_quantity?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_admin_wallet: string
-              p_drop_chance?: number
-              p_dungeon_number?: number
-              p_ended_at?: string
-              p_item_image_url?: string
-              p_item_name: string
-              p_item_template_id: number
-              p_max_winners?: number
-              p_monster_id?: string
-              p_reward_amount?: number
-              p_total_quantity?: number
-            }
-            Returns: Json
-          }
+      admin_create_treasure_hunt_event: {
+        Args: {
+          p_admin_wallet: string
+          p_drop_chance?: number
+          p_dungeon_number?: number
+          p_duration_days?: number
+          p_duration_hours?: number
+          p_duration_minutes?: number
+          p_item_image_url?: string
+          p_item_name: string
+          p_item_template_id: number
+          p_max_winners?: number
+          p_monster_id?: string
+          p_reward_amount?: number
+          p_total_quantity?: number
+        }
+        Returns: Json
+      }
       admin_delete_card_upgrade_requirement: {
         Args: { p_id: string; p_wallet: string }
         Returns: undefined

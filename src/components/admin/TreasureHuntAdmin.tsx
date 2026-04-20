@@ -155,6 +155,20 @@ export const TreasureHuntAdmin = () => {
         return;
       }
 
+      const totalDurationSeconds =
+        (formData.duration_days || 0) * 86400 +
+        (formData.duration_hours || 0) * 3600 +
+        (formData.duration_minutes || 0) * 60;
+
+      if (totalDurationSeconds <= 0) {
+        toast({
+          title: "Ошибка",
+          description: "Укажите длительность события (дни/часы/минуты)",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Получаем данные предмета
       const selectedItem = itemTemplates.find(item => item.id === parseInt(formData.item_template_id));
       
@@ -169,11 +183,18 @@ export const TreasureHuntAdmin = () => {
         p_max_winners: formData.max_winners,
         p_reward_amount: formData.reward_amount,
         p_duration_days: formData.duration_days,
+        p_duration_hours: formData.duration_hours,
+        p_duration_minutes: formData.duration_minutes,
       });
 
       const resultObj = result as Record<string, unknown> | null;
       if (resultObj?.status === 'error') {
-        throw new Error((resultObj.message as string) || 'Admin check failed');
+        const msg = resultObj.message as string;
+        throw new Error(
+          msg === 'duration_required'
+            ? 'Укажите длительность события'
+            : msg || 'Admin check failed'
+        );
       }
 
       if (error) throw error;
