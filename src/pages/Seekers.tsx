@@ -80,6 +80,8 @@ export const Seekers = () => {
     if (!activeEvent?.ended_at) return;
     if (!activeEvent.is_active) return;
 
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     const calculateTimeRemaining = () => {
       const endTime = new Date(activeEvent.ended_at!).getTime();
       const now = Date.now();
@@ -87,7 +89,7 @@ export const Seekers = () => {
 
       if (remaining <= 0) {
         setTimeRemaining(0);
-        clearInterval(interval);
+        if (interval) clearInterval(interval);
         endEvent();
         return;
       }
@@ -96,9 +98,11 @@ export const Seekers = () => {
     };
 
     calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
+    interval = setInterval(calculateTimeRemaining, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [activeEvent?.ended_at, activeEvent?.is_active, endEvent]);
 
   const loadActiveEvent = async () => {
