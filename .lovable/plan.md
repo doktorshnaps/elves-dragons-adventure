@@ -1,63 +1,71 @@
 
 
-## «Искатели»: событие не завершается по таймеру, таймер «начинается заново»
+## «Искатели»: настройка длительности игнорируется, всегда 24 часа
 
 ### Корень проблемы
 
-В `src/pages/Seekers.tsx` функция `endEvent` пытается закрыть событие напрямую через клиентский UPDATE:
+В `src/components/admin/TreasureHuntAdmin.tsx` форма содержит три поля длительности:
+- `duration_days`
+- `duration_hours`
+- `duration_minutes`
+
+Но при создании события в RPC `admin_create_treasure_hunt_event` передаётся **только** `p_duration_days`:
 
 ```ts
-await supabase.from('treasure_hunt_events')
-  .update({ is_active: false, ended_at: new Date().toISOString() })
-  .eq('id', activeEvent.id);
+p_duration_days: formData.duration_days,
 ```
 
-Но:
-1. **RLS блокирует UPDATE** — политика `Treasure hunt update by admin` разрешает изменения только админам. Обычный игрок получает RLS-фейл, `is_active` в БД остаётся `true`.
-2. **`ended_at` (дедлайн) перезаписывается** на `now()` — даже если б UPDATE прошёл, изначальное время окончания терялось бы.
-3. **Серверного авто-закрытия нет** — cron-задача отсутствует, поэтому событие живёт «активным» бесконечно после истечения таймера.
-4. **Цикл спама**: `useEffect` каждую секунду пересчитывает `endTime - now`, видит «≤0», вызывает `endEvent()`. Запрос летит каждую секунду, тост спамится, RLS отбивает каждый раз. У части игроков выглядит как «таймер сбросился» (особенно после reload, когда `loadActiveEvent` снова цепляет тот же активный event с уже истёкшим `ended_at`).
-5. **`loadActiveEvent`** не учитывает `ended_at < now()`: достаёт `is_active=true` без проверки дедлайна → истёкшее событие отображается как активное.
+Часы и минуты из формы **никуда не уходят**. Если админ ставит, например, «0 дней, 2 часа, 30 минут», в RPC улетает `p_duration_days: 0`, а серверная функция, скорее всего, при `0` подставляет дефолт = 1 день (24 часа). Отсюда «всегда 24 часа».
+
+Нужно проверить точную сигнатуру RPC `admin_create_treasure_hunt_event` (есть ли там параметры hours/minutes или только days), и при необходимости расширить её.
 
 ### План фикса
 
-**1. SQL-миграция: серверное авто-завершение + RPC**
+**1. Проверка/обновление RPC `admin_create_treasure_hunt_event`** (миграция SQL)
 
-- Добавить SECURITY DEFINER RPC `auto_finalize_expired_treasure_hunts()`:
-  - Находит все события `is_active=true AND ended_at IS NOT NULL AND ended_at <= now()`.
-  - Ставит им `is_active=false`. **`ended_at` НЕ трогаем** — сохраняем оригинальный дедлайн.
-  - Возвращает количество закрытых.
-- Включить расширения `pg_cron` + `pg_net` (если ещё нет) и поставить cron каждую минуту:
-  ```sql
-  SELECT cron.schedule('auto-finalize-treasure-hunts', '* * * * *',
-    $$SELECT public.auto_finalize_expired_treasure_hunts();$$);
-  ```
-- Дополнительно: `claim-battle-rewards` и `claim-item-reward` уже корректно проверяют `ended_at <= now()` и отвечают `event_expired` — серверная сторона новых finding'ов не примет.
+- Прочитать текущую сигнатуру через `supabase--read_query` (`pg_get_function_arguments`).
+- Дропнуть старую версию (memory `database-rpc-standardization` — не плодить overload).
+- Создать новую версию с параметрами:
+  - `p_duration_days int default 0`
+  - `p_duration_hours int default 0`
+  - `p_duration_minutes int default 0`
+- Внутри: `v_duration interval := make_interval(days => p_duration_days, hours => p_duration_hours, mins => p_duration_minutes);`
+- Если итог `<= interval '0'` → вернуть ошибку `"duration_required"` (не молча подставлять 24ч).
+- `ended_at := now() + v_duration` устанавливать **сразу при создании**, чтобы cron-финализатор корректно работал.
+- `started_at := now()` тоже при создании (или при тогле — нужно проверить, что `admin_toggle_treasure_hunt_event` делает; если он сейчас выставляет `started_at`/`ended_at` при активации — лучше пересчитывать `ended_at = now() + duration` именно в момент `Старт`, чтобы таймер шёл от запуска, а не от создания).
 
-**2. Клиент `Seekers.tsx`**
+**Решение**: хранить длительность в БД (новая колонка `duration_seconds int` в `treasure_hunt_events`) и:
+- При создании — сохранить `duration_seconds`, `ended_at = NULL`.
+- При тогле «Старт» — `started_at = now()`, `ended_at = now() + (duration_seconds || ' seconds')::interval`.
+- При тогле «Стоп» — оставить как есть (или сбросить).
 
-- **Удалить клиентский UPDATE** в `endEvent`. Заменить на вызов нового RPC `auto_finalize_expired_treasure_hunts` (он SECURITY DEFINER — пройдёт от любого пользователя, идемпотентен) и затем `loadActiveEvent()` для перезагрузки.
-- Сделать `endEvent` идемпотентным: вызывать **только один раз** (флаг `useRef finalizationTriggeredRef`), не спамить тостом.
-- В `loadActiveEvent` добавить проверку: если найдено активное, но `ended_at <= now()` → сначала вызвать `auto_finalize_expired_treasure_hunts`, затем повторно загрузить (получим уже закрытое + лидерборд).
-- В useEffect таймера: при `remaining <= 0` остановить интервал (`clearInterval` сразу) и один раз триггернуть финализацию.
+Это естественно: таймер начинает идти с момента нажатия «Старт», а не с создания.
+
+**2. Клиент `TreasureHuntAdmin.tsx`**
+
+- Передавать в RPC все три параметра: `p_duration_days`, `p_duration_hours`, `p_duration_minutes`.
+- Перед отправкой валидировать: сумма > 0, иначе toast «Укажите длительность».
+- (Опционально) показывать в карточках событий рассчитанную длительность/оставшееся время.
 
 **3. Memory**
 
-Обновить `mem://admin/treasure-hunt-management`: завершение события исключительно через RPC `auto_finalize_expired_treasure_hunts` (cron + клиентский триггер); прямой UPDATE `treasure_hunt_events` из клиента запрещён; `ended_at` после старта не перезаписывается (это дедлайн, не «время фактического конца»).
+Обновить `mem://admin/treasure-hunt-management`: длительность задаётся в днях/часах/минутах; хранится в `duration_seconds`; `ended_at` рассчитывается в момент активации (Старт), а не создания; cron `auto_finalize_expired_treasure_hunts` гасит просроченные.
 
 ### Файлы под изменение
 
-- **Создать миграцию**: RPC `auto_finalize_expired_treasure_hunts` + cron schedule.
-- **`src/pages/Seekers.tsx`**: убрать direct UPDATE, добавить RPC-вызов, идемпотентный финализатор, проверка дедлайна в `loadActiveEvent`.
-- **`mem://admin/treasure-hunt-management`**: дополнить правилами.
+- **Новая миграция SQL**:
+  - `ALTER TABLE treasure_hunt_events ADD COLUMN IF NOT EXISTS duration_seconds integer;`
+  - `DROP FUNCTION` старой `admin_create_treasure_hunt_event`, создать новую с 3 параметрами длительности.
+  - При необходимости обновить `admin_toggle_treasure_hunt_event`, чтобы при активации пересчитывал `ended_at`.
+- **`src/components/admin/TreasureHuntAdmin.tsx`**: добавить hours/minutes в `rpc(...)`, валидация суммы > 0.
 
 ### Что НЕ делаю
 
-Не трогаю RLS, систему наград, админ-RPC создания/тогла событий, edge-функции (они уже правильно проверяют `ended_at`).
+Не трогаю клиент `Seekers.tsx` (он уже корректно работает с `ended_at` после прошлого фикса), RLS, edge-функции наград.
 
 ### Проверка
 
-- Дождаться истечения `ended_at` (или временно поставить близкий дедлайн через админку): через ≤1 минуты cron сам выставит `is_active=false`. UI игрока: при заходе на /seekers видно «Событие завершено», лидерборд зафиксирован, таймер не возобновляется.
-- В сетевой вкладке нет спама `PATCH /treasure_hunt_events`.
-- Повторное открытие страницы не «оживляет» событие.
+- Создать событие «0 дн, 0 ч, 5 мин» → нажать «Старт» → таймер на /seekers стартует с 5:00 и через 5 минут событие закрывается (cron + клиентский триггер).
+- Создать «0/0/0» → toast «Укажите длительность», запрос не уходит.
+- Создать «1 день, 2 часа» → таймер 26:00:00 от момента «Старт».
 
