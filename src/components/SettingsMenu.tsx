@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Sun, Menu, Volume2, VolumeX, LogOut, BookOpen, UserPen, Check, X, Loader2, Bell, BellOff, MessageCircleWarning } from "lucide-react";
+import { Globe, Sun, Menu, Volume2, VolumeX, LogOut, BookOpen, UserPen, Check, X, Loader2, Bell, BellOff, MessageCircleWarning, Sparkles } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useMusic } from "@/hooks/useMusic";
+import { useCardAnimationsSetting } from "@/hooks/useCardAnimationsSetting";
 import { Slider } from "@/components/ui/slider";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +26,7 @@ export const SettingsMenu = () => {
   const { language, toggleLanguage } = useLanguage();
   const { brightness, setBrightness, backgroundBrightness, setBackgroundBrightness } = useBrightness();
   const { volume, setVolume, isPlaying, setIsPlaying } = useMusic();
+  const { enabled: cardAnimationsEnabled, toggle: toggleCardAnimations } = useCardAnimationsSetting();
   const { disconnect: disconnectWallet, accountId } = useWalletContext();
   const { isTelegram, tgWebApp } = useTelegram();
   const { toast } = useToast();
@@ -402,6 +404,26 @@ export const SettingsMenu = () => {
               : (isPlaying ? 'Music On' : 'Music Off')
             }
           </span>
+        </button>
+
+        <button
+          onClick={toggleCardAnimations}
+          className="w-full bg-black/30 border-2 border-white rounded-2xl p-2.5 mb-2 hover:bg-black/40 transition-all flex flex-col items-center gap-1"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center justify-center gap-1.5">
+            <Sparkles className={`w-4 h-4 ${cardAnimationsEnabled ? 'text-white' : 'text-white/40'}`} />
+            <span className="text-white font-medium text-xs">
+              {language === 'ru'
+                ? (cardAnimationsEnabled ? 'Анимации карт: вкл' : 'Анимации карт: выкл')
+                : (cardAnimationsEnabled ? 'Card FX: On' : 'Card FX: Off')}
+            </span>
+          </div>
+          <p className="text-white/70 text-[9px] leading-tight text-center">
+            {language === 'ru'
+              ? 'Отключите для слабых устройств — меньше нагрев и расход батареи'
+              : 'Disable on low-end devices — reduces heat and battery drain'}
+          </p>
         </button>
 
         <div 
