@@ -159,95 +159,95 @@ export const Menu = () => {
         </div>
       </div>
       
-      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-8 my-[37px]">
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+      <div className="relative z-10 max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-6 mt-2 sm:mt-8 my-2 sm:my-[37px]">
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/dungeons')}>
-          <img src={dungeonIcon} alt="Dungeon" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.dungeon').toUpperCase()}</span>
+          <img src={dungeonIcon} alt="Dungeon" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.dungeon').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/shop')}>
-          <img src={shopIcon} alt="Shop" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.magicShop').toUpperCase().replace(' ', '\n')}</span>
+          <img src={shopIcon} alt="Shop" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.magicShop').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/grimoire')}>
-          <img src={grimoireIcon} alt="Grimoire" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.grimoire').toUpperCase()}</span>
+          <img src={grimoireIcon} alt="Grimoire" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.grimoire').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/equipment')}>
-          <img src={inventoryIcon} alt="Inventory" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.inventory').toUpperCase()}</span>
+          <img src={inventoryIcon} alt="Inventory" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.inventory').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/team')}>
-          <img src={teamIcon} alt="Team" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.team').toUpperCase()}</span>
+          <img src={teamIcon} alt="Team" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.team').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/quest')}>
-          <img src={moneyIcon} alt="Money" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.quest').toUpperCase()}</span>
+          <img src={moneyIcon} alt="Money" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.quest').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/shelter')}>
-          <img src={shelterIcon} alt="Shelter" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.camp').toUpperCase()}</span>
+          <img src={shelterIcon} alt="Shelter" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.camp').toUpperCase()}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/soul-archive')}>
-          <img src={soulArchiveIcon} alt="Soul Archive" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.soulArchive').toUpperCase().replace(' ', '\n')}</span>
+          <img src={soulArchiveIcon} alt="Soul Archive" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.soulArchive').toUpperCase().replace(' ', '\n')}</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/seekers')}>
-          <img src={moneyIcon} alt="Seekers" className="w-[23px] h-[23px]" />
-          <span className="text-base font-semibold leading-tight text-center">ИСКАТЕЛИ</span>
+          <img src={moneyIcon} alt="Seekers" className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">ИСКАТЕЛИ</span>
         </Button>
 
-        <Button variant="outline" className="h-36 bg-black/50 border-2 border-amber-500 rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+        <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-amber-500 rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/pvp')}>
-          <Swords className="w-[23px] h-[23px] text-amber-500" />
-          <span className="text-base font-semibold leading-tight text-center">PVP<br/>АРЕНА</span>
+          <Swords className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px] text-amber-500" />
+          <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">PVP<br/>АРЕНА</span>
         </Button>
 
         {gameData.buildingLevels?.clan_hall >= 1 && (
-          <Button variant="outline" className="h-36 bg-black/50 border-2 border-amber-500 rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+          <Button variant="outline" className="h-20 sm:h-36 bg-black/50 border-2 border-amber-500 rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
             boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
           }} onClick={() => navigate('/clan')}>
-            <Shield className="w-[23px] h-[23px] text-amber-500" />
-            <span className="text-base font-semibold leading-tight text-center">КЛАН</span>
+            <Shield className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px] text-amber-500" />
+            <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">КЛАН</span>
           </Button>
         )}
       </div>
 
       {/* Admin Button - для всех админов */}
-      {isAdmin && <div className="relative z-10 max-w-4xl mx-auto mt-8">
-          <Button variant="outline" className="h-36 w-full bg-black/50 border-2 border-white rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-3 backdrop-blur-sm" style={{
+      {isAdmin && <div className="relative z-10 max-w-4xl mx-auto mt-2 sm:mt-8">
+          <Button variant="outline" className="h-20 sm:h-36 w-full bg-black/50 border-2 border-white rounded-2xl sm:rounded-3xl text-white hover:bg-black/70 hover:text-white transition-all flex flex-col items-center justify-center gap-1 sm:gap-3 backdrop-blur-sm p-1 sm:p-4" style={{
         boxShadow: '-33px 15px 10px rgba(0, 0, 0, 0.6)'
       }} onClick={() => navigate('/admin-settings')}>
-            <Settings className="w-[23px] h-[23px]" />
-            <span className="text-base font-semibold leading-tight text-center">{t(language, 'menu.gameSettings').toUpperCase().replace(' ', '\n')}</span>
+            <Settings className="w-[18px] h-[18px] sm:w-[23px] sm:h-[23px]" />
+            <span className="text-[10px] sm:text-base font-semibold leading-tight text-center">{t(language, 'menu.gameSettings').toUpperCase().replace(' ', '\n')}</span>
           </Button>
         </div>}
       </div>
