@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Globe, Sun, Menu, Volume2, VolumeX, LogOut, BookOpen, UserPen, Check, X, Loader2, Bell, BellOff, MessageCircleWarning } from "lucide-react";
+import { Globe, Sun, Menu, Volume2, VolumeX, LogOut, BookOpen, UserPen, Check, X, Loader2, Bell, BellOff, MessageCircleWarning, Sparkles } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useBrightness } from "@/hooks/useBrightness";
 import { useMusic } from "@/hooks/useMusic";
+import { useCardAnimationsSetting } from "@/hooks/useCardAnimationsSetting";
 import { Slider } from "@/components/ui/slider";
 import { useWalletContext } from "@/contexts/WalletConnectContext";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +26,7 @@ export const SettingsMenu = () => {
   const { language, toggleLanguage } = useLanguage();
   const { brightness, setBrightness, backgroundBrightness, setBackgroundBrightness } = useBrightness();
   const { volume, setVolume, isPlaying, setIsPlaying } = useMusic();
+  const { enabled: cardAnimationsEnabled, toggle: toggleCardAnimations } = useCardAnimationsSetting();
   const { disconnect: disconnectWallet, accountId } = useWalletContext();
   const { isTelegram, tgWebApp } = useTelegram();
   const { toast } = useToast();
