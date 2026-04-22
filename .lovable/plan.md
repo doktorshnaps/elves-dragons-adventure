@@ -1,71 +1,78 @@
 
 
-## «Искатели»: настройка длительности игнорируется, всегда 24 часа
+## Кнопка отключения анимаций карточек (для слабых устройств)
 
 ### Корень проблемы
 
-В `src/components/admin/TreasureHuntAdmin.tsx` форма содержит три поля длительности:
-- `duration_days`
-- `duration_hours`
-- `duration_minutes`
+Карточки редкости используют CSS-классы `rarity-shimmer` и `rarity-diamond` (анимированные градиенты-переливы). На слабых мобильных устройствах множественный рендер таких карт (инвентарь, магазин, выбор команды, бой) серьёзно нагружает GPU/CPU — фризы, нагрев, разряд батареи.
 
-Но при создании события в RPC `admin_create_treasure_hunt_event` передаётся **только** `p_duration_days`:
+Сейчас классы навешиваются безусловно в:
+- `src/components/game/cards/CardGrid.tsx`
+- `src/components/game/battle/TeamCardDisplay.tsx`
+- `src/components/shop/CardAnimation.tsx`
+- и других местах через `getRarityStyle().shimmer`
 
-```ts
-p_duration_days: formData.duration_days,
-```
+### Решение
 
-Часы и минуты из формы **никуда не уходят**. Если админ ставит, например, «0 дней, 2 часа, 30 минут», в RPC улетает `p_duration_days: 0`, а серверная функция, скорее всего, при `0` подставляет дефолт = 1 день (24 часа). Отсюда «всегда 24 часа».
+Глобальный пользовательский тумблер «Анимации карточек», который сохраняется в `localStorage` и при выключении полностью убирает shimmer/diamond эффекты со всех карточек.
 
-Нужно проверить точную сигнатуру RPC `admin_create_treasure_hunt_event` (есть ли там параметры hours/minutes или только days), и при необходимости расширить её.
+### План
 
-### План фикса
+**1. Глобальное состояние настройки**
 
-**1. Проверка/обновление RPC `admin_create_treasure_hunt_event`** (миграция SQL)
+- Создать `src/hooks/useCardAnimationsSetting.ts`:
+  - Читает/пишет `localStorage` ключ `card-animations-enabled` (по умолчанию `true`).
+  - Эмитит событие `storage` + кастомный `card-animations-changed`, чтобы все подписчики обновлялись синхронно.
+  - Возвращает `{ enabled, toggle, setEnabled }`.
+- Применить через CSS-переменную/класс на `<html>`: при `enabled=false` добавлять класс `no-card-animations` к `document.documentElement`.
 
-- Прочитать текущую сигнатуру через `supabase--read_query` (`pg_get_function_arguments`).
-- Дропнуть старую версию (memory `database-rpc-standardization` — не плодить overload).
-- Создать новую версию с параметрами:
-  - `p_duration_days int default 0`
-  - `p_duration_hours int default 0`
-  - `p_duration_minutes int default 0`
-- Внутри: `v_duration interval := make_interval(days => p_duration_days, hours => p_duration_hours, mins => p_duration_minutes);`
-- Если итог `<= interval '0'` → вернуть ошибку `"duration_required"` (не молча подставлять 24ч).
-- `ended_at := now() + v_duration` устанавливать **сразу при создании**, чтобы cron-финализатор корректно работал.
-- `started_at := now()` тоже при создании (или при тогле — нужно проверить, что `admin_toggle_treasure_hunt_event` делает; если он сейчас выставляет `started_at`/`ended_at` при активации — лучше пересчитывать `ended_at = now() + duration` именно в момент `Старт`, чтобы таймер шёл от запуска, а не от создания).
+**2. CSS-killswitch**
 
-**Решение**: хранить длительность в БД (новая колонка `duration_seconds int` в `treasure_hunt_events`) и:
-- При создании — сохранить `duration_seconds`, `ended_at = NULL`.
-- При тогле «Старт» — `started_at = now()`, `ended_at = now() + (duration_seconds || ' seconds')::interval`.
-- При тогле «Стоп» — оставить как есть (или сбросить).
+- В `src/index.css` добавить:
+  ```css
+  .no-card-animations .rarity-shimmer,
+  .no-card-animations .rarity-shimmer::before,
+  .no-card-animations .rarity-shimmer::after,
+  .no-card-animations .rarity-diamond,
+  .no-card-animations .animate-card-glow {
+    animation: none !important;
+    background-image: none !important;
+  }
+  ```
+- Это самый дешёвый способ: компоненты не трогаем, отрубается единым правилом.
+- Дополнительно отключить тяжёлые `backdrop-blur` и `box-shadow`-glow в режиме «no-animations».
 
-Это естественно: таймер начинает идти с момента нажатия «Старт», а не с создания.
+**3. UI переключателя**
 
-**2. Клиент `TreasureHuntAdmin.tsx`**
+- Добавить на странице настроек (`src/pages/Settings.tsx` — если есть) секцию «Производительность» с `Switch` «Анимации карточек».
+- Если страницы настроек нет — добавить кнопку-иконку в меню `/menu` (рядом с языком) или в выпадающем меню профиля. Уточнить у пользователя предпочтительное место (см. вопрос ниже).
+- Подпись + краткое описание: «Отключите для слабых устройств — уменьшит нагрев и разряд батареи».
 
-- Передавать в RPC все три параметра: `p_duration_days`, `p_duration_hours`, `p_duration_minutes`.
-- Перед отправкой валидировать: сумма > 0, иначе toast «Укажите длительность».
-- (Опционально) показывать в карточках событий рассчитанную длительность/оставшееся время.
+**4. Авто-детекция (опционально, дефолт ON)**
 
-**3. Memory**
+- При первом запуске проверить `navigator.hardwareConcurrency <= 4` И `navigator.deviceMemory <= 2` (где доступно) → автоматически предложить отключить через одноразовый тост с кнопкой «Отключить анимации».
+- Уважать `prefers-reduced-motion: reduce` — если выставлено системой, по умолчанию выключать.
 
-Обновить `mem://admin/treasure-hunt-management`: длительность задаётся в днях/часах/минутах; хранится в `duration_seconds`; `ended_at` рассчитывается в момент активации (Старт), а не создания; cron `auto_finalize_expired_treasure_hunts` гасит просроченные.
+**5. Применение в существующих компонентах**
+
+Менять компоненты не требуется — глобальный CSS-killswitch перекрывает анимации. Но `motion`-обёртки из `framer-motion` (например, `CardAnimation.tsx` при покупке пака) — это полезные UX-анимации появления, их **НЕ** трогаем (они одноразовые, не зацикленные). Отключаем только зацикленные shimmer/diamond/glow.
 
 ### Файлы под изменение
 
-- **Новая миграция SQL**:
-  - `ALTER TABLE treasure_hunt_events ADD COLUMN IF NOT EXISTS duration_seconds integer;`
-  - `DROP FUNCTION` старой `admin_create_treasure_hunt_event`, создать новую с 3 параметрами длительности.
-  - При необходимости обновить `admin_toggle_treasure_hunt_event`, чтобы при активации пересчитывал `ended_at`.
-- **`src/components/admin/TreasureHuntAdmin.tsx`**: добавить hours/minutes в `rpc(...)`, валидация суммы > 0.
+- **Создать**: `src/hooks/useCardAnimationsSetting.ts`
+- **Изменить**: `src/index.css` (правила `.no-card-animations`)
+- **Изменить**: страница настроек (или меню) — добавить `Switch`
+- **Изменить**: `src/main.tsx` или `App.tsx` — инициализация класса на `<html>` при загрузке + слушатель `prefers-reduced-motion`
 
 ### Что НЕ делаю
 
-Не трогаю клиент `Seekers.tsx` (он уже корректно работает с `ended_at` после прошлого фикса), RLS, edge-функции наград.
+- Не убираю одноразовые `framer-motion` анимации открытия карт (они UX-критичны).
+- Не трогаю серверную логику.
+- Не меняю стили рамок редкости (border/glow остаются как индикатор), только зацикленные переливы.
 
 ### Проверка
 
-- Создать событие «0 дн, 0 ч, 5 мин» → нажать «Старт» → таймер на /seekers стартует с 5:00 и через 5 минут событие закрывается (cron + клиентский триггер).
-- Создать «0/0/0» → toast «Укажите длительность», запрос не уходит.
-- Создать «1 день, 2 часа» → таймер 26:00:00 от момента «Старт».
+- Открыть инвентарь → toggle OFF → shimmer на легендарных/мифических картах останавливается мгновенно, без перезагрузки.
+- Перезагрузить страницу → состояние сохранилось.
+- В DevTools Performance: при OFF — отсутствие постоянных layer/paint циклов от shimmer-карт.
 
