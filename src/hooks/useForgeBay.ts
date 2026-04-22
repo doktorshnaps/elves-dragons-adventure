@@ -152,13 +152,13 @@ export const useForgeBay = () => {
     try {
       // Используем RPC для получения карт (обход RLS)
       const { data: allInstances, error: rpcError } = await supabase
-        .rpc('get_card_instances_by_wallet', { 
+        .rpc('get_card_instances_by_wallet_optimized', { 
           p_wallet_address: accountId 
         });
       
       if (rpcError) throw rpcError;
       
-      const instance = (allInstances as any[])?.find(
+      const instance = ((allInstances as any[] | null) ?? []).find(
         (ci: any) => ci.id === cardInstanceIdOrTemplateId || ci.card_template_id === cardInstanceIdOrTemplateId
       );
 
