@@ -59,11 +59,11 @@ export const useNFTCardIntegration = () => {
       console.log('🔄 Force cleanup on wallet connect');
       
       // Получаем текущие NFT из БД
-      const { data: dbCards } = await supabase.rpc('get_card_instances_by_wallet', {
+      const { data: dbCards } = await supabase.rpc('get_card_instances_by_wallet_optimized', {
         p_wallet_address: accountId
       });
       
-      const currentNFTIds = (dbCards || [])
+      const currentNFTIds = ((dbCards as any[] | null) ?? [])
         .filter((c: any) => c.nft_contract_id && c.nft_token_id)
         .map((c: any) => c.card_template_id);
       

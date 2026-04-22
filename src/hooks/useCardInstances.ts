@@ -53,7 +53,7 @@ export const useCardInstances = () => {
 
       if (DEV) console.log('🃏 [useCardInstances] Fetching for:', accountId);
       const { data, error } = await supabase
-        .rpc('get_card_instances_by_wallet', { p_wallet_address: accountId });
+        .rpc('get_card_instances_by_wallet_optimized', { p_wallet_address: accountId });
 
       if (error) {
         if (DEV) console.error('❌ [useCardInstances]', error?.message || 'load failed');
@@ -65,8 +65,11 @@ export const useCardInstances = () => {
         throw error;
       }
 
-      if (DEV) console.log('✅ [useCardInstances] Loaded', data?.length || 0);
-      return (data || []) as unknown as CardInstance[];
+      // Optimized RPC returns jsonb (array of objects) — single scalar, not subject
+      // to PostgREST's SETOF row cap (~1000). Critical for players with >1000 cards.
+      const arr = (data ?? []) as unknown as CardInstance[];
+      if (DEV) console.log('✅ [useCardInstances] Loaded', arr.length);
+      return arr;
     },
     enabled: isConnected && !!accountId && !walletLoading && !!selector,
     staleTime: 30 * 60 * 1000,

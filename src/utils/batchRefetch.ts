@@ -37,7 +37,7 @@ export const batchRefetchShopData = async (
   try {
     // Execute 2 RPC calls in parallel (item_instances syncs via Real-time subscription)
     const [cardsResponse, shopResponse] = await Promise.all([
-      supabase.rpc('get_card_instances_by_wallet', { p_wallet_address: walletAddress }),
+      supabase.rpc('get_card_instances_by_wallet_optimized', { p_wallet_address: walletAddress }),
       supabase.rpc('get_shop_data_complete' as any, { p_wallet_address: walletAddress })
     ]);
 
@@ -46,7 +46,8 @@ export const batchRefetchShopData = async (
     if (shopResponse.error) throw shopResponse.error;
 
     const result = {
-      cardInstances: cardsResponse.data || [],
+      // Optimized RPC returns jsonb array — bypasses PostgREST SETOF row cap (~1000)
+      cardInstances: (cardsResponse.data as any[] | null) ?? [],
       shopData: typeof shopResponse.data === 'string' 
         ? JSON.parse(shopResponse.data) 
         : shopResponse.data
