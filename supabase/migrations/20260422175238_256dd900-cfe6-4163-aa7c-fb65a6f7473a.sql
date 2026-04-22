@@ -1,0 +1,1 @@
+COMMENT ON FUNCTION public.get_card_instances_by_wallet(text) IS 'DEPRECATED: use get_card_instances_by_wallet_optimized — SETOF return type is row-capped by PostgREST (~1000 rows) regardless of internal LIMIT. For wallets with >1000 cards this returns truncated, non-deterministic results. See: src/hooks/useCardInstances.ts';
