@@ -321,3 +321,27 @@ body.wallet-modal-open iframe {
   background-size: 200% 100%;
   animation: rarityShimmer 2s ease-in-out infinite;
 }
+
+/* ============================================================
+   Card animations killswitch (low-end device performance mode)
+   Toggle via .no-card-animations class on <html>.
+   Disables looping shimmer/diamond/glow effects on rarity cards
+   while preserving one-shot framer-motion UX animations.
+   ============================================================ */
+html.no-card-animations .rarity-shimmer::after,
+html.no-card-animations .rarity-shimmer::before,
+html.no-card-animations .rarity-diamond::after {
+  animation: none !important;
+  background: none !important;
+  display: none !important;
+}
+
+html.no-card-animations .animate-card-glow {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+html.no-card-animations .animate-pulse-slow,
+html.no-card-animations .animate-shimmer {
+  animation: none !important;
+}
