@@ -406,6 +406,26 @@ export const SettingsMenu = () => {
           </span>
         </button>
 
+        <button
+          onClick={toggleCardAnimations}
+          className="w-full bg-black/30 border-2 border-white rounded-2xl p-2.5 mb-2 hover:bg-black/40 transition-all flex flex-col items-center gap-1"
+          style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
+        >
+          <div className="flex items-center justify-center gap-1.5">
+            <Sparkles className={`w-4 h-4 ${cardAnimationsEnabled ? 'text-white' : 'text-white/40'}`} />
+            <span className="text-white font-medium text-xs">
+              {language === 'ru'
+                ? (cardAnimationsEnabled ? 'Анимации карт: вкл' : 'Анимации карт: выкл')
+                : (cardAnimationsEnabled ? 'Card FX: On' : 'Card FX: Off')}
+            </span>
+          </div>
+          <p className="text-white/70 text-[9px] leading-tight text-center">
+            {language === 'ru'
+              ? 'Отключите для слабых устройств — меньше нагрев и расход батареи'
+              : 'Disable on low-end devices — reduces heat and battery drain'}
+          </p>
+        </button>
+
         <div 
           className="bg-black/30 border-2 border-white rounded-2xl p-2.5 mb-2"
           style={{ boxShadow: '-10px 10px 8px rgba(0, 0, 0, 0.4)' }}
