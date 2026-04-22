@@ -1,64 +1,95 @@
 
 
-## Игрок s6aek3r.tg: «карты драконов исчезают, герои появляются сами» — корень и фикс
+## Карточки не грузятся: оптимизированная RPC ссылается на несуществующую колонку
 
 ### Диагноз
 
-В БД у игрока **всё на месте**:
-- Героев: **1006**
-- Драконов: **1054**
-- Рабочих: 8
-- В медпункте/кузнице/мёртвых: 0
-
-В UI же показывалось `Колода героев 486–493 / Колода драконов 503–511`. Сумма каждый раз **≈ 996–997 карт** — это и есть подсказка.
-
-### Корень проблемы
-
-Хук `useCardInstances` зовёт RPC `get_card_instances_by_wallet`, которая возвращает `SETOF card_instances`. PostgREST трактует `SETOF table` как табличный ответ и применяет **глобальный лимит ~1000 строк** на JSON-ответ, **независимо от `LIMIT 5000` внутри функции**. У этого игрока 2060 карт → API режет ответ до ~1000.
-
-Дополнительно: у 2060 карт всего **26 уникальных `created_at`** (выдаются пачками по покупке паков). При `ORDER BY created_at DESC LIMIT 1000` граничная пачка попадает в обрезку **в недетерминированном порядке** — поэтому при каждом рефетче (после боя/покупки) в UI видна **разная подмножество** героев и драконов. Игроку это выглядит как «дракон пропал, а герой сам появился».
-
-Симптомы воспроизводятся у любого игрока с >1000 карт — у этого их 2 раза больше.
-
-Файлы под фикс:
-- `src/hooks/useCardInstances.ts`
-- `src/utils/batchRefetch.ts`
-- `src/hooks/useNFTCardIntegration.ts`
-- `src/hooks/useForgeBay.ts`
-
-### План фикса
-
-**1. Переключить все вызовы на `get_card_instances_by_wallet_optimized`**
-
-Эта RPC уже существует и возвращает `jsonb` (одно скалярное JSON-значение → не попадает под лимит строк PostgREST). Покрывает все нужные поля + `template_info` для воркеров.
-
-В четырёх файлах заменить:
-```ts
-supabase.rpc('get_card_instances_by_wallet', { p_wallet_address })
+В консоли пользователя:
 ```
-на
-```ts
-supabase.rpc('get_card_instances_by_wallet_optimized', { p_wallet_address })
+❌ [useCardInstances] column ci.is_on_marketplace does not exist
 ```
-и адаптировать обработку: ответ теперь `jsonb` (массив объектов), а не строки таблицы. Привести типы к существующему `CardInstance` через приведение `data as unknown as CardInstance[]` (и `?? []` на пустой ответ).
 
-**2. Защититься от регрессии — пометить старую RPC как deprecated**
+После прошлого фикса фронт переключён на `get_card_instances_by_wallet_optimized`. Но тело функции содержит:
+```sql
+WHERE ci.wallet_address = p_wallet_address
+  AND ci.is_on_marketplace IS NOT TRUE;
+```
 
-В `get_card_instances_by_wallet` поднять явный `LIMIT 5000` остаётся, но т.к. это `SETOF`, она навсегда уязвима к лимиту PostgREST. Добавлю в её комментарий `COMMENT ON FUNCTION ... IS 'DEPRECATED: use get_card_instances_by_wallet_optimized — SETOF is row-capped by PostgREST'`, чтобы будущие обращения не вернулись.
+Колонки `is_on_marketplace` в таблице `public.card_instances` **нет** (проверено по `information_schema.columns`). Любой вызов RPC падает с `42703 undefined_column`, фронт показывает тост «Ошибка загрузки карт» и пустой список → у всех игроков 0 карт.
 
-**3. Проверка после фикса**
+Это регрессия: оптимизированная RPC создавалась под будущую фичу маркетплейса, которая ещё не приехала схемой.
 
-- У игрока `s6aek3r.tg` после релиза в UI должны отобразиться **1006 героев / 1054 дракона** (стабильно при любом рефетче).
-- Сетевой ответ `get_card_instances_by_wallet_optimized` для этого кошелька должен содержать массив длины 2068.
-- На других игроках с <1000 карт поведение не меняется.
+### Фикс
 
-**4. Память**
+Одна SQL-миграция — пересоздать `get_card_instances_by_wallet_optimized` без условия `is_on_marketplace`:
 
-Обновить `mem://architecture/instance-refresh-policy`: «RPC, возвращающие `SETOF`, обрезаются глобальным лимитом строк PostgREST. Для коллекций потенциально >1000 строк (карты, инвентарь) использовать `*_optimized` варианты, возвращающие `jsonb`».
+```sql
+CREATE OR REPLACE FUNCTION public.get_card_instances_by_wallet_optimized(p_wallet_address text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_result jsonb;
+BEGIN
+  SELECT jsonb_agg(
+    jsonb_build_object(
+      'id', ci.id,
+      'user_id', ci.user_id,
+      'wallet_address', ci.wallet_address,
+      'card_template_id', ci.card_template_id,
+      'card_type', ci.card_type,
+      'current_health', ci.current_health,
+      'max_health', ci.max_health,
+      'current_defense', ci.current_defense,
+      'max_defense', ci.max_defense,
+      'max_power', ci.max_power,
+      'max_magic', ci.max_magic,
+      'last_heal_time', ci.last_heal_time,
+      'is_in_medical_bay', ci.is_in_medical_bay,
+      'medical_bay_start_time', ci.medical_bay_start_time,
+      'medical_bay_heal_rate', ci.medical_bay_heal_rate,
+      'monster_kills', ci.monster_kills,
+      'card_data', ci.card_data,
+      'created_at', ci.created_at,
+      'updated_at', ci.updated_at,
+      'nft_contract_id', ci.nft_contract_id,
+      'nft_token_id', ci.nft_token_id,
+      'template_info', CASE 
+        WHEN ci.card_type = 'workers' AND it.id IS NOT NULL THEN
+          jsonb_build_object(
+            'id', it.id, 'item_id', it.item_id, 'name', it.name,
+            'description', it.description, 'image_url', it.image_url,
+            'stats', it.stats, 'value', it.value,
+            'sell_price', it.sell_price, 'rarity', it.rarity
+          )
+        ELSE NULL
+      END
+    )
+  )
+  INTO v_result
+  FROM card_instances ci
+  LEFT JOIN item_templates it
+    ON ci.card_type = 'workers' AND ci.card_template_id = it.item_id
+  WHERE ci.wallet_address = p_wallet_address;
+
+  RETURN COALESCE(v_result, '[]'::jsonb);
+END;
+$$;
+```
+
+Когда колонка `is_on_marketplace` реально появится в `card_instances` — фильтр можно будет вернуть отдельной миграцией.
 
 ### Что НЕ делаю
 
-- Не меняю саму схему `card_instances`, не трогаю realtime-подписки и кэш-политику React Query (3-слойная синхронизация остаётся).
-- Не трогаю воркеров/медпункт/кузницу — там данные приходят теми же путями, фикс RPC заодно лечит и их при больших коллекциях.
-- Не делаю серверных миграций кроме комментария на старой функции.
+- Не трогаю фронт — он уже использует правильную RPC, проблема исключительно в SQL.
+- Не откатываю переключение на оптимизированную RPC (старая всё равно режется лимитом 1000).
+- Не добавляю колонку `is_on_marketplace` — нет фичи маркетплейса, это будет мёртвый код.
+
+### Проверка
+
+- Открыть `/team` → колоды героев и драконов снова показывают карты.
+- В консоли отсутствует `column ci.is_on_marketplace does not exist`.
+- У `s6aek3r.tg` стабильно 1006 героев / 1054 дракона (большая выборка через jsonb-RPC).
 
