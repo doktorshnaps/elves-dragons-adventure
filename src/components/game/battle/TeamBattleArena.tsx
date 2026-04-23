@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Sword, Shield, Heart, ArrowLeft, Zap, FastForward } from 'lucide-react';
+import { Sword, Shield, Heart, ArrowLeft, Zap, FastForward, Castle } from 'lucide-react';
 import { TeamPair } from '@/types/teamBattle';
 import { Opponent } from '@/types/battle';
 import { useGameStore } from '@/stores/gameStore';
-import { getXPProgress } from '@/utils/accountLeveling';
 import { useNavigate } from 'react-router-dom';
 import { TeamHealthBars } from './TeamHealthBars';
 import { InlineDiceDisplay } from './InlineDiceDisplay';
@@ -62,10 +61,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   const navigate = useNavigate();
   const { endDungeonSession } = useDungeonSync();
   const { speed, setSpeed, adjustDelay } = useBattleSpeed();
-  const {
-    accountLevel,
-    accountExperience
-  } = useGameStore();
   const [selectedPair, setSelectedPair] = React.useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = React.useState<number | string | null>(null);
   const [attackingPair, setAttackingPair] = React.useState<string | null>(null);
@@ -169,9 +164,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
     return orderedPairs[0];
   };
   const currentAttacker = getCurrentAttacker();
-
-  // Получаем прогресс опыта для отображения
-  const xpProgress = getXPProgress(accountExperience);
 
   // Сбрасываем все состояния анимаций при смене уровня
   useEffect(() => {
@@ -490,14 +482,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs text-white/70">
-                {t(language, 'battlePage.level')} {accountLevel}
-              </span>
-              <div className="w-20 sm:w-28">
-                <Progress value={xpProgress.progress * 100} className="h-1" />
-              </div>
-              <span className="text-[9px] sm:text-xs text-white font-medium">
-                Ур. {level}
+              <Castle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+              <span className="text-xs sm:text-sm text-white font-semibold">
+                {t(language, 'battlePage.dungeonLevel')} {level}
               </span>
             </div>
 
