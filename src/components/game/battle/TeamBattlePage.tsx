@@ -980,26 +980,27 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       );
     }
     
+    // 💀 ПРИОРИТЕТ: При полном поражении всегда показываем экран поражения,
+    // даже если pendingReward/accumulatedReward остались от предыдущих уровней.
+    if (alivePairs.length === 0) {
+      console.log('💀 [RENDER] Показываем экран полного поражения (приоритет над pendingReward)');
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-white text-center">{t(language, 'battlePage.teamDefeated')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
+              <Button variant="menu" onClick={handleSurrenderWithSave}>{t(language, 'battlePage.exit')}</Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     if (!pendingReward && !isClaiming && !claimResultModal.isOpen) {
       console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
-      // При полном поражении награды нет — показываем экран поражения с выходом
-      if (alivePairs.length === 0) {
-        console.log('💀 [RENDER] Показываем экран полного поражения');
-        return (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
-            <Card variant="menu" className="p-6 max-w-md w-full">
-              <CardHeader>
-                <CardTitle className="text-white text-center">{t(language, 'battlePage.teamDefeated')}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
-                <Button variant="menu" onClick={handleSurrenderWithSave}>{t(language, 'battlePage.exit')}</Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      }
-
       // Иначе краткая заглушка на обработку (например, при победе)
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
