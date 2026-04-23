@@ -165,9 +165,6 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
   };
   const currentAttacker = getCurrentAttacker();
 
-  // Получаем прогресс опыта для отображения
-  const xpProgress = getXPProgress(accountExperience);
-
   // Сбрасываем все состояния анимаций при смене уровня
   useEffect(() => {
     setAttackAnimation({ isActive: false, type: 'normal', source: 'player', damage: 0 });
@@ -485,14 +482,9 @@ export const TeamBattleArena: React.FC<TeamBattleArenaProps> = ({
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs text-white/70">
-                {t(language, 'battlePage.level')} {accountLevel}
-              </span>
-              <div className="w-20 sm:w-28">
-                <Progress value={xpProgress.progress * 100} className="h-1" />
-              </div>
-              <span className="text-[9px] sm:text-xs text-white font-medium">
-                Ур. {level}
+              <Castle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+              <span className="text-xs sm:text-sm text-white font-semibold">
+                {t(language, 'battlePage.dungeonLevel')} {level}
               </span>
             </div>
 
