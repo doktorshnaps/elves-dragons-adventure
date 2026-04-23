@@ -917,6 +917,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       // Флаги управляются через Zustand, не localStorage
       useGameStore.getState().setActiveBattleInProgress(false);
       processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
+      // 🛡️ Страховка от race condition в useDungeonRewards (isProcessingRef.current может проглотить вызов)
+      console.log('🔄 Сброс всех наград (страховка при поражении)');
+      resetRewards();
     } else {
       // Задержка 1.8с, чтобы успели проиграться бросок кубика, полет оружия и смерть монстра
       setShowingFinishDelay(true);
