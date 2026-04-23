@@ -931,7 +931,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         setShowingFinishDelay(false);
       }, delayMs);
     }
-  }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
+  }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion, resetRewards]);
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
     // ✅ FIX: If team was never loaded (stale empty state), clear and don't render defeat
