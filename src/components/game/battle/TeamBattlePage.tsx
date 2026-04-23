@@ -642,9 +642,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         variant: "default"
       });
     } else {
+      const totalCards = battleState.playerPairs.reduce(
+        (acc, pair) => acc + (pair.hero ? 1 : 0) + (pair.dragon ? 1 : 0),
+        0
+      );
       toast({
         title: "📤 Отправка данных",
-        description: `Сохраняем ${cardHealthUpdates.length} из ${battleState.playerPairs.length * 2} карт...`,
+        description: `Сохраняем ${cardHealthUpdates.length} из ${totalCards} карт...`,
       });
     }
     
@@ -913,6 +917,9 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       // Флаги управляются через Zustand, не localStorage
       useGameStore.getState().setActiveBattleInProgress(false);
       processDungeonCompletion(kills, battleState.level, isFullCompletion, true); // isDefeat = true
+      // 🛡️ Страховка от race condition в useDungeonRewards (isProcessingRef.current может проглотить вызов)
+      console.log('🔄 Сброс всех наград (страховка при поражении)');
+      resetRewards();
     } else {
       // Задержка 1.8с, чтобы успели проиграться бросок кубика, полет оружия и смерть монстра
       setShowingFinishDelay(true);
@@ -924,7 +931,7 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         setShowingFinishDelay(false);
       }, delayMs);
     }
-  }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion]);
+  }, [isBattleOver, battleStarted, alivePairs.length, battleState.level, processDungeonCompletion, resetRewards]);
   
   if (isBattleOver && battleStarted && !showingFinishDelay) {
     // ✅ FIX: If team was never loaded (stale empty state), clear and don't render defeat
@@ -973,26 +980,27 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
       );
     }
     
+    // 💀 ПРИОРИТЕТ: При полном поражении всегда показываем экран поражения,
+    // даже если pendingReward/accumulatedReward остались от предыдущих уровней.
+    if (alivePairs.length === 0) {
+      console.log('💀 [RENDER] Показываем экран полного поражения (приоритет над pendingReward)');
+      return (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
+          <Card variant="menu" className="p-6 max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="text-white text-center">{t(language, 'battlePage.teamDefeated')}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
+              <Button variant="menu" onClick={handleSurrenderWithSave}>{t(language, 'battlePage.exit')}</Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     if (!pendingReward && !isClaiming && !claimResultModal.isOpen) {
       console.log('🔍 [RENDER] Нет pending reward и не идет claiming');
-      // При полном поражении награды нет — показываем экран поражения с выходом
-      if (alivePairs.length === 0) {
-        console.log('💀 [RENDER] Показываем экран полного поражения');
-        return (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
-            <Card variant="menu" className="p-6 max-w-md w-full">
-              <CardHeader>
-                <CardTitle className="text-white text-center">{t(language, 'battlePage.teamDefeated')}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <p className="text-white/80">{t(language, 'battlePage.noReward')}</p>
-                <Button variant="menu" onClick={handleSurrenderWithSave}>{t(language, 'battlePage.exit')}</Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
-      }
-
       // Иначе краткая заглушка на обработку (например, при победе)
       return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200]">
