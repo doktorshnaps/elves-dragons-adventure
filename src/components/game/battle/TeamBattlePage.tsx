@@ -642,9 +642,13 @@ const TeamBattlePageInner: React.FC<TeamBattlePageProps> = ({
         variant: "default"
       });
     } else {
+      const totalCards = battleState.playerPairs.reduce(
+        (acc, pair) => acc + (pair.hero ? 1 : 0) + (pair.dragon ? 1 : 0),
+        0
+      );
       toast({
         title: "📤 Отправка данных",
-        description: `Сохраняем ${cardHealthUpdates.length} из ${battleState.playerPairs.length * 2} карт...`,
+        description: `Сохраняем ${cardHealthUpdates.length} из ${totalCards} карт...`,
       });
     }
     
