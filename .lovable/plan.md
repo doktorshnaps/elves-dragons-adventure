@@ -1,70 +1,79 @@
 
 
-## Ошибка «Failed to get challenge» при выходе после смерти карт
+## Награда после смерти команды + неправильный счётчик «1 из 2 карт»
 
-### Диагноз
+### Две проблемы
 
-В edge-логах видно последовательность для `mr_bruts.tg`:
+**1. «Сохраняем 1 из 2 карт»** (скрин 2)
 
+В `TeamBattlePage.tsx:647`:
+```ts
+description: `Сохраняем ${cardHealthUpdates.length} из ${battleState.playerPairs.length * 2} карт...`,
 ```
-582333  ✅ get-claim-challenge → nonce ОК
-583651  ✅ claim-battle-rewards → rewards applied (победа на ур.1)
-587948  ✅ end-dungeon-session → сессия удалена
-589627  ❌ get-claim-challenge → "Session not found" (PGRST116)
+Знаменатель `playerPairs.length * 2` подразумевает, что в каждой паре всегда есть и герой, и дракон. Но в команде может быть только 1 герой без дракона → `1 / (1*2) = 1/2`. У игрока в команде была 1 карта — должно быть `1 из 1`.
+
+**2. После смерти всей команды появляется «Забрать награду»** (скрин 1 + тост из скрина 2)
+
+Тост `Сохраняем X из Y карт` приходит ТОЛЬКО из `handleClaimAndExit` (line 647). На экране поражения кнопка «Выйти» уже маршрутизирована на `handleSurrenderWithSave` (line 989) — без claim. Значит модалка `DungeonRewardModal` (line 1033) открывается ПОСЛЕ полного поражения и её `onClose={handleClaimAndExit}` (line 1035) триггерит claim-путь.
+
+Условие открытия модалки: `!!pendingReward && !isClaiming && !claimResultModal.isOpen`. Экран поражения (line 979) показывается только если `!pendingReward && alivePairs.length === 0`. Если `pendingReward` остался от предыдущего уровня (например игрок выиграл ур.1, нажал «Продолжить», умер на ур.2), а `processDungeonCompletion(isDefeat=true)` не успел обнулить state до рендера — открывается модалка наград, и пользователь логично жмёт «Забрать», получая 0 ELL/0 XP/0 предметов и тост `Сохраняем 1 из 2 карт`.
+
+Дополнительно в `useDungeonRewards.processDungeonCompletion` есть guard:
+```ts
+if (isProcessingRef.current) return;
 ```
+который может проглотить вызов `isDefeat=true`, если предыдущая обработка ещё идёт — тогда `pendingReward` НЕ обнуляется и модалка остаётся.
 
-То есть фронт ПОВТОРНО запрашивает challenge с тем же `claim_key=6b334be9` уже после того, как сессия удалена.
+### Исправление (1 файл клиента)
 
-В коде `TeamBattlePage.tsx` (строки 979–993) экран **полного поражения** («Команда побеждена / Награды нет») имеет кнопку «Выйти», которая вызывает `handleClaimAndExit`. Эта функция:
+`src/components/game/battle/TeamBattlePage.tsx`:
 
-1. Берёт `getCurrentClaimKey()` (старый или текущий claim_key из localStorage),
-2. Запускает `claimRewardAndExit(capturedClaimKey, …)`,
-3. Внутри идёт в `claimBattleRewardsUtil` → `get-claim-challenge`.
+**A. Правильный счётчик карт в тосте (строки 645–648):**
 
-Но к моменту нажатия «Выйти» сессия уже могла быть закрыта (предыдущий уровень завершился победой и `end-dungeon-session` отработал, либо real-time/keep-alive стёрли сессию). Кроме того, защита `isDefeatedRef.current` теряется при перемонтировании хука `useDungeonRewards`. Результат — `get-claim-challenge` отвечает 404, фронт показывает красный тост «Failed to get challenge: Edge Function returned a non-2xx status code», игрок зависает на экране ошибки.
-
-При этом **никаких наград начислять при полном поражении не нужно** — `processDungeonCompletion` уже сбрасывает `pendingReward = null` и `accumulatedReward = null`. Нужен только: сохранить здоровье/броню (включая `0`) мёртвых карт + закрыть сессию + выйти.
-
-### Решение
-
-Маршрутизировать кнопку «Выйти» на экране поражения через **существующую** функцию `handleSurrenderWithSave`, которая уже делает ровно то, что нужно:
-
-- Собирает `cardHealthUpdates` (включая мёртвые карты с `current_health=0`),
-- Вызывает `claimRewardAndExit(null, cardHealthUpdates, …)` — путь `shouldSkipRewards=true`, без challenge/claim,
-- Делает `handleExitAndReset()` (зачистка Zustand, localStorage, `end-dungeon-session`, инвалидация кэша, navigate).
-
-То есть на экране поражения мы НЕ ходим за challenge вовсе — сразу batch-апдейт здоровья и чистый выход.
-
-### Правка (1 файл)
-
-`src/components/game/battle/TeamBattlePage.tsx`, строка 989:
-
-```tsx
-// Было
-<Button variant="menu" onClick={handleClaimAndExit}>
-  {t(language, 'battlePage.exit')}
-</Button>
-
-// Стало
-<Button variant="menu" onClick={handleSurrenderWithSave}>
-  {t(language, 'battlePage.exit')}
-</Button>
+Заменить `playerPairs.length * 2` на реальное количество карт в команде:
+```ts
+const totalCards = battleState.playerPairs.reduce(
+  (acc, pair) => acc + (pair.hero ? 1 : 0) + (pair.dragon ? 1 : 0),
+  0
+);
+toast({
+  title: "📤 Отправка данных",
+  description: `Сохраняем ${cardHealthUpdates.length} из ${totalCards} карт...`,
+});
 ```
 
-Дополнительно: в блоке экрана ошибки claim (строки 949–973) на кнопке «Сдаться и выйти» (963–967) уже стоит `handleSurrenderWithSave` — это правильная ссылка-эталон, ничего не трогаю.
+**B. Приоритет экрана поражения над модалкой наград (строки 929–1059):**
+
+В блоке `if (isBattleOver && battleStarted && !showingFinishDelay)` поднять проверку `alivePairs.length === 0` ВЫШЕ проверки `!pendingReward`. Если команда полностью побеждена — всегда показываем экран «Команда побеждена / Награды нет / Выйти» с `handleSurrenderWithSave`, **независимо** от того, остался ли `pendingReward`/`accumulatedReward` в памяти от предыдущих уровней. Перед рендером экрана поражения дополнительно вызвать `resetRewards()` через `useEffect`-страж (один раз на defeat), чтобы исключить «зомби-модалку».
+
+Логика:
+```text
+isBattleOver && battleStarted:
+  ├─ playerPairs пусто → очистить state, fall-through
+  ├─ claimError → экран ошибки claim (как было)
+  ├─ alivePairs.length === 0 → ЭКРАН ПОРАЖЕНИЯ (handleSurrenderWithSave) ✦ НОВЫЙ ПРИОРИТЕТ
+  ├─ isClaiming → "Обработка результатов..."
+  ├─ !pendingReward → "Обработка..."
+  └─ default → DungeonRewardModal + ClaimRewardsResultModal (как было, для побед)
+```
+
+**C. Гарантированный сброс `pendingReward`/`accumulatedReward` при детекции поражения:**
+
+В useEffect `Обработка завершения боя` (строки 893–927) после `processDungeonCompletion(... isDefeat=true)` добавить прямой `resetRewards()` через ссылку из `useDungeonRewards`. Это страховка от race condition с `isProcessingRef.current` в хуке наград.
 
 ### Что НЕ трогаю
 
-- `handleClaimAndExit` — продолжает обслуживать кнопку «Выйти» в модалке наград (`DungeonRewardModal.onClose`) при победе/частичном прохождении. Там challenge/claim необходимы.
-- `get-claim-challenge` edge-функция — её ответ 404 при отсутствии сессии корректен, это защитная проверка.
-- `claim-battle-rewards`, `end-dungeon-session`, `claimRewardAndExit`, `useDungeonRewards` — логика верна, проблема была только в неправильном вызове из UI поражения.
-- `isDefeatedRef` — оставляю как дополнительную защиту, но больше на неё не полагаемся в этом сценарии.
+- `useDungeonRewards.processDungeonCompletion` — внутренняя логика остаётся, добавляем только клиентскую страховку.
+- `handleClaimAndExit` — продолжает обслуживать кнопку «Забрать» в `DungeonRewardModal` при настоящих победах/частичном прохождении.
+- `handleSurrenderWithSave`, `claimRewardAndExit`, edge-функции — без изменений.
+- Архитектуру наград, тосты `🚨 Сохранение прогресса`, итоговую модалку `ClaimRewardsResultModal` — не трогаю.
+- `processDungeonCompletion` для побед — поведение «Победа → накопить → выбрать продолжить/забрать» сохраняется в полном объёме.
 
 ### Проверка
 
-1. Зайти в подземелье → довести команду до смерти всех карт.
-2. На экране «Команда побеждена / Награды нет» нажать «Выйти».
-3. Ожидаемо: тосты «Сдача» → «Состояние сохранено» → переход на `/dungeons`. **Никакого красного тоста «Ошибка начисления наград»** не появляется.
-4. В edge-логах нет новых вызовов `get-claim-challenge` после `end-dungeon-session`.
-5. Здоровье мёртвых карт сохранилось в БД как `0` (карты остаются мертвыми и попадают в обычный поток медпункта/удаления из команд).
+1. Команда из 1 карты → зайти в подземелье ур.1 → нажать «Сдаться» (или умереть) → тост: **`Сохраняем 1 из 1 карт...`**, не `1 из 2`.
+2. Команда из 1 героя + 1 дракона (1 пара) → тост: `Сохраняем 2 из 2 карт`.
+3. Победить ур.1 → нажать «Продолжить» → умереть на ур.2 → видим экран **«Команда побеждена / Награды нет»** с одной кнопкой «Выйти». **Никакой модалки «Забрать награду»** не появляется.
+4. Победить ур.1 → нажать «Забрать награду» → нормальный flow с `ClaimRewardsResultModal` (как раньше, не сломали).
+5. В консоли при поражении видно `🔄 Сброс всех наград` от резервного `resetRewards()` сразу после `processDungeonCompletion(isDefeat=true)`.
 
