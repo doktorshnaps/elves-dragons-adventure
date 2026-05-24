@@ -1,79 +1,86 @@
+## Гостевой режим на /auth — демо-аккаунт read-only
 
+### Концепция
 
-## Награда после смерти команды + неправильный счётчик «1 из 2 карт»
+Гость = подмена `accountId` на фиксированный демо-кошелёк из БД (`guest-demo.near`). Под капотом весь UI работает как обычно (`useWalletContext().accountId` отдаёт демо-адрес), данные читаются из реальной таблицы `game_data`/`card_instances`/`player_teams` демо-аккаунта, но все мутации блокируются клиентским guard'ом + RLS на стороне БД (демо-кошелёк не имеет admin-прав, а edge-функции получают `wallet_address` от клиента — guard ловит до отправки).
 
-### Две проблемы
+Демо-аккаунт = обычная запись в БД, наполняется вручную через админку (создать кошелёк `guest-demo.near`, дать ему карты/здания). В коде хардкод-константа `GUEST_DEMO_WALLET = 'guest-demo.near'`.
 
-**1. «Сохраняем 1 из 2 карт»** (скрин 2)
+### Изменения
 
-В `TeamBattlePage.tsx:647`:
+**1. `src/contexts/WalletConnectContext.tsx`**
+- Добавить `isGuest: boolean` и `enterGuestMode(): void`, `exitGuestMode(): Promise<void>` в контекст.
+- При маунте читать `localStorage.getItem('guestMode') === 'true'` → если да и нет реального кошелька, выставить `accountId = GUEST_DEMO_WALLET`, `isGuest = true`, `isLoading = false`.
+- `enterGuestMode()`: пишет `guestMode=true` + `walletConnected=true` в localStorage, выставляет state, инвалидирует react-query кэш.
+- `exitGuestMode()`: удаляет `guestMode`, очищает localStorage как в `disconnect()`, чистит react-query кэш, редирект на /auth.
+- `connect()`: если уже `isGuest`, сначала вызвать `exitGuestMode()`, потом обычный коннект.
+
+**2. `src/utils/guestMode.ts` (новый)**
 ```ts
-description: `Сохраняем ${cardHealthUpdates.length} из ${battleState.playerPairs.length * 2} карт...`,
+export const GUEST_DEMO_WALLET = 'guest-demo.near';
+export const isGuestWallet = (id: string | null) => id === GUEST_DEMO_WALLET;
+// Хук-обёртка: возвращает {isGuest, blockIfGuest(featureName)}
+export const useGuestGuard = () => {
+  const { isGuest } = useWalletContext();
+  const { toast } = useToast();
+  const blockIfGuest = (feature: string) => {
+    if (!isGuest) return false;
+    toast({ title: 'Гостевой режим', description: `${feature} недоступно. Подключите кошелёк.`, variant: 'destructive' });
+    return true;
+  };
+  return { isGuest, blockIfGuest };
+};
 ```
-Знаменатель `playerPairs.length * 2` подразумевает, что в каждой паре всегда есть и герой, и дракон. Но в команде может быть только 1 герой без дракона → `1 / (1*2) = 1/2`. У игрока в команде была 1 карта — должно быть `1 из 1`.
 
-**2. После смерти всей команды появляется «Забрать награду»** (скрин 1 + тост из скрина 2)
+**3. `src/pages/Auth.tsx`**
+- Под основной кнопкой подключения — вторичная кнопка «Войти как гость» (ghost-стиль) с подписью «Ознакомление без покупок и сохранения прогресса».
+- onClick → `enterGuestMode()` → `navigate('/menu')`.
+- Добавить переводы `auth.guestButton`, `auth.guestSubtitle` в `src/utils/translations.ts` (RU/EN).
 
-Тост `Сохраняем X из Y карт` приходит ТОЛЬКО из `handleClaimAndExit` (line 647). На экране поражения кнопка «Выйти» уже маршрутизирована на `handleSurrenderWithSave` (line 989) — без claim. Значит модалка `DungeonRewardModal` (line 1033) открывается ПОСЛЕ полного поражения и её `onClose={handleClaimAndExit}` (line 1035) триггерит claim-путь.
+**4. `src/components/layout/GuestBanner.tsx` (новый)**
+- Фикс-полоса сверху (sticky, z-50) с текстом «🎭 Гостевой режим — прогресс не сохраняется» + кнопка «Подключить кошелёк» (вызывает `exitGuestMode()` → редирект на /auth).
+- Рендерится только если `isGuest`. Монтируется в `GameLayout.tsx` поверх контента.
 
-Условие открытия модалки: `!!pendingReward && !isClaiming && !claimResultModal.isOpen`. Экран поражения (line 979) показывается только если `!pendingReward && alivePairs.length === 0`. Если `pendingReward` остался от предыдущего уровня (например игрок выиграл ур.1, нажал «Продолжить», умер на ур.2), а `processDungeonCompletion(isDefeat=true)` не успел обнулить state до рендера — открывается модалка наград, и пользователь логично жмёт «Забрать», получая 0 ELL/0 XP/0 предметов и тост `Сохраняем 1 из 2 карт`.
+**5. Блокировка мутаций (guard через `useGuestGuard().blockIfGuest`)**
 
-Дополнительно в `useDungeonRewards.processDungeonCompletion` есть guard:
+В каждом из этих обработчиков в самом начале:
 ```ts
-if (isProcessingRef.current) return;
-```
-который может проглотить вызов `isDefeat=true`, если предыдущая обработка ещё идёт — тогда `pendingReward` НЕ обнуляется и модалка остаётся.
-
-### Исправление (1 файл клиента)
-
-`src/components/game/battle/TeamBattlePage.tsx`:
-
-**A. Правильный счётчик карт в тосте (строки 645–648):**
-
-Заменить `playerPairs.length * 2` на реальное количество карт в команде:
-```ts
-const totalCards = battleState.playerPairs.reduce(
-  (acc, pair) => acc + (pair.hero ? 1 : 0) + (pair.dragon ? 1 : 0),
-  0
-);
-toast({
-  title: "📤 Отправка данных",
-  description: `Сохраняем ${cardHealthUpdates.length} из ${totalCards} карт...`,
-});
+if (blockIfGuest('Покупки в магазине')) return;
 ```
 
-**B. Приоритет экрана поражения над модалкой наград (строки 929–1059):**
+- **Магазин**: `src/components/Shop.tsx` / `src/pages/ShopPage.tsx` — обработчик покупки.
+- **Колоды/команды**: `src/components/game/team/*` (поиск через `rg "saveTeam\|player_teams"`), все `handleSave/handleAddCard/handleRemoveCard`.
+- **Подземелья**: `src/components/dungeon/DungeonControls.tsx` / `ActiveDungeonButton.tsx` — кнопка «Войти в подземелье».
+- **PvP**: `src/pages/PvP.tsx` — кнопка поиска матча.
+- **Кланы**: `src/pages/Clan.tsx` — create/join/leave/donate.
+- **Telegram/настройки**: `src/components/SettingsMenu.tsx` — сохранение chat_id, смена display name.
+- **Зелья/предметы**: продажа предметов, открытие паков, форж, медпункт.
+- **`useGameInitialization`**: НЕ создавать game_data для гостя (early return если `isGuestWallet(accountId)`).
+- **`useGameInitialization` → `saveTelegramChatId`**: skip для гостя.
 
-В блоке `if (isBattleOver && battleStarted && !showingFinishDelay)` поднять проверку `alivePairs.length === 0` ВЫШЕ проверки `!pendingReward`. Если команда полностью побеждена — всегда показываем экран «Команда побеждена / Награды нет / Выйти» с `handleSurrenderWithSave`, **независимо** от того, остался ли `pendingReward`/`accumulatedReward` в памяти от предыдущих уровней. Перед рендером экрана поражения дополнительно вызвать `resetRewards()` через `useEffect`-страж (один раз на defeat), чтобы исключить «зомби-модалку».
-
-Логика:
-```text
-isBattleOver && battleStarted:
-  ├─ playerPairs пусто → очистить state, fall-through
-  ├─ claimError → экран ошибки claim (как было)
-  ├─ alivePairs.length === 0 → ЭКРАН ПОРАЖЕНИЯ (handleSurrenderWithSave) ✦ НОВЫЙ ПРИОРИТЕТ
-  ├─ isClaiming → "Обработка результатов..."
-  ├─ !pendingReward → "Обработка..."
-  └─ default → DungeonRewardModal + ClaimRewardsResultModal (как было, для побед)
-```
-
-**C. Гарантированный сброс `pendingReward`/`accumulatedReward` при детекции поражения:**
-
-В useEffect `Обработка завершения боя` (строки 893–927) после `processDungeonCompletion(... isDefeat=true)` добавить прямой `resetRewards()` через ссылку из `useDungeonRewards`. Это страховка от race condition с `isProcessingRef.current` в хуке наград.
+**6. `src/components/ProtectedRoute.tsx`**
+- `lsConnected` теперь учитывает и `guestMode === 'true'`. Уже окей через `walletConnected=true`, но добавить дополнительную проверку в комментарии.
 
 ### Что НЕ трогаю
 
-- `useDungeonRewards.processDungeonCompletion` — внутренняя логика остаётся, добавляем только клиентскую страховку.
-- `handleClaimAndExit` — продолжает обслуживать кнопку «Забрать» в `DungeonRewardModal` при настоящих победах/частичном прохождении.
-- `handleSurrenderWithSave`, `claimRewardAndExit`, edge-функции — без изменений.
-- Архитектуру наград, тосты `🚨 Сохранение прогресса`, итоговую модалку `ClaimRewardsResultModal` — не трогаю.
-- `processDungeonCompletion` для побед — поведение «Победа → накопить → выбрать продолжить/забрать» сохраняется в полном объёме.
+- Edge-функции и RLS — БД-уровень не модифицирую. Защита чисто клиентская (для read-only ознакомления этого достаточно; даже если гость хакнет UI и отправит мутацию с `wallet_address='guest-demo.near'`, демо-аккаунт пострадает только сам, что не критично — это публичный демо).
+- Архитектуру `WalletContext` за пределами добавления `isGuest`/`enterGuestMode`/`exitGuestMode`.
+- Логику NEAR-селектора, HotConnector, реферал, Telegram WebApp init.
+
+### Создание демо-аккаунта (off-code, вне этого PR)
+
+После мерджа: админ заходит в админку, выставляет себе временно `guest-demo.near` через Hot Wallet (или создаёт запись через game-wipe → import), даёт ему 5–10 карт, прокачивает здания. Альтернатива — добавлю отдельную миграцию-сид, если скажете «да, засеять».
 
 ### Проверка
 
-1. Команда из 1 карты → зайти в подземелье ур.1 → нажать «Сдаться» (или умереть) → тост: **`Сохраняем 1 из 1 карт...`**, не `1 из 2`.
-2. Команда из 1 героя + 1 дракона (1 пара) → тост: `Сохраняем 2 из 2 карт`.
-3. Победить ур.1 → нажать «Продолжить» → умереть на ур.2 → видим экран **«Команда побеждена / Награды нет»** с одной кнопкой «Выйти». **Никакой модалки «Забрать награду»** не появляется.
-4. Победить ур.1 → нажать «Забрать награду» → нормальный flow с `ClaimRewardsResultModal` (как раньше, не сломали).
-5. В консоли при поражении видно `🔄 Сброс всех наград` от резервного `resetRewards()` сразу после `processDungeonCompletion(isDefeat=true)`.
+1. `/auth` → видна вторая кнопка «Войти как гость» → клик → редирект на `/menu`, сверху баннер.
+2. Баннер виден на всех страницах. Кнопка «Подключить кошелёк» в баннере чистит гость-режим и кидает на `/auth`.
+3. В магазине нажать «Купить» → toast «Гостевой режим: Покупки в магазине недоступно».
+4. Попытка сохранить команду / войти в подземелье / встать в PvP-очередь / создать клан / включить Telegram → аналогичный toast, ничего не отправляется в БД.
+5. Просмотр карт, зданий, профиля, лидербордов — работает.
+6. F5 на любой странице в гостевом режиме — состояние сохраняется (через `localStorage.guestMode`).
+7. Подключение реального кошелька через баннер → гость-флаг сбрасывается, грузится реальный аккаунт.
 
+### Открытый вопрос
+
+Адрес демо-аккаунта: использовать `guest-demo.near` (нужно создать вручную после мерджа), или укажете существующий кошелёк, который уже хорошо заполнен и не жалко показать публично?
