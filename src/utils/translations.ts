@@ -398,6 +398,11 @@ export const translations = {
       guestSubtitle: 'Ознакомительный режим — без покупок и сохранения прогресса',
       orDivider: 'или'
     },
+    // Guest mode
+    guest: {
+      bannerTitle: 'Гостевой режим — прогресс не сохраняется',
+      connectCta: 'Подключить кошелёк'
+    },
     // Admin settings
     admin: {
       title: 'Настройки игры',
@@ -982,6 +987,11 @@ export const translations = {
       guestButton: 'Enter as Guest',
       guestSubtitle: 'Preview mode — no purchases, no saved progress',
       orDivider: 'or'
+    },
+    // Guest mode
+    guest: {
+      bannerTitle: 'Guest mode — progress is not saved',
+      connectCta: 'Connect Wallet'
     },
     // Admin settings
     admin: {
