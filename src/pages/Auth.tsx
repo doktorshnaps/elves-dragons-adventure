@@ -23,7 +23,8 @@ export const Auth = () => {
   const {
     accountId,
     isLoading: isConnecting,
-    connect
+    connect,
+    enterGuestMode
   } = useWalletContext();
   const { isTelegram, tgWebApp } = useTelegram();
   const isConnected = !!accountId;
@@ -124,6 +125,11 @@ export const Auth = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleEnterAsGuest = () => {
+    enterGuestMode();
+    navigate('/menu', { replace: true });
   };
   return <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       <SplashCursor />
@@ -246,6 +252,32 @@ export const Auth = () => {
                 <Button onClick={handleConnectWallet} disabled={isConnecting} className="w-full bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 hover:from-purple-700 hover:via-blue-700 hover:to-pink-700 text-white font-semibold py-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
                   {isConnecting ? t(language, 'auth.connecting') : t(language, 'auth.connectButton')}
                 </Button>
+              </motion.div>
+
+              {/* Divider + Guest button */}
+              <motion.div
+                className="mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.75 }}
+              >
+                <div className="flex items-center gap-3 my-3">
+                  <div className="flex-1 h-px bg-slate-700/60" />
+                  <span className="text-xs text-slate-500 uppercase tracking-wider">
+                    {t(language, 'auth.orDivider')}
+                  </span>
+                  <div className="flex-1 h-px bg-slate-700/60" />
+                </div>
+                <Button
+                  onClick={handleEnterAsGuest}
+                  variant="outline"
+                  className="w-full bg-slate-800/40 border-slate-600 text-slate-200 hover:bg-slate-700/60 hover:text-white py-5 rounded-xl transition-all"
+                >
+                  🎭 {t(language, 'auth.guestButton')}
+                </Button>
+                <p className="text-[11px] text-slate-500 text-center mt-2">
+                  {t(language, 'auth.guestSubtitle')}
+                </p>
               </motion.div>
 
               {/* Footer note */}

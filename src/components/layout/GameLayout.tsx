@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { metricsMonitor } from '@/utils/metricsMonitor';
+import { GuestBanner } from '@/components/layout/GuestBanner';
 
 
 interface GameLayoutProps {
@@ -36,6 +37,7 @@ export const GameLayout = ({
         {backgroundImage && <div className="absolute inset-0 bg-black/40" />}
         
         <div className="relative z-10">
+          <GuestBanner />
           {children}
         </div>
       </div>

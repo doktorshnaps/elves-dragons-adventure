@@ -5,6 +5,7 @@ import useTelegram from "@/hooks/useTelegram";
 import { initSelector } from "@/utils/selector";
 import { initWibe3, getWibe3 } from "@/lib/wibe3";
 import { useQueryClient } from "@tanstack/react-query";
+import { GUEST_DEMO_WALLET, setGuestRuntimeFlag } from "@/utils/guestMode";
 
 interface WalletContextType {
   selector: WalletSelector | null;
@@ -14,6 +15,10 @@ interface WalletContextType {
   hasError: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
+  // Гостевой режим (демо-аккаунт без возможности мутаций)
+  isGuest: boolean;
+  enterGuestMode: () => void;
+  exitGuestMode: () => Promise<void>;
   // New: HotConnector multichain support
   wibe3: any | null;
   evmAddress: string | null;
@@ -29,6 +34,9 @@ const WalletContext = createContext<WalletContextType>({
   hasError: false,
   connect: async () => {},
   disconnect: async () => {},
+  isGuest: false,
+  enterGuestMode: () => {},
+  exitGuestMode: async () => {},
   wibe3: null,
   evmAddress: null,
   solanaAddress: null,
@@ -38,9 +46,29 @@ const WalletContext = createContext<WalletContextType>({
 export function WalletConnectProvider({ children }: { children: React.ReactNode }) {
   const { tgWebApp } = useTelegram();
   const [selector, setSelector] = useState<WalletSelector | null>(null);
-  const [accountId, setAccountId] = useState<string | null>(null);
+  const [accountId, setAccountId] = useState<string | null>(() => {
+    try {
+      if (typeof window !== 'undefined' && localStorage.getItem('guestMode') === 'true') {
+        return GUEST_DEMO_WALLET;
+      }
+    } catch {}
+    return null;
+  });
+  const [isGuest, setIsGuest] = useState<boolean>(() => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem('guestMode') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [nearAccountId, setNearAccountId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    try {
+      return !(typeof window !== 'undefined' && localStorage.getItem('guestMode') === 'true');
+    } catch {
+      return true;
+    }
+  });
   const [hasError, setHasError] = useState(false);
   const [wibe3, setWibe3] = useState<any>(null);
   const [evmAddress, setEvmAddress] = useState<string | null>(null);
@@ -56,6 +84,12 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
   }
 
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  // Держим runtime-флаг в window, чтобы обёртка supabase-клиента могла блокировать записи.
+  useEffect(() => {
+    setGuestRuntimeFlag(isGuest);
+    (window as any).__WALLET_ADDRESS__ = accountId;
+  }, [isGuest, accountId]);
 
   // Инициализация wallet-selector
   useEffect(() => {
@@ -257,6 +291,10 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
 
   // Функция подключения кошелька через HOT Wallet
   const connect = async () => {
+    // Если активен гостевой режим — выходим из него перед реальным коннектом
+    if (isGuest) {
+      try { await exitGuestMode(); } catch {}
+    }
     if (!selector) {
       console.warn("[wallet] selector not ready");
       return;
@@ -286,8 +324,49 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
     }
   };
 
+  const enterGuestMode = () => {
+    try {
+      localStorage.setItem('guestMode', 'true');
+      localStorage.setItem('walletConnected', 'true');
+      localStorage.setItem('walletAccountId', GUEST_DEMO_WALLET);
+    } catch {}
+    setIsGuest(true);
+    setAccountId(GUEST_DEMO_WALLET);
+    setNearAccountId(null);
+    setIsLoading(false);
+    setHasError(false);
+    setGuestRuntimeFlag(true);
+    if (queryClientRef.current) {
+      queryClientRef.current.invalidateQueries({ queryKey: ['gameData'] });
+      queryClientRef.current.invalidateQueries({ queryKey: ['cardInstances'] });
+      queryClientRef.current.invalidateQueries({ queryKey: ['itemInstances'] });
+    }
+    console.log('🎭 [WalletContext] Entered guest mode as', GUEST_DEMO_WALLET);
+  };
+
+  const exitGuestMode = async () => {
+    try {
+      localStorage.removeItem('guestMode');
+      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletAccountId');
+      localStorage.removeItem('nearAccountId');
+    } catch {}
+    setIsGuest(false);
+    setAccountId(null);
+    setNearAccountId(null);
+    setGuestRuntimeFlag(false);
+    if (queryClientRef.current) {
+      queryClientRef.current.clear();
+    }
+    console.log('🎭 [WalletContext] Exited guest mode');
+  };
+
   // Функция отключения кошелька
   const disconnect = async () => {
+    if (isGuest) {
+      await exitGuestMode();
+      return;
+    }
     if (!selector) return;
     try {
       const state = selector.store.getState();
@@ -351,6 +430,9 @@ export function WalletConnectProvider({ children }: { children: React.ReactNode 
         hasError,
         connect,
         disconnect,
+        isGuest,
+        enterGuestMode,
+        exitGuestMode,
         wibe3,
         evmAddress,
         solanaAddress,

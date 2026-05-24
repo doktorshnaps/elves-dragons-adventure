@@ -393,7 +393,15 @@ export const translations = {
       referralAdded: 'Реферал добавлен',
       referralAddedDesc: 'Вы успешно привязаны к пригласившему игроку',
       referralError: 'Ошибка реферала',
-      connectionError: 'Не удалось подключить кошелек'
+      connectionError: 'Не удалось подключить кошелек',
+      guestButton: 'Войти как гость',
+      guestSubtitle: 'Ознакомительный режим — без покупок и сохранения прогресса',
+      orDivider: 'или'
+    },
+    // Guest mode
+    guest: {
+      bannerTitle: 'Гостевой режим — прогресс не сохраняется',
+      connectCta: 'Подключить кошелёк'
     },
     // Admin settings
     admin: {
@@ -975,7 +983,15 @@ export const translations = {
       referralAdded: 'Referral Added',
       referralAddedDesc: 'You have been successfully linked to the referring player',
       referralError: 'Referral Error',
-      connectionError: 'Failed to connect wallet'
+      connectionError: 'Failed to connect wallet',
+      guestButton: 'Enter as Guest',
+      guestSubtitle: 'Preview mode — no purchases, no saved progress',
+      orDivider: 'or'
+    },
+    // Guest mode
+    guest: {
+      bannerTitle: 'Guest mode — progress is not saved',
+      connectCta: 'Connect Wallet'
     },
     // Admin settings
     admin: {

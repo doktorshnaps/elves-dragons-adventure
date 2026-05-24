@@ -6,6 +6,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveTelegramChatId } from "@/utils/telegramNotifications";
 import useTelegram from "@/hooks/useTelegram";
+import { isGuestWallet } from "@/utils/guestMode";
 
 /**
  * РЕФАКТОРИНГ: Убрана зависимость от setCards
@@ -27,6 +28,13 @@ export const useGameInitialization = () => {
     console.log('🔄 useGameInitialization effect: accountId=', accountId, 'isConnected=', isConnected, 'hasInitialized=', hasInitializedRef.current);
     if (!isConnected || !accountId || hasInitializedRef.current) {
       console.log('⏭️ Skipping initialization:', { isConnected, accountId, hasInitialized: hasInitializedRef.current });
+      return;
+    }
+
+    // Гостевой режим: не создаём/не пишем ничего в game_data — только читаем существующее.
+    if (isGuestWallet(accountId)) {
+      console.log('🎭 [GameInit] Guest mode — skipping init/write for', accountId);
+      hasInitializedRef.current = true;
       return;
     }
 
@@ -133,6 +141,7 @@ export const useGameInitialization = () => {
   // Dedicated stable effect for saving Telegram chat_id
   useEffect(() => {
     if (!accountId || !isTelegram || !tgWebApp) return;
+    if (isGuestWallet(accountId)) return; // не сохраняем TG chat_id для гостя
     const tgUserId = tgWebApp.initDataUnsafe?.user?.id;
     if (!tgUserId) return;
 
