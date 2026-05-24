@@ -2,6 +2,21 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { metricsMonitor } from '@/utils/metricsMonitor';
+import { isGuestRuntime } from '@/utils/guestMode';
+
+/**
+ * Список edge-функций, которые разрешены в гостевом режиме (только чтение).
+ * Все остальные `functions.invoke` блокируются на клиенте.
+ */
+const GUEST_ALLOWED_FUNCTIONS = new Set<string>([
+  'get-user-nft-cards',
+  'pvp-match-status',
+]);
+
+const GUEST_BLOCK_ERROR = {
+  data: null,
+  error: { message: 'Гостевой режим: запись запрещена. Подключите кошелёк.' },
+};
 
 const SUPABASE_URL = "https://oimhwdymghkwxznjarkv.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pbWh3ZHltZ2hrd3h6bmphcmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MTMxMjEsImV4cCI6MjA3MDA4OTEyMX0.97FbtgxM3nYtzTQWf8TpKqvxJ7h_pvhpBOd0SYRd05k";
@@ -73,12 +88,17 @@ baseClient.from = function(table: string) {
     return promise;
   };
   
-  // Оборачиваем каждый метод
+  // Оборачиваем каждый метод + блокируем мутации в гостевом режиме
   const methods = ['select', 'insert', 'update', 'delete', 'upsert'];
+  const writeMethods = new Set(['insert', 'update', 'delete', 'upsert']);
   methods.forEach(method => {
     const original = (builder as any)[method];
     if (original) {
       (builder as any)[method] = function(...args: any[]) {
+        if (writeMethods.has(method) && isGuestRuntime()) {
+          console.warn(`🎭 [Guest] Blocked ${method} on ${table}`);
+          return Promise.resolve(GUEST_BLOCK_ERROR) as any;
+        }
         const result = original.apply(builder, args);
         return wrapPromise(method, result);
       };
@@ -86,6 +106,16 @@ baseClient.from = function(table: string) {
   });
   
   return builder;
+} as any;
+
+// Блокируем все edge-функции (кроме allowlist) в гостевом режиме
+const originalInvoke = baseClient.functions.invoke.bind(baseClient.functions);
+baseClient.functions.invoke = function (fn: string, options?: any) {
+  if (isGuestRuntime() && !GUEST_ALLOWED_FUNCTIONS.has(fn)) {
+    console.warn(`🎭 [Guest] Blocked edge function: ${fn}`);
+    return Promise.resolve(GUEST_BLOCK_ERROR) as any;
+  }
+  return originalInvoke(fn, options);
 } as any;
 
 export { baseClient as monitoredSupabase };
