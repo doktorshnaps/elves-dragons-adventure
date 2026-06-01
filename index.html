@@ -4,13 +4,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>ElleonorAI - Dragon & Heroes | NFT Fantasy Card Game on NEAR</title>
+    <title>ElleonorAI — NFT Card Game on NEAR</title>
     <meta name="description" content="ElleonorAI - Заработай играя в NFT карточную игру на NEAR Protocol. Собирай героев и драконов, сражайся в подземельях, обменивай карты." />
+    <link rel="canonical" href="https://elleonorai.xyz/" />
     <meta name="keywords" content="NFT, blockchain, NEAR Protocol, card game, fantasy, dragons, heroes, play to earn, Web3, crypto game" />
     <meta property="og:title" content="ElleonorAI - Dragon & Heroes | NFT Fantasy Card Game" />
     <meta property="og:description" content="Собирай NFT карты героев и драконов, сражайся в подземельях и зарабатывай на NEAR Protocol" />
+    <meta property="og:url" content="https://elleonorai.xyz/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ElleonorAI" />
     <meta name="author" content="Lovable" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image" content="https://elleonorai.xyz/og-image.png" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -22,7 +26,37 @@
     
     <!-- Telegram Mini App Configuration -->
     <meta name="telegram-webapp-manifest" content="/manifest.json" />
-    
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "ElleonorAI",
+          "url": "https://elleonorai.xyz/",
+          "logo": "https://elleonorai.xyz/og-image.png",
+          "sameAs": ["https://twitter.com/ElleonorAI"]
+        },
+        {
+          "@type": "WebSite",
+          "name": "ElleonorAI — Dragon & Heroes",
+          "url": "https://elleonorai.xyz/"
+        },
+        {
+          "@type": "VideoGame",
+          "name": "ElleonorAI — Dragon & Heroes",
+          "url": "https://elleonorai.xyz/",
+          "genre": ["Card Game", "Fantasy", "Play to Earn"],
+          "gamePlatform": ["Web", "NEAR Protocol"],
+          "applicationCategory": "Game",
+          "operatingSystem": "Web Browser"
+        }
+      ]
+    }
+    </script>
+
     <!-- Preconnect to external domains for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
