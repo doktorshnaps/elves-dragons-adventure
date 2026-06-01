@@ -1,0 +1,10 @@
+# ElleonorAI — Dragon & Heroes
+
+> NFT fantasy card game on NEAR Protocol. Collect heroes and dragons, battle in dungeons, trade cards, and earn while you play.
+
+ElleonorAI is a play-to-earn card game where players collect NFT heroes and dragons on the NEAR blockchain, build teams, and fight through procedurally generated dungeons and PvP battles. The game is wallet-gated — most surfaces are accessible only after connecting a NEAR wallet.
+
+## Pages
+
+- [Home](/): Landing page that routes visitors to the auth screen.
+- [Connect Wallet](/auth): Sign in with a NEAR wallet or enter as a guest to explore.
