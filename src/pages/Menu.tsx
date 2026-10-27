@@ -78,6 +78,13 @@ export const Menu = () => {
     }
   }, [isConnected, accountId, gameDataLoading]);
 
+  // Страховка: не держим экран загрузки дольше 6 секунд
+  useEffect(() => {
+    if (initialLoadComplete) return;
+    const timer = setTimeout(() => setInitialLoadComplete(true), 6000);
+    return () => clearTimeout(timer);
+  }, [initialLoadComplete]);
+
   // Показываем загрузку только при первой загрузке
   if (isConnected && !initialLoadComplete && gameDataLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-game-background">
