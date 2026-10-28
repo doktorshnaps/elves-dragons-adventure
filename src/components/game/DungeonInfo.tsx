@@ -12,6 +12,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { translateMonsterName, translateMonsterDescription, translateMonsterText } from "@/utils/monsterTranslations";
 import { t } from "@/utils/translations";
 import { getDungeonNumber } from "@/utils/monsterPowerIndex";
+import { useStaticGameDataContext } from "@/contexts/StaticGameDataContext";
 
 // Monster descriptions
 const monsterDescriptions: Record<string, string> = {
@@ -85,6 +86,7 @@ const DungeonLevel = memo(({
   level
 }: DungeonLevelProps) => {
   const { language } = useLanguage();
+  const { data: staticData } = useStaticGameDataContext();
   
   const [opponents, setOpponents] = React.useState<any[]>([]);
   const [loadKey, setLoadKey] = React.useState(0);
@@ -110,7 +112,7 @@ const DungeonLevel = memo(({
       setOpponents(enhanced);
     };
     loadOpponents();
-  }, [dungeonType, level, language, loadKey]);
+  }, [dungeonType, level, language, loadKey, staticData]);
 
   return <div className="space-y-4">
       <h3 className="text-lg font-semibold text-white border-b border-white/30 pb-2">
